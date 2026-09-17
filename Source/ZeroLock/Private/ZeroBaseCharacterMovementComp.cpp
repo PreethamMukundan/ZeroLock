@@ -56,7 +56,7 @@ void UZeroBaseCharacterMovementComp::FSavedMove_Zero::SetMoveFor(ACharacter* C, 
     Saved_bWantsToSprint = CharMovementComp->Safe_bWantsToSprint;
     Saved_bPrevWantsToCrouch = CharMovementComp->Safe_bPrevWantsToCrouch;
     Saved_bWantsToDash = CharMovementComp->Safe_bWantsToDash;
-    Saved_bPressedZeroJump = CharMovementComp->ZeroCharacter_Owner->bPressedZeroJump;
+    //Saved_bPressedZeroJump = CharMovementComp->ZeroCharacter_Owner->bPressedZeroJump;
     Saved_bHadAnimRootMotion = CharMovementComp->Safe_bHadAnimRootMotion;
     Saved_bTransitionFinished = CharMovementComp->Safe_bTransitionFinished;
 }
@@ -69,7 +69,7 @@ void UZeroBaseCharacterMovementComp::FSavedMove_Zero::PrepMoveFor(ACharacter* C)
     CharMovementComp->Safe_bWantsToSprint = Saved_bWantsToSprint;
     CharMovementComp->Safe_bPrevWantsToCrouch = Saved_bPrevWantsToCrouch;
     CharMovementComp->Safe_bWantsToDash = Saved_bWantsToDash;
-    CharMovementComp->ZeroCharacter_Owner->bPressedZeroJump = Saved_bPressedZeroJump;
+    //CharMovementComp->ZeroCharacter_Owner->bPressedZeroJump = Saved_bPressedZeroJump;
     CharMovementComp->Safe_bHadAnimRootMotion = Saved_bHadAnimRootMotion;
     CharMovementComp->Safe_bTransitionFinished = Saved_bTransitionFinished;
 }
@@ -180,7 +180,7 @@ void UZeroBaseCharacterMovementComp::OnMovementUpdated(float DeltaSeconds, const
 }
 
 void UZeroBaseCharacterMovementComp::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
-{
+{/*
     if(ZeroCharacter_Owner->ZeroJumpHoldTIme > ZiplineMinKeyPressTime && ZeroCharacter_Owner->bStillJumpKeyDown)
     {
         if(TryZipLine())
@@ -245,7 +245,7 @@ void UZeroBaseCharacterMovementComp::UpdateCharacterStateBeforeMovement(float De
     if(IsCustomMovementMode(CMOVE_Slide) && !bWantsToCrouch)
     {
        SetMovementMode(MOVE_Walking);
-    }
+    }*/
     Super::UpdateCharacterStateBeforeMovement(DeltaSeconds);
 }
 
@@ -655,7 +655,6 @@ int32 UZeroBaseCharacterMovementComp::GetStablePlayerIndex() const
 	{
 		TArray<APlayerState*> SortedArray = GS->PlayerArray;
         
-		// FIX: Use GetPlayerId(), which replicates correctly over the network
 		SortedArray.Sort([](const APlayerState& A, const APlayerState& B) {
 			return A.GetPlayerId() < B.GetPlayerId();
 		});
@@ -685,7 +684,6 @@ void UZeroBaseCharacterMovementComp::OnClientCorrectionReceived(
 
 bool UZeroBaseCharacterMovementComp::IsCustomMovementMode(ECustomMovementMode inCustomMode) const { return MovementMode == MOVE_Custom && CustomMovementMode == inCustomMode; }
 
-// --- UPDATED PHYS MELEE FOR MANUAL SWEEP AND GHOSTING ---
 void UZeroBaseCharacterMovementComp::PhysMelee(float DeltaTime, int32 Iterations)
 {
     if (DeltaTime < MIN_TICK_TIME) return;
@@ -696,22 +694,18 @@ void UZeroBaseCharacterMovementComp::PhysMelee(float DeltaTime, int32 Iterations
 
     FVector OldLocation = UpdatedComponent->GetComponentLocation();
     
-    // 1. Get the target direction from the Camera (Control Rotation)
     FVector MeleeDir = CharacterOwner->GetControlRotation().Vector();
-    MeleeDir.Z = 0.f; // Keep the dash horizontal
+    MeleeDir.Z = 0.f; 
     MeleeDir.Normalize();
 
-    // The full distance we WANT to move this frame
     FVector MoveDelta = MeleeDir * (1000.f * DeltaTime); 
     FQuat NewRot = FRotationMatrix::MakeFromXZ(MeleeDir, FVector::UpVector).ToQuat();
-    
-    // 2. MANUAL SWEEP FOR PLAYERS
+
     FHitResult PlayerHit;
     FCollisionShape CapShape = CharacterOwner->GetCapsuleComponent()->GetCollisionShape();
     FCollisionQueryParams Params;
     Params.AddIgnoredActor(CharacterOwner);
 
-    // Sweep against Pawns
     bool bHitPlayer = GetWorld()->SweepSingleByObjectType(
         PlayerHit, 
         OldLocation, 
@@ -724,11 +718,9 @@ void UZeroBaseCharacterMovementComp::PhysMelee(float DeltaTime, int32 Iterations
 
     if (bHitPlayer)
     {
-        // We hit a player! Truncate the MoveDelta so we stop exactly at the impact point
         MoveDelta *= PlayerHit.Time;
     }
 
-    // 3. ACTUAL MOVEMENT
     FHitResult WallHit(1.f);
     SafeMoveUpdatedComponent(MoveDelta, NewRot, true, WallHit);
 
@@ -737,7 +729,6 @@ void UZeroBaseCharacterMovementComp::PhysMelee(float DeltaTime, int32 Iterations
         SlideAlongSurface(MoveDelta, (1.f - WallHit.Time), WallHit.Normal, WallHit, true);
     }
 
-    // 4. PROCESS THE PLAYER HIT
     if (bHitPlayer)
     {
         if (MeleeHitDelegate.IsBound())
@@ -747,7 +738,6 @@ void UZeroBaseCharacterMovementComp::PhysMelee(float DeltaTime, int32 Iterations
         SetMovementMode(MOVE_Falling);
     }
 
-    // Update Velocity for the network/animators
     if (!bJustTeleported && !HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity())
     {
         Velocity = (UpdatedComponent->GetComponentLocation() - OldLocation) / DeltaTime;

@@ -71,7 +71,7 @@ void UZL_GA_Drifter_Teleport::OnInputPressed(float TimeWaited)
 		
 		Hero->SetActorLocation(Villan->GetActorLocation()+ ForwardDirection* -125);
 		Hero->GetController()->SetControlRotation(Villan->GetControlRotation());
-		Hero->GetCharacterMovement()->StopMovementImmediately();
+		//Hero->GetCharacterMovement()->StopMovementImmediately();
 		//Hero->SetActorRotation(Villan->GetActorRotation(),ETeleportType::TeleportPhysics);
 		Villan->GetAbilitySystemComponent()->RemoveGameplayCue(MarkedCueTag);
 	}

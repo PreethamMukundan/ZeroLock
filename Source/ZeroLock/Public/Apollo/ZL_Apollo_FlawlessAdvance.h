@@ -8,6 +8,7 @@
 #include "GAS/BaseGameplayAbility.h"
 #include "ZL_Apollo_FlawlessAdvance.generated.h"
 
+class UZL_AbilityTask_MoverMoveTo;
 /**
  * 
  */
@@ -44,8 +45,14 @@ public:
 	class UZL_WaitDelay_Task* WaitTimeTask ;
 	class UAbilityTask_PlayMontageAndWait* AnimMontageTask ;
 	
-	class UAbilityTask_ApplyRootMotionMoveToForce* ActiveChargeMovementTask;
-	class UAbilityTask_ApplyRootMotionMoveToForce* LungeRootMotionTask;
+	UPROPERTY()
+	UZL_AbilityTask_MoverMoveTo* ActiveChargeMovementTask;
+
+	UPROPERTY()
+	UZL_AbilityTask_MoverMoveTo* LungeRootMotionTask;
+	
+	//class UAbilityTask_ApplyRootMotionMoveToForce* ActiveChargeMovementTask;
+	//class UAbilityTask_ApplyRootMotionMoveToForce* LungeRootMotionTask;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Lunge|Movement")
 	UCurveVector* InitChargePathOffsetCurve;

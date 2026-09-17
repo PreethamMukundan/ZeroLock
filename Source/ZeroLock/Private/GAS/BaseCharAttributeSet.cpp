@@ -196,14 +196,14 @@ void UBaseCharAttributeSet::PostAttributeChange(const FGameplayAttribute& Attrib
 	}
 	if (Attribute == GetCurrentSpeedAttribute())
 	{
-		TargetChar->GetCharacterMovement()->MaxWalkSpeed = NewValue;
+		//TargetChar->GetCharacterMovement()->MaxWalkSpeed = NewValue;
 	
 	}
 
 	else if (Attribute == GetCurrentJumpAttribute())
 	{
 	
-		TargetChar->GetCharacterMovement()->JumpZVelocity = NewValue;
+		//TargetChar->GetCharacterMovement()->JumpZVelocity = NewValue;
 	
 	}
 	else if (Attribute == GetFireRateAttribute())

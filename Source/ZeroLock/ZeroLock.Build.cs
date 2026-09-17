@@ -8,7 +8,7 @@ public class ZeroLock : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "GameplayAbilities", "CommonUI" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "GameplayAbilities", "CommonUI", "Mover" });
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"Slate",
 			"SlateCore",
@@ -18,6 +18,7 @@ public class ZeroLock : ModuleRules
 			"Paper2D",
 			"NetCore",
 			"AIModule",
+			"Niagara",
 			"NavigationSystem",
 			"UMG",
 			"CommonUI",
@@ -29,8 +30,7 @@ public class ZeroLock : ModuleRules
 			"OpenSSL",
 			"Json",
 			"ModelViewViewModel",
-			"SlateMVVM"
-
+			"SlateMVVM", "Niagara", "Niagara"
 		});
 		
 		PrivateDefinitions.Add("P2PMODE=1");

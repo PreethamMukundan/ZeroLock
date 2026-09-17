@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "Mover/ZeroMoverPawn.h"
 #include "Logging/LogMacros.h"
 #include "AbilitySystemInterface.h"
 #include <GameplayEffectTypes.h>
@@ -16,9 +16,6 @@ class UZL_AbilityUIManagerComponent;
 class UWidgetComponent;
 class UZL_BaseDamageWidgetComponent;
 class UZL_VM_Attributes;
-//enum class EGASAbilityInputID;
-class USpringArmComponent;
-class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
@@ -41,70 +38,33 @@ struct FMyAbilityMap
 	UPROPERTY()
 	EGASAbilityInputID InputID;
 };
+
 USTRUCT(BlueprintType)
-struct  FZL_DamageNumber
+struct FZL_DamageNumber
 {
 	GENERATED_USTRUCT_BODY()
 
 	float DamageAmount;
-
 	FGameplayTagContainer Tags;
 
 	FZL_DamageNumber() {}
-
 	FZL_DamageNumber(float InDamageAmount, FGameplayTagContainer InTags) : DamageAmount(InDamageAmount)
 	{
 		Tags.AppendTags(InTags);
 	}
 };
+
 UCLASS(config=Game)
-class AZeroLockCharacter : public ACharacter , public IAbilitySystemInterface
+class AZeroLockCharacter : public AZeroMoverPawn, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
-	protected:
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Movement")
-	class UZeroBaseCharacterMovementComp* ZeroMovementComp;
-	
-
-	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
-	
-	/** Camera boom positioning the camera behind the character */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	USpringArmComponent* CameraBoom;
+protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Parry, meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* ParryComp;
-	/** Follow camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* FollowCamera;
 	
-	/** MappingContext */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputMappingContext* DefaultMappingContext;
-
-	/** Jump Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* JumpAction;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* DashAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* CrouchAction;
-	
-	
-	/** Move Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* MoveAction;
-
-	/** Look Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* LookAction;
-
-
-
-	//Gameplay Ability system inputs
+	// Gameplay Ability system inputs
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* EI_PrimaryFire;
 
@@ -124,9 +84,6 @@ class AZeroLockCharacter : public ACharacter , public IAbilitySystemInterface
 	UInputAction* EI_Ultimate;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* EI_Melee;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* EI_Parry;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -139,41 +96,15 @@ class AZeroLockCharacter : public ACharacter , public IAbilitySystemInterface
 	UInputAction* EI_UIInfo;
 	
 public:
-	AZeroLockCharacter(const FObjectInitializer& ObjectInitializer);
-
-
-	FVector2D GetMoveVector()const { return MovementVector;};
-	
+	AZeroLockCharacter();
 
 protected:
 
-	
-
-	/** Called for movement input */
-	void Move(const FInputActionValue& Value);
-
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Input")
-	FVector2D MovementVector;
-
-
-
-	UFUNCTION(Server, Reliable)
-	void ServerSetMovementVector(FVector2D NewVector);
-	
-	/** Called for looking input */
-	void Look(const FInputActionValue& Value);
-
-
-	void DashPressed();
-	void DashReleased();
-	void CrouchPressed();
-	void CrouchReleased();
 	void MeleePressed();
 	void MeleeReleased();
 	void ParryPressed();
 	void UIInfoPressed();
 	void UIInfoReleased();
-
 
 public:
 	float MeleePressedTime;
@@ -188,57 +119,29 @@ public:
 	virtual void ShowDamageNumber();
 
 	UFUNCTION(BlueprintCallable)
-	UZL_BaseDamageWidgetComponent* GetMyDamageNumberComp()const { return DamageWidgetComp;};
+	UZL_BaseDamageWidgetComponent* GetMyDamageNumberComp()const { return DamageWidgetComp; };
 
-	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
 	UZL_BaseDamageWidgetComponent* DamageWidgetComp;
-	// APawn interface
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	// End of APawn interface
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void Stunned(FGameplayTag GameplayTag, int NewCount);
 	void Parry(FGameplayTag GameplayTag, int NewCount);
-
 
 	void HealthAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void AmmoAttributeChange(const FOnAttributeChangeData& OnAttributeChangeData);
 	void SpeedAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void AddEventForDeath();
 	
-	// To add mapping context
-	virtual void BeginPlay();
+	virtual void BeginPlay() override;
 
 public:
-	/** Returns CameraBoom subobject **/
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	/** Returns FollowCamera subobject **/
-	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-
-
-	//movement
-	FCollisionQueryParams GetIgnoreCharacterParams() const ;
-
-	virtual bool CanJumpInternal_Implementation() const override;
-
-	
-	//JUMP
-	bool bPressedZeroJump;
-	bool bStillJumpKeyDown =false;
-	//float ZeroTimeJumpKeyPressed;
-	float ZeroJumpHoldTIme;
-
-	virtual void Jump() override;
-	virtual void StopJumping() override;
-	virtual void ClearJumpInput(float DeltaTime) override;
-
-	//
+	FCollisionQueryParams GetIgnoreCharacterParams() const;
 	void Death();
 
-	//Ability System 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UBaseCharAbilitySystemComponent* AbilitySystemComp;
@@ -253,11 +156,8 @@ protected:
 	class UBaseCharAttributeSet* AttributeSet;
 
 public:
-	
 	virtual class UAbilitySystemComponent* GetAbilitySystemComponent()const override;
-
 	virtual UBaseCharAbilitySystemComponent* GetMyAbilitySystemComp()const;
-
 	virtual UBaseCharAttributeSet* GetMyAttributeSet()const;
 
 	void MovementLocked(FGameplayTag GameplayTag, int NewCount);
@@ -267,10 +167,9 @@ public:
 	virtual void GiveAbilities();
 
 	virtual void BroadcastAbilitiesToUI(UBaseGameplayAbility* Ability , EGASAbilityInputID InputID);
-
 	void GrantAbilityOfClassX(TSubclassOf<class UBaseGameplayAbility> AbilityToGrant,EGASAbilityInputID InputToBindTo,bool brodcast = false);
-
 	UZero_Item_Inventory_Component* GetInventoryComponent()const;
+
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
 
@@ -283,7 +182,6 @@ public:
 	bool IsAlive();
 
 	void ChangeFireRate();
-
 	void PrimaryFireTickFunction();
 	FTimerHandle PrimaryFireTickHandle;
 
@@ -300,12 +198,9 @@ public:
 	void UltimateAbilityReleased();
 
 	void Reload();
-	
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
 	TSubclassOf<class UGameplayEffect> DefaultGameplayEffect;
-
-
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
 	TArray<TSubclassOf<class UBaseGameplayAbility>> DefaultAbilities;
@@ -337,8 +232,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS/Melee")
 	TSubclassOf<class UBaseGameplayAbility> ParryAbility;
 
-
-
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "GAS")
 	TArray<FGameplayAbilitySpecHandle> DefaultAbilitiesHandles;
 
@@ -352,19 +245,14 @@ public:
 	FDamageRecievedDelegate DamageRecievedDelegate;
 	UPROPERTY(BlueprintAssignable)
 	FAddAbilityIconDelegate AddAbilityIconDelegate;
-
-	
 	
 public:
 	UFUNCTION()
 	void HealthChanged(float currentH , float MaxH);
-
 	UFUNCTION()
 	void OnTakeDamage(float currentH);
-
 	UFUNCTION()
 	void HandleDeath();
-
 	UFUNCTION(Server, Reliable)
 	void ServerHandleDeath(APlayerController* PC);
 	
@@ -376,6 +264,7 @@ public:
 
 	UPROPERTY(BlueprintReadOnly,Category = "Assist")
 	TMap<AZeroLockCharacter*, float> AssistTimeMap;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Assist")
 	float AssistWindow = 10.f;
 
@@ -400,7 +289,6 @@ public:
 	UPROPERTY()
 	TArray<FMyAbilityMap> AbilitiesArray;
 
-
 	UFUNCTION()
 	void OnRep_AbilityUIData();
 	
@@ -410,28 +298,21 @@ public:
 	UPROPERTY(BlueprintReadWrite,EditDefaultsOnly, Category = "Animation/melee")
 	UAnimMontage* HeavyMeleeMontage;
 
-
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void FOVChange(float newFOV,float duration);
 
-
-
 	TMap<EGASAbilityInputID,FGameplayTag> inputTags;
-
 
 	UPROPERTY(EditDefaultsOnly, Category = "Icon")
 	UTexture2D* Icon;
 
 	void InitInputTagsMap();
 
-
 	UPROPERTY(BlueprintAssignable, Category = "GAS|Events")
 	FHeroGameplayEventDelegate OnWeaponHitEventReceived;
     
-	// Function you call when the actual hit happens
 	UFUNCTION(BlueprintCallable)
 	void HandleWeaponHitEvent(const FGameplayEventData& EventData);
-
 
 	UPROPERTY(BlueprintReadWrite,Category="MVVM")
 	UZL_VM_Attributes* VM_Attributes;
@@ -450,6 +331,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	class UZL_OverHeadDisplay* OverHeadDisplayRef;
+	
 	UFUNCTION()
 	void InitializeFloatingStatusBar();
 
@@ -464,5 +346,3 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Teams")
 	bool IsOnSameTeam(AZeroLockCharacter* CharacterToCheck);
 };
-
-

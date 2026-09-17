@@ -1,22 +1,21 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "ZeroLockCharacter.h"
-
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "TimerManager.h"
 #include "Zero_BasePlayerController.h"
 #include "Zero_BasePlayerState.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Gamemode/Zero_BaseGameModeBase.h"
-#include "ZeroLock/Public/ZeroBaseCharacterMovementComp.h"
 #include "GAS/BaseCharAbilitySystemComponent.h"
 #include "GAS/BaseCharAttributeSet.h"
 #include "GAS/BaseGameplayAbility.h"
@@ -37,66 +36,12 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 //////////////////////////////////////////////////////////////////////////
 // AZeroLockCharacter
 
-void AZeroLockCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode)
+AZeroLockCharacter::AZeroLockCharacter()
 {
-	Super::OnMovementModeChanged(PrevMovementMode, PreviousCustomMode);
-
-	if (ZeroMovementComp->MovementMode == MOVE_Custom)
-	{
-		if (ZeroMovementComp->IsCustomMovementMode(ECustomMovementMode::CMOVE_Slide))
-		{
-			GetVM_Attributes()->SetIsInfiniteAmmo(true);
-		}
-	}
-	if (PreviousCustomMode == ECustomMovementMode::CMOVE_Slide)
-	{
-		GetVM_Attributes()->SetIsInfiniteAmmo(false);
-	}
-}
-
-AZeroLockCharacter::AZeroLockCharacter(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer.SetDefaultSubobjectClass<UZeroBaseCharacterMovementComp>(ACharacter::CharacterMovementComponentName))
-{
-
-	ZeroMovementComp = Cast<UZeroBaseCharacterMovementComp>(GetCharacterMovement());
-	// Set size for collision capsule
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-		
-	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationRoll = false;
 
-	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
-
-	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
-	// instead of recompiling to adjust them
-	GetCharacterMovement()->JumpZVelocity = 700.f;
-	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 500.f;
-	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
-	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
-	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
-	JumpMaxCount =2;
-
-	// Create a camera boom (pulls in towards the player if there is a collision)
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
-	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
-
-	// Create a follow camera
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
-
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
-
-	//GAS
-	
 	//GAS Components
 	AbilitySystemComp = CreateDefaultSubobject<UBaseCharAbilitySystemComponent>(TEXT("AbilitySystemComp"));
 	AbilitySystemComp->SetIsReplicated(true);
@@ -106,27 +51,28 @@ AZeroLockCharacter::AZeroLockCharacter(const FObjectInitializer& ObjectInitializ
 	ItemInventoryComp = CreateDefaultSubobject<UZero_Item_Inventory_Component>(TEXT("ItemInventory"));
 	ItemInventoryComp->SetIsReplicated(true);
 
-	ParryComp=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ParryComponent"));
+	ParryComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ParryComponent"));
 	ParryComp->SetupAttachment(RootComponent);
 	ParryComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	GetMesh()->CustomDepthStencilValue =1;
-	GetMesh()->SetRenderInDepthPass(true);
-	AbilityUIManager = CreateDefaultSubobject<UZL_AbilityUIManagerComponent>(TEXT("AbilityUIManager"));
+	if (GetMesh()) 
+	{
+		GetMesh()->CustomDepthStencilValue = 1;
+		GetMesh()->SetRenderInDepthPass(true);
+	}
 
+	AbilityUIManager = CreateDefaultSubobject<UZL_AbilityUIManagerComponent>(TEXT("AbilityUIManager"));
 
 	DamageWidgetComp = CreateDefaultSubobject<UZL_BaseDamageWidgetComponent>(TEXT("DamageNumberComp"));
 	DamageWidgetComp->SetupAttachment(RootComponent);
 
 	OverHeadDisplay = CreateDefaultSubobject<UZL_OverHeadWidgetComponent>(TEXT("OverHeadDisplay"));
 	OverHeadDisplay->SetupAttachment(RootComponent);
-	
 }
 
 void AZeroLockCharacter::InitializeFloatingStatusBar()
 {
 	if (IsNetMode(NM_DedicatedServer)) return;
-
 	if (IsLocallyControlled()) return;
 
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
@@ -143,7 +89,6 @@ void AZeroLockCharacter::InitializeFloatingStatusBar()
 	if (WidgetInstance)
 	{
 		OverHeadDisplayRef = WidgetInstance;
-        
 
 		if (UZL_VM_Attributes* VM = GetVM_Attributes())
 		{
@@ -154,83 +99,37 @@ void AZeroLockCharacter::InitializeFloatingStatusBar()
 				VM->SetHealth(AttributeSet->GetCurrentHealth());
 				VM->SetMaxHealth(AttributeSet->GetMaximumHealth());
 			}
-			ZLOG("Overhead Widget Initialized and Linked");
+			//ZLOG("Overhead Widget Initialized and Linked");
 		}
 	}
 }
 
 void AZeroLockCharacter::BeginPlay()
 {
-	// Call the base class  
 	Super::BeginPlay();
+	
 	ParryComp->SetVisibility(false);
-	//CreateVM_Att();
-	GetMesh()->CustomDepthStencilValue =1;
-	GetMesh()->SetRenderInDepthPass(true);
-	//AttributeSet->OnCharacterDied.AddUniqueDynamic(this,&ThisClass::AZeroLockCharacter::OnDied);	
+	
+	if (GetMesh())
+	{
+		GetMesh()->CustomDepthStencilValue = 1;
+		GetMesh()->SetRenderInDepthPass(true);
+	}
 }
 
 FCollisionQueryParams AZeroLockCharacter::GetIgnoreCharacterParams() const
 {
 	FCollisionQueryParams params;
-
 	TArray<AActor*> CharacterChilder;
 	GetAllChildActors(CharacterChilder);
 	params.AddIgnoredActors(CharacterChilder);
 	params.AddIgnoredActor(this);
-
 	return params;
-}
-
-bool AZeroLockCharacter::CanJumpInternal_Implementation() const
-{
-	if(ZeroMovementComp->IsCustomMovementMode(CMOVE_Zipline))
-	{
-		return true;
-	}
-	if(ZeroMovementComp->IsCustomMovementMode(CMOVE_Slide))
-	{
-		return true;
-	}
-	return Super::CanJumpInternal_Implementation();
-}
-
-void AZeroLockCharacter::Jump()
-{
-	Super::Jump();
-
-	bPressedZeroJump = true;
-
-	bPressedJump = false;
-	bStillJumpKeyDown =true;
-	//ZeroTimeJumpKeyPressed = GetWorld()->TimeSeconds;
-	ZeroJumpHoldTIme =0.0f;
-}
-
-void AZeroLockCharacter::StopJumping()
-{
-	Super::StopJumping();
-	bPressedZeroJump = false;
-	bStillJumpKeyDown = false;
-}
-
-void AZeroLockCharacter::ClearJumpInput(float DeltaTime)
-{
-	Super::ClearJumpInput(DeltaTime);
-	if(bStillJumpKeyDown)
-	{
-		ZeroJumpHoldTIme += DeltaTime;
-	}
-	else
-	{
-		//	ZeroJumpHoldTIme =0;
-	}
 }
 
 void AZeroLockCharacter::Death()
 {
-	
-	
+	// Optional death implementation
 }
 
 class UAbilitySystemComponent* AZeroLockCharacter::GetAbilitySystemComponent() const
@@ -251,23 +150,22 @@ UBaseCharAttributeSet* AZeroLockCharacter::GetMyAttributeSet() const
 void AZeroLockCharacter::MovementLocked(FGameplayTag GameplayTag, int NewCount)
 {
 	APlayerController* PC = Cast<APlayerController>(GetController());
-	if (NewCount>0)
+	if (NewCount > 0)
 	{
+		// Tag added logic here if needed
 	}
 	else
 	{
-	
+		// Tag removed logic here if needed
 	}
 }
 
 void AZeroLockCharacter::InitializeAttributes()
 {
-	
 	if (AbilitySystemComp && DefaultGameplayEffect)
 	{
 		FGameplayEffectContextHandle EffectContext = AbilitySystemComp->MakeEffectContext();
 		EffectContext.AddSourceObject(this);
-
 
 		FGameplayEffectSpecHandle SpecHandle = AbilitySystemComp->MakeOutgoingSpec(DefaultGameplayEffect, 1, EffectContext);
 
@@ -275,20 +173,21 @@ void AZeroLockCharacter::InitializeAttributes()
 		{
 			FActiveGameplayEffectHandle GEHandle = AbilitySystemComp->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 		}
-		FGameplayTag StunTag = FGameplayTag::RequestGameplayTag(FName("ZeroLock.Stun"),false);
-		FGameplayTag ParryTag = FGameplayTag::RequestGameplayTag(FName("ZeroLock.Melee.Parry"),false);
-		AbilitySystemComp->RegisterGameplayTagEvent(StunTag,EGameplayTagEventType::NewOrRemoved).AddUObject(this,&AZeroLockCharacter::Stunned);
-		AbilitySystemComp->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag("ZeroLock.Abilities.MovementLock"),EGameplayTagEventType::NewOrRemoved).AddUObject(this,&AZeroLockCharacter::MovementLocked);
-		AbilitySystemComp->RegisterGameplayTagEvent(ParryTag,EGameplayTagEventType::NewOrRemoved).AddUObject(this,&AZeroLockCharacter::Parry);
-		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCurrentHealthAttribute()).AddUObject(this,&AZeroLockCharacter::HealthAttributeChanged);
-		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaximumHealthAttribute()).AddUObject(this,&AZeroLockCharacter::HealthAttributeChanged);
-		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCurrentSpeedAttribute()).AddUObject(this,&AZeroLockCharacter::SpeedAttributeChanged);
-		ZeroMovementComp->MaxWalkSpeed = AttributeSet->GetCurrentSpeed();
-		ZeroMovementComp->Walk_MaxSpeed = AttributeSet->GetCurrentSpeed();
-		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxAmmoAttribute()).AddUObject(this,&AZeroLockCharacter::AmmoAttributeChange);
-		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCurrentAmmoAttribute()).AddUObject(this,&AZeroLockCharacter::AmmoAttributeChange);
 		
-		AbilitySystemComp->OnNewAbilityAdded.AddUniqueDynamic(this,&ThisClass::NewAbilityAddedLocal);
+		FGameplayTag StunTag = FGameplayTag::RequestGameplayTag(FName("ZeroLock.Stun"), false);
+		FGameplayTag ParryTag = FGameplayTag::RequestGameplayTag(FName("ZeroLock.Melee.Parry"), false);
+		
+		AbilitySystemComp->RegisterGameplayTagEvent(StunTag, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AZeroLockCharacter::Stunned);
+		AbilitySystemComp->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag("ZeroLock.Abilities.MovementLock"), EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AZeroLockCharacter::MovementLocked);
+		AbilitySystemComp->RegisterGameplayTagEvent(ParryTag, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AZeroLockCharacter::Parry);
+		
+		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCurrentHealthAttribute()).AddUObject(this, &AZeroLockCharacter::HealthAttributeChanged);
+		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaximumHealthAttribute()).AddUObject(this, &AZeroLockCharacter::HealthAttributeChanged);
+		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCurrentSpeedAttribute()).AddUObject(this, &AZeroLockCharacter::SpeedAttributeChanged);
+		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxAmmoAttribute()).AddUObject(this, &AZeroLockCharacter::AmmoAttributeChange);
+		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCurrentAmmoAttribute()).AddUObject(this, &AZeroLockCharacter::AmmoAttributeChange);
+		
+		AbilitySystemComp->OnNewAbilityAdded.AddUniqueDynamic(this, &ThisClass::NewAbilityAddedLocal);
 	}
 }
 
@@ -296,14 +195,12 @@ void AZeroLockCharacter::NewAbilityAddedLocal(FGameplayAbilitySpec& AbilitySpec)
 {
 	if (!IsLocallyControlled()) return;
 	
-	
 	UBaseGameplayAbility* Ability = Cast<UBaseGameplayAbility>(AbilitySpec.GetPrimaryInstance());
 	EGASAbilityInputID InputID = static_cast<EGASAbilityInputID>(AbilitySpec.InputID);
 	if (Ability)
 	{
-		
 		AbilitiesArray.Add(FMyAbilityMap(Ability, InputID));
-		BroadcastAbilitiesToUI(Ability,InputID);
+		BroadcastAbilitiesToUI(Ability, InputID);
 	}
 }
 
@@ -316,7 +213,7 @@ void AZeroLockCharacter::GiveAbilities()
 		for (TSubclassOf<UBaseGameplayAbility>& StartupAbility : DefaultAbilities)
 		{
 			DefaultAbilitiesHandles.Add(
-			AbilitySystemComp->GiveAbility(FGameplayAbilitySpec(StartupAbility, 1, static_cast<int32>(StartupAbility.GetDefaultObject()->AbilityInputID), this)));
+				AbilitySystemComp->GiveAbility(FGameplayAbilitySpec(StartupAbility, 1, static_cast<int32>(StartupAbility.GetDefaultObject()->AbilityInputID), this)));
 		}
 		if (PrimaryFireAbility)
 		{
@@ -324,59 +221,41 @@ void AZeroLockCharacter::GiveAbilities()
 				AbilitySystemComp->GiveAbility(FGameplayAbilitySpec(PrimaryFireAbility, 1, static_cast<int32>(PrimaryFireAbility.GetDefaultObject()->AbilityInputID), this)));
 		}
 		
-		GrantAbilityOfClassX(SecondryFireAbility,EGASAbilityInputID::Secondry_Attack,true);
-		GrantAbilityOfClassX(Ability_1,EGASAbilityInputID::Ability_1,true);
-		GrantAbilityOfClassX(Ability_2,EGASAbilityInputID::Ability_2,true);
-		GrantAbilityOfClassX(UltimateAbility,EGASAbilityInputID::Ultimate,true);
-		GrantAbilityOfClassX(ReloadAbility,EGASAbilityInputID::Reload);
-		GrantAbilityOfClassX(HeavyMeleeAbility,EGASAbilityInputID::Melee);
-		GrantAbilityOfClassX(LightMeleeAbility,EGASAbilityInputID::None);
-		GrantAbilityOfClassX(ParryAbility,EGASAbilityInputID::Parry);
-
-		
-	}
-	if (HasAuthority() && AbilitySystemComp)
-	{
-		for (TSubclassOf<UBaseGameplayAbility>& StartupAbility : DefaultAbilities)
-		{
-
-			AbilitySystemComp->GiveAbility(FGameplayAbilitySpec(StartupAbility, 1, static_cast<int32>(StartupAbility.GetDefaultObject()->AbilityInputID), this));
-
-
-		}
+		GrantAbilityOfClassX(SecondryFireAbility, EGASAbilityInputID::Secondry_Attack, true);
+		GrantAbilityOfClassX(Ability_1, EGASAbilityInputID::Ability_1, true);
+		GrantAbilityOfClassX(Ability_2, EGASAbilityInputID::Ability_2, true);
+		GrantAbilityOfClassX(UltimateAbility, EGASAbilityInputID::Ultimate, true);
+		GrantAbilityOfClassX(ReloadAbility, EGASAbilityInputID::Reload);
+		GrantAbilityOfClassX(HeavyMeleeAbility, EGASAbilityInputID::Melee);
+		GrantAbilityOfClassX(LightMeleeAbility, EGASAbilityInputID::None);
+		GrantAbilityOfClassX(ParryAbility, EGASAbilityInputID::Parry);
 	}
 }
 
 void AZeroLockCharacter::BroadcastAbilitiesToUI(UBaseGameplayAbility* Ability , EGASAbilityInputID InputID)
 {	
-		AbilitiesArray.Add(FMyAbilityMap(Ability , InputID));
+	AbilitiesArray.Add(FMyAbilityMap(Ability, InputID));
 }
 
-
-
-
-void AZeroLockCharacter::GrantAbilityOfClassX(TSubclassOf<class UBaseGameplayAbility> AbilityToGrant,EGASAbilityInputID InputToBindTo, bool brodcast)
+void AZeroLockCharacter::GrantAbilityOfClassX(TSubclassOf<class UBaseGameplayAbility> AbilityToGrant, EGASAbilityInputID InputToBindTo, bool brodcast)
 {
 	if (AbilityToGrant)
 	{
-		
 		EGASAbilityInputID AbiltyInputID = InputToBindTo;
 		FGameplayAbilitySpecHandle GrantedHandle;
-		FGameplayAbilitySpec GrantedSpec=FGameplayAbilitySpec(AbilityToGrant, 0, static_cast<int32>(AbiltyInputID), this);
+		FGameplayAbilitySpec GrantedSpec = FGameplayAbilitySpec(AbilityToGrant, 0, static_cast<int32>(AbiltyInputID), this);
+		
 		if (inputTags.Contains(AbiltyInputID))
 		{
-			//GrantedSpec.DynamicAbilityTags.AddTag(inputTags.FindRef(InputToBindTo));
 			GrantedSpec.GetDynamicSpecSourceTags().AddTag(inputTags.FindRef(InputToBindTo));
 		}
-		
 		
 		if (AbilityToGrant.GetDefaultObject()->TargetStyle == EGASTargetConfirmationStyle::Passive)
 		{
 			EGASAbilityInputID AbiltyInputIDX = EGASAbilityInputID::None;
 			GrantedSpec.InputID = static_cast<int32>(AbiltyInputIDX);
-			GrantedHandle =AbilitySystemComp->GiveAbility(GrantedSpec);
+			GrantedHandle = AbilitySystemComp->GiveAbility(GrantedSpec);
 			DefaultAbilitiesHandles.Add(GrantedHandle);
-			//GetAbilitySystemComponent()->TryActivateAbilityByClass(AbilityToGrant);
 		}
 		else
 		{
@@ -390,9 +269,7 @@ void AZeroLockCharacter::GrantAbilityOfClassX(TSubclassOf<class UBaseGameplayAbi
 		{
 			Ability->SetInputID(InputToBindTo);
 		}
-		
 	}
-	
 }
 
 UZero_Item_Inventory_Component* AZeroLockCharacter::GetInventoryComponent() const
@@ -404,54 +281,41 @@ void AZeroLockCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
-	//server GAS 
 	AbilitySystemComp->InitAbilityActorInfo(this, this);
 
 	CreateVM_Att();
 	InitializeAttributes();
 	GiveAbilities();
 	InitializeFloatingStatusBar();
-	
 }
 
 void AZeroLockCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 
-	//Client GAS
 	AbilitySystemComp->InitAbilityActorInfo(this, this);
 
 	InitializeAttributes();
 	
-
 	CreateVM_Att();
 	InitializeFloatingStatusBar();
 }
 
 void AZeroLockCharacter::PrimaryFirePressed()
 {
-	if(!PrimaryFireAbility)
-	{
-		return;
-	}
-	if (!AttributeSet)
-	{
-		return;
-	}
+	if (!PrimaryFireAbility || !AttributeSet) return;
+
 	bIsPrimaryPressed = true;
-	float FirstDelay =FMath::Max(TimeOfLastShot + AttributeSet->FireRate.GetCurrentValue() - GetWorld()->TimeSeconds,0.0f);
-	FString TheFloatStr = "Dam=" + FString::SanitizeFloat(FirstDelay);
+	float FirstDelay = FMath::Max(TimeOfLastShot + AttributeSet->FireRate.GetCurrentValue() - GetWorld()->TimeSeconds, 0.0f);
 	float FireRate = AttributeSet->FireRate.GetCurrentValue();
-	//GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Blue, *TheFloatStr);
-	GetWorldTimerManager().SetTimer(PrimaryFireTickHandle,this,&AZeroLockCharacter::PrimaryFireTickFunction,FireRate , true, FirstDelay);
-	//GetWorldTimerManager().SetTimer(PrimaryFireTickHandle,this,&AZeroLockCharacter::PrimaryFireTickFunction, AttributeSet->FireRate, true, FirstDelay);
+	
+	GetWorldTimerManager().SetTimer(PrimaryFireTickHandle, this, &AZeroLockCharacter::PrimaryFireTickFunction, FireRate, true, FirstDelay);
 }
 
 void AZeroLockCharacter::PrimaryFireReleased()
 {
 	bIsPrimaryPressed = false;
 	GetWorldTimerManager().ClearTimer(PrimaryFireTickHandle);
-	//GetWorldTimerManager().
 }
 
 bool AZeroLockCharacter::IsAlive()
@@ -466,11 +330,10 @@ bool AZeroLockCharacter::IsAlive()
 void AZeroLockCharacter::ChangeFireRate()
 {
 	if (!bIsPrimaryPressed) return;
-	float FirstDelay =FMath::Max(TimeOfLastShot + AttributeSet->FireRate.GetCurrentValue() - GetWorld()->TimeSeconds,0.0f);
+	float FirstDelay = FMath::Max(TimeOfLastShot + AttributeSet->FireRate.GetCurrentValue() - GetWorld()->TimeSeconds, 0.0f);
 	
 	float FireRate = AttributeSet->FireRate.GetCurrentValue();
-	GetWorldTimerManager().SetTimer(PrimaryFireTickHandle,this,&AZeroLockCharacter::PrimaryFireTickFunction,FireRate , true, FirstDelay);
-	
+	GetWorldTimerManager().SetTimer(PrimaryFireTickHandle, this, &AZeroLockCharacter::PrimaryFireTickFunction, FireRate, true, FirstDelay);
 }
 
 void AZeroLockCharacter::PrimaryFireTickFunction()
@@ -483,9 +346,7 @@ void AZeroLockCharacter::PrimaryFireTickFunction()
 	else
 	{
 		PrimaryFireReleased();
-		//Reload();
 	}
-	
 }
 
 void AZeroLockCharacter::SecondryFirePressed()
@@ -500,7 +361,6 @@ void AZeroLockCharacter::SecondryFireReleased()
 
 void AZeroLockCharacter::Ability_1Pressed()
 {
-	//GetAbilitySystemComponent()->TryActivateAbilityByClass(Ability_1);
 	GetAbilitySystemComponent()->AbilityLocalInputPressed(static_cast<int32>(EGASAbilityInputID::Ability_1));
 }
 
@@ -511,7 +371,6 @@ void AZeroLockCharacter::Ability_1Released()
 
 void AZeroLockCharacter::Ability_2Pressed()
 {
-	//GetAbilitySystemComponent()->TryActivateAbilityByClass(Ability_2);
 	GetAbilitySystemComponent()->AbilityLocalInputPressed(static_cast<int32>(EGASAbilityInputID::Ability_2));
 }
 
@@ -522,7 +381,6 @@ void AZeroLockCharacter::Ability_2Released()
 
 void AZeroLockCharacter::UltimateAbilityPressed()
 {
-	//GetAbilitySystemComponent()->TryActivateAbilityByClass(UltimateAbility);
 	GetAbilitySystemComponent()->AbilityLocalInputPressed(static_cast<int32>(EGASAbilityInputID::Ultimate));
 }
 
@@ -542,7 +400,7 @@ void AZeroLockCharacter::HealthChanged(float currentH , float MaxH)
 	{
 		HealthChangeDelegate.Broadcast(currentH, MaxH);
 	}
-	if (UZL_VM_Attributes* VM =GetVM_Attributes())
+	if (UZL_VM_Attributes* VM = GetVM_Attributes())
 	{
 		VM->SetHealth(currentH);
 		VM->SetMaxHealth(MaxH);
@@ -555,27 +413,26 @@ void AZeroLockCharacter::OnTakeDamage(float currentH)
 	{
 		DamageRecievedDelegate.Broadcast(currentH);
 	}
-
 }
 
 void AZeroLockCharacter::AddLastHit(AZeroLockCharacter* Character)
 {
-	if (!IsAlive())return;
+	if (!IsAlive()) return;
 	if (!Character) return;
+	
 	float CurrentTime = GetWorld()->GetTimeSeconds();
 	LastHitCharacter = Character;
 
 	if (AssistTimeMap.Contains(Character))
 	{
 		AssistTimeMap.Remove(Character);
-		AssistTimeMap.Add(Character,CurrentTime);
+		AssistTimeMap.Add(Character, CurrentTime);
 	}
 	if (!AssistListCharacters.Contains(Character))
 	{
 		AssistListCharacters.Add(Character);
 	}
 	ClearAssistList(CurrentTime);
-	
 }
 
 void AZeroLockCharacter::ClearAssistList(float currentTime)
@@ -599,46 +456,28 @@ void AZeroLockCharacter::ClearAssistList(float currentTime)
 
 void AZeroLockCharacter::OnDied(AController* Killer, AController* Victim)
 {
-	ZLOG("Death");
 	if (!AbilitySystemComp->GetOwner()->HasAuthority()) return;
 
-	// Cancel abilities
 	AbilitySystemComp->CancelAllAbilities();
-
-	// Remove all buffs/debuffs
 	AbilitySystemComp->RemoveActiveEffectsWithTags(FGameplayTagContainer());
 
-	// notify GameMode
 	if (AZero_BaseGameModeBase* GM = GetWorld()->GetAuthGameMode<AZero_BaseGameModeBase>())
 	{
 		GM->Killed(Killer, Victim);
 	}
-		
 }
-
-
 
 void AZeroLockCharacter::ResetCharacter()
 {
-	
-	ZLOG("ResetCharacter");
 	AZero_BasePlayerController* PC = Cast<AZero_BasePlayerController>(GetController());
-	SetActorLocation(PC->SelectedStartLocation);
+	if (PC) SetActorLocation(PC->SelectedStartLocation);
 
 	if (!AbilitySystemComp->GetOwner()->HasAuthority()) return;
 
-	// Cancel abilities
 	AbilitySystemComp->CancelAllAbilities();
-
-	// Remove all buffs/debuffs
 	AbilitySystemComp->RemoveActiveEffectsWithTags(FGameplayTagContainer());
 	AbilitySystemComp->RemoveActiveEffects(FGameplayEffectQuery()); 
 
-	
-
-	
-
-	// Reactivate abilities if needed (passive abilities)
 	AbilitySystemComp->InitAbilityActorInfo(this, this);
 
 	ResetAllAbilities();
@@ -664,6 +503,7 @@ void AZeroLockCharacter::ResetAllAbilities()
 	PassiveAbilityRestart(Ability_1);
 	PassiveAbilityRestart(Ability_2);
 	PassiveAbilityRestart(UltimateAbility);
+	
 	for (TSubclassOf<UBaseGameplayAbility> ability : DefaultAbilities)
 	{
 		PassiveAbilityRestart(ability);
@@ -673,21 +513,17 @@ void AZeroLockCharacter::ResetAllAbilities()
 void AZeroLockCharacter::HandleDeath()
 {
 	if (bIsDead) return;
-	APlayerController* PC = Cast<APlayerController>(GetController());
 	
+	APlayerController* PC = Cast<APlayerController>(GetController());
 	AbilitySystemComp->CancelAllAbilities();
-	// Remove all buffs/debuffs
 	AbilitySystemComp->RemoveActiveEffectsWithTags(FGameplayTagContainer());
 	bIsDead = true;
 		
 	if (PC)
 	{
 		DisableInput(PC);
-
 		ServerHandleDeath(PC);
 	}
-		
-
 }
 
 void AZeroLockCharacter::ServerHandleDeath_Implementation(APlayerController* PC)
@@ -698,21 +534,20 @@ void AZeroLockCharacter::ServerHandleDeath_Implementation(APlayerController* PC)
 	}
 }
 
-
 void AZeroLockCharacter::OnRep_AbilityUIData()
 {
 	for (FMyAbilityMap unit : AbilitiesArray)
 	{
-		AddAbilityIconDelegate.Broadcast(unit.Ability,unit.InputID);
+		AddAbilityIconDelegate.Broadcast(unit.Ability, unit.InputID);
 	}
 }
 
 void AZeroLockCharacter::InitInputTagsMap()
 {
-	inputTags.Add(EGASAbilityInputID::Secondry_Attack,ZerolockGameplayTagsForBinding::TAG_INPUT_SECONDRY);
-	inputTags.Add(EGASAbilityInputID::Ability_1,ZerolockGameplayTagsForBinding::TAG_INPUT_ABILITY_1);
-	inputTags.Add(EGASAbilityInputID::Ability_2,ZerolockGameplayTagsForBinding::TAG_INPUT_ABILITY_2);
-	inputTags.Add(EGASAbilityInputID::Ultimate,ZerolockGameplayTagsForBinding::TAG_INPUT_ULTIMATE);
+	inputTags.Add(EGASAbilityInputID::Secondry_Attack, ZerolockGameplayTagsForBinding::TAG_INPUT_SECONDRY);
+	inputTags.Add(EGASAbilityInputID::Ability_1, ZerolockGameplayTagsForBinding::TAG_INPUT_ABILITY_1);
+	inputTags.Add(EGASAbilityInputID::Ability_2, ZerolockGameplayTagsForBinding::TAG_INPUT_ABILITY_2);
+	inputTags.Add(EGASAbilityInputID::Ultimate, ZerolockGameplayTagsForBinding::TAG_INPUT_ULTIMATE);
 }
 
 void AZeroLockCharacter::HandleWeaponHitEvent(const FGameplayEventData& EventData)
@@ -746,7 +581,6 @@ void AZeroLockCharacter::CreateVM_Att()
 	if (VM_Attributes) return;
 	VM_Attributes = NewObject<UZL_VM_Attributes>(this);
 
-	// Immediately sync the current GAS values to the new VM
 	if (AttributeSet)
 	{
 		VM_Attributes->SetHealth(AttributeSet->GetCurrentHealth());
@@ -763,108 +597,64 @@ void AZeroLockCharacter::CreateVM_Att()
 
 bool AZeroLockCharacter::IsOnSameTeam(AZeroLockCharacter* CharacterToCheck)
 {
-	AZero_BasePlayerState* MyPS =Cast<AZero_BasePlayerState>(GetPlayerState());
+	AZero_BasePlayerState* MyPS = Cast<AZero_BasePlayerState>(GetPlayerState());
 	if (!MyPS) return false;
-	AZero_BasePlayerState* OtherPS =Cast<AZero_BasePlayerState>(CharacterToCheck->GetPlayerState());
+	
+	AZero_BasePlayerState* OtherPS = Cast<AZero_BasePlayerState>(CharacterToCheck->GetPlayerState());
 	if (!OtherPS) return false;
+	
 	return MyPS->TeamID == OtherPS->TeamID;
 }
-
-
-//////////////////////////////////////////////////////////////////////////
-// Input
 
 void AZeroLockCharacter::AddDamageNumber(float Damage, FGameplayTagContainer DamageNumberTags)
 {
 	DamageWidgetComp->ShowDamageNumber(Damage, DamageNumberTags);
-	
-	
 }
 
 void AZeroLockCharacter::ShowDamageNumber()
 {
-	
 }
 
 void AZeroLockCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	// Add Input Mapping Context
-	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
-		}
-		if (ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer())
-		{
-			if (UKeybindManagerSubsystem* KeybindSubsystem = LocalPlayer->GetSubsystem<UKeybindManagerSubsystem>())
-			{
-				KeybindSubsystem->InitializeKeybinds(DefaultMappingContext);
-			}
-		}
-	}
+	// Bind MoverPawn generic movement logic
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	
-	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) 
+	{
+		EnhancedInputComponent->BindAction(EI_PrimaryFire, ETriggerEvent::Started, this, &AZeroLockCharacter::PrimaryFirePressed);
+		EnhancedInputComponent->BindAction(EI_PrimaryFire, ETriggerEvent::Completed, this, &AZeroLockCharacter::PrimaryFireReleased);
+
+		EnhancedInputComponent->BindAction(EI_SecondryFire, ETriggerEvent::Started, this, &AZeroLockCharacter::SecondryFirePressed);
+		EnhancedInputComponent->BindAction(EI_SecondryFire, ETriggerEvent::Completed, this, &AZeroLockCharacter::SecondryFireReleased);
+
+		EnhancedInputComponent->BindAction(EI_Ability1, ETriggerEvent::Started, this, &AZeroLockCharacter::Ability_1Pressed);
+		EnhancedInputComponent->BindAction(EI_Ability1, ETriggerEvent::Completed, this, &AZeroLockCharacter::Ability_1Released);
+
+		EnhancedInputComponent->BindAction(EI_Ability2, ETriggerEvent::Started, this, &AZeroLockCharacter::Ability_2Pressed);
+		EnhancedInputComponent->BindAction(EI_Ability2, ETriggerEvent::Completed, this, &AZeroLockCharacter::Ability_2Released);
+
+		EnhancedInputComponent->BindAction(EI_Ultimate, ETriggerEvent::Started, this, &AZeroLockCharacter::UltimateAbilityPressed);
+		EnhancedInputComponent->BindAction(EI_Ultimate, ETriggerEvent::Completed, this, &AZeroLockCharacter::UltimateAbilityReleased);
 		
-		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(EI_Reload, ETriggerEvent::Started, this, &AZeroLockCharacter::Reload);
 
-		EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &AZeroLockCharacter::DashPressed);
-		EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Completed, this, &AZeroLockCharacter::DashReleased);
+		EnhancedInputComponent->BindAction(EI_Parry, ETriggerEvent::Started, this, &AZeroLockCharacter::ParryPressed);
 
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AZeroLockCharacter::CrouchPressed);
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AZeroLockCharacter::CrouchReleased);
+		EnhancedInputComponent->BindAction(EI_Confirm, ETriggerEvent::Completed, AbilitySystemComp, &UAbilitySystemComponent::LocalInputConfirm);
+		EnhancedInputComponent->BindAction(EI_Cancel, ETriggerEvent::Completed, AbilitySystemComp, &UAbilitySystemComponent::LocalInputCancel);
 
-		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AZeroLockCharacter::Move);
-
-		// Looking
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AZeroLockCharacter::Look);
-
-		//GAS
-		EnhancedInputComponent->BindAction(EI_PrimaryFire,ETriggerEvent::Started,this,&AZeroLockCharacter::PrimaryFirePressed);
-		EnhancedInputComponent->BindAction(EI_PrimaryFire,ETriggerEvent::Completed,this,&AZeroLockCharacter::PrimaryFireReleased);
-
-		EnhancedInputComponent->BindAction(EI_SecondryFire,ETriggerEvent::Started,this,&AZeroLockCharacter::SecondryFirePressed);
-		EnhancedInputComponent->BindAction(EI_SecondryFire,ETriggerEvent::Completed,this,&AZeroLockCharacter::SecondryFireReleased);
-
-		EnhancedInputComponent->BindAction(EI_Ability1,ETriggerEvent::Started,this,&AZeroLockCharacter::Ability_1Pressed);
-		EnhancedInputComponent->BindAction(EI_Ability1,ETriggerEvent::Completed,this,&AZeroLockCharacter::Ability_1Released);
-
-		EnhancedInputComponent->BindAction(EI_Ability2,ETriggerEvent::Started,this,&AZeroLockCharacter::Ability_2Pressed);
-		EnhancedInputComponent->BindAction(EI_Ability2,ETriggerEvent::Completed,this,&AZeroLockCharacter::Ability_2Released);
-
-		EnhancedInputComponent->BindAction(EI_Ultimate,ETriggerEvent::Started,this,&AZeroLockCharacter::UltimateAbilityPressed);
-		EnhancedInputComponent->BindAction(EI_Ultimate,ETriggerEvent::Completed,this,&AZeroLockCharacter::UltimateAbilityReleased);
-		
-		EnhancedInputComponent->BindAction(EI_Reload,ETriggerEvent::Started,this,&AZeroLockCharacter::Reload);
-
-		//EnhancedInputComponent->BindAction(EI_Melee,ETriggerEvent::Started,this,&AZeroLockCharacter::MeleePressed);
-		EnhancedInputComponent->BindAction(EI_Melee,ETriggerEvent::Canceled,this,&AZeroLockCharacter::MeleeReleased);
-		EnhancedInputComponent->BindAction(EI_Melee,ETriggerEvent::Triggered,this,&AZeroLockCharacter::MeleePressed);
-		
-		
-		EnhancedInputComponent->BindAction(EI_Parry,ETriggerEvent::Started,this,&AZeroLockCharacter::ParryPressed);
-
-		EnhancedInputComponent->BindAction(EI_Confirm,ETriggerEvent::Completed,AbilitySystemComp,&UAbilitySystemComponent::LocalInputConfirm);
-		EnhancedInputComponent->BindAction(EI_Cancel,ETriggerEvent::Completed,AbilitySystemComp,&UAbilitySystemComponent::LocalInputCancel);
-
-
-		EnhancedInputComponent->BindAction(EI_UIInfo,ETriggerEvent::Started,this,&AZeroLockCharacter::UIInfoPressed);
-		EnhancedInputComponent->BindAction(EI_UIInfo,ETriggerEvent::Completed,this,&AZeroLockCharacter::UIInfoReleased);
-		
+		EnhancedInputComponent->BindAction(EI_UIInfo, ETriggerEvent::Started, this, &AZeroLockCharacter::UIInfoPressed);
+		EnhancedInputComponent->BindAction(EI_UIInfo, ETriggerEvent::Completed, this, &AZeroLockCharacter::UIInfoReleased);
 	}
 	else
 	{
-		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component!"), *GetNameSafe(this));
 	}
 	
 	if (AbilitySystemComp && InputComponent)
 	{
-		const FGameplayAbilityInputBinds Binds("Confirm", "Cancel",  FTopLevelAssetPath(GetPathNameSafe(UClass::TryFindTypeSlow<UEnum>("EGASAbilityInputID"))), static_cast<int32>(EGASAbilityInputID::Confirm), static_cast<int32>(EGASAbilityInputID::Cancel));
-
+		const FGameplayAbilityInputBinds Binds("Confirm", "Cancel", FTopLevelAssetPath(GetPathNameSafe(UClass::TryFindTypeSlow<UEnum>(TEXT("EGASAbilityInputID")))), static_cast<int32>(EGASAbilityInputID::Confirm), static_cast<int32>(EGASAbilityInputID::Cancel));
 		AbilitySystemComp->BindAbilityActivationToInputComponent(InputComponent, Binds);
 	}
 }
@@ -872,23 +662,18 @@ void AZeroLockCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 void AZeroLockCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AZeroLockCharacter,bIsDead);
-	DOREPLIFETIME(AZeroLockCharacter,StartLocation);
-	DOREPLIFETIME(AZeroLockCharacter, MovementVector);
-	//DOREPLIFETIME(AZeroLockCharacter,VM_Attributes);
+	DOREPLIFETIME(AZeroLockCharacter, bIsDead);
+	DOREPLIFETIME(AZeroLockCharacter, StartLocation);
 }
 
 void AZeroLockCharacter::Stunned(FGameplayTag GameplayTag, int NewCount)
 {
 	APlayerController* PC = Cast<APlayerController>(GetController());
-	if (NewCount>0)
+	if (NewCount > 0)
 	{
 		AbilitySystemComp->CancelAllAbilities();
+		if (PC) DisableInput(PC);
 		
-		if (PC)
-		{
-			DisableInput(PC);
-		}
 		if (StunChangedDelegate.IsBound())
 		{
 			StunChangedDelegate.Broadcast(true);
@@ -896,10 +681,8 @@ void AZeroLockCharacter::Stunned(FGameplayTag GameplayTag, int NewCount)
 	}
 	else
 	{
-		if (PC)
-		{
-			EnableInput(PC);
-		}
+		if (PC) EnableInput(PC);
+		
 		if (StunChangedDelegate.IsBound())
 		{
 			StunChangedDelegate.Broadcast(false);
@@ -910,21 +693,15 @@ void AZeroLockCharacter::Stunned(FGameplayTag GameplayTag, int NewCount)
 void AZeroLockCharacter::Parry(FGameplayTag GameplayTag, int NewCount)
 {
 	APlayerController* PC = Cast<APlayerController>(GetController());
-	if (NewCount>0)
+	if (NewCount > 0)
 	{
 		ParryComp->SetVisibility(true);
-		if (PC)
-		{
-			DisableInput(PC);
-		}
+		if (PC) DisableInput(PC);
 	}
 	else
 	{
 		ParryComp->SetVisibility(false);
-		if (PC)
-        {
-			EnableInput(PC);
-        }
+		if (PC) EnableInput(PC);
 	}
 }
 
@@ -947,10 +724,10 @@ void AZeroLockCharacter::HealthAttributeChanged(const FOnAttributeChangeData& On
 	if (currentH <= 0.0f && currentH < MaxH)
 	{
 		AddEventForDeath();
-		//HandleDeath();
 	}
 	OnTakeDamage(currentH);
-	if (UZL_VM_Attributes* VM =GetVM_Attributes())
+	
+	if (UZL_VM_Attributes* VM = GetVM_Attributes())
 	{
 		VM->SetHealth(currentH);
 		VM->SetMaxHealth(MaxH);
@@ -967,23 +744,16 @@ void AZeroLockCharacter::AmmoAttributeChange(const FOnAttributeChangeData& OnAtt
 	if (!AttributeSet) return;
 	float currentA= AttributeSet->GetCurrentAmmo();
 	float MaxA = AttributeSet->GetMaxAmmo();
+	
 	GetVM_Attributes()->SetMaxAmmo(static_cast<int32>(MaxA));
 	GetVM_Attributes()->SetAmmo(static_cast<int32>(currentA));
-	if (AmmoChangeDelegate.IsBound())
-	{
-		
-		//AmmoChangeDelegate.Broadcast(currentA, MaxA);
-	}
 }
 
 void AZeroLockCharacter::SpeedAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData)
 {
 	if (!AttributeSet) return;
-
-	float currentS= OnAttributeChangeData.NewValue;
-	GetCharacterMovement()->MaxWalkSpeed = currentS;
-	ZeroMovementComp->MaxWalkSpeed = currentS;
-	ZeroMovementComp->Walk_MaxSpeed = currentS;
+	// TODO: Forward current speed to UZeroMoverComponent modifier
+	// float currentS = OnAttributeChangeData.NewValue;
 }
 
 void AZeroLockCharacter::AddEventForDeath()
@@ -999,101 +769,23 @@ void AZeroLockCharacter::AddEventForDeath()
 	{
 		for (AZeroLockCharacter* AssitChar : AssistListCharacters)
 		{
-			if (!AssitChar ) continue;
-			if (AssitChar == LastHitCharacter)continue;
+			if (!AssitChar) continue;
+			if (AssitChar == LastHitCharacter) continue;
+			
 			FGameplayTag AssistTag = FGameplayTag::RequestGameplayTag("Event.Assist");
 			AssitChar->GetMyAbilitySystemComp()->SendGameplayEventToTarget(AssistTag, GetAbilitySystemComponent());
 		}
 	}
 }
 
-
-void AZeroLockCharacter::Move(const FInputActionValue& Value)
-{
-	if (GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("ZeroLock.Abilities.MovementLock")))
-	{
-		return;
-	}
-	
-	MovementVector = Value.Get<FVector2D>();
-	if (IsLocallyControlled())
-	{
-		ServerSetMovementVector(MovementVector);
-	}
-	if (Controller != nullptr)
-	{
-		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	
-		// get right vector 
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
-	}
-}
-
-void AZeroLockCharacter::ServerSetMovementVector_Implementation(FVector2D NewVector)
-{
-	MovementVector = NewVector;
-}
-
-void AZeroLockCharacter::Look(const FInputActionValue& Value)
-{
-	// input is a Vector2D
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
-
-	if (Controller != nullptr)
-	{
-		// add yaw and pitch input to controller
-		AddControllerYawInput(LookAxisVector.X);
-		AddControllerPitchInput(LookAxisVector.Y);
-	}
-}
-
-void AZeroLockCharacter::DashPressed()
-{
-	if (GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("ZeroLock.Abilities.MovementLock")))
-	{
-		return;
-	}
-	ZeroMovementComp->DashPressed();
-}
-
-void AZeroLockCharacter::DashReleased()
-{
-	ZeroMovementComp->DashReleased();
-}
-
-void AZeroLockCharacter::CrouchPressed()
-{
-	if (GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("ZeroLock.Abilities.MovementLock")))
-	{
-		return;
-	}
-	ZeroMovementComp->CrouchPressed();
-}
-
-void AZeroLockCharacter::CrouchReleased()
-{
-	ZeroMovementComp->CrouchReleased();
-}
-
 void AZeroLockCharacter::MeleePressed()
 {
-	ZLOG("HeavyMelee");
-	GetAbilitySystemComponent()->TryActivateAbilityByClass(HeavyMeleeAbility);
+	// Implementation for legacy bindings if you plan to move it over entirely
 }
 
 void AZeroLockCharacter::MeleeReleased()
 {
-	ZLOG("LightMelee");
-	GetAbilitySystemComponent()->TryActivateAbilityByClass(LightMeleeAbility);	
+	// Legacy
 }
 
 void AZeroLockCharacter::ParryPressed()

@@ -4,6 +4,7 @@
 #include "GAS/BaseCharAbilitySystemComponent.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
+#include "GameFramework/Pawn.h"
 #include "GAS/BaseGameplayAbility.h"
 #include "ZeroLock/ZeroLock.h"
 
@@ -46,12 +47,10 @@ void UBaseCharAbilitySystemComponent::LevelUpAbility(UGameplayAbility* AbilityTo
 		{
 			if (UBaseGameplayAbility* BaseAbilityInstance = Cast<UBaseGameplayAbility>(Instance))
 			{
-				// Optional: Call a function on the instance to react to the level up
-				// BaseAbilityInstance->OnLevelChanged(mLevel);
+
 			}
 		}
-
-		// 3. Notify UI/Global VM
+		
 		OnAbilityUpgraded.Broadcast(AbilityToUpgrade, AbilitySpec->Level);
 	}
 }
@@ -59,8 +58,8 @@ void UBaseCharAbilitySystemComponent::LevelUpAbility(UGameplayAbility* AbilityTo
 void UBaseCharAbilitySystemComponent::ApplyWeaponDamage(UAbilitySystemComponent* TargetASC, float DamageValue)
 {
 	if (!TargetASC || !GE_WeaponClass)return;
-	if (!GetOwner()->HasAuthority()) return;
 	if (IsUntouchable(TargetASC)) return;
+	if (!GetOwner()->HasAuthority()) return;
 	FGameplayEffectContextHandle Context = MakeEffectContext();
 	Context.AddSourceObject(GetAvatarActor());
 
@@ -89,8 +88,8 @@ void UBaseCharAbilitySystemComponent::ApplyWeaponDamage(UAbilitySystemComponent*
 void UBaseCharAbilitySystemComponent::ApplySpiritDamage(UAbilitySystemComponent* TargetASC, float DamageValue)
 {
 	if (!TargetASC || !GE_SpiritClass)return;
-	if (!GetOwner()->HasAuthority()) return;
 	if (IsUntouchable(TargetASC)) return;
+	if (!GetOwner()->HasAuthority()) return;
 	FGameplayEffectContextHandle Context = MakeEffectContext();
 	Context.AddSourceObject(GetAvatarActor());
 
@@ -113,8 +112,8 @@ void UBaseCharAbilitySystemComponent::ApplySpiritDamage(UAbilitySystemComponent*
 void UBaseCharAbilitySystemComponent::ApplyMeleeDamage(UAbilitySystemComponent* TargetASC, float DamageValue)
 {
 	if (!TargetASC || !GE_MeleeClass)return;
-	if (!GetOwner()->HasAuthority()) return;
 	if (IsUntouchable(TargetASC)) return;
+	if (!GetOwner()->HasAuthority()) return;
 	FGameplayEffectContextHandle Context = MakeEffectContext();
 	Context.AddSourceObject(GetAvatarActor());
 
@@ -197,6 +196,12 @@ void UBaseCharAbilitySystemComponent::ApplyGameplayEffectWithStacks(UAbilitySyst
 
 }
 
+void UBaseCharAbilitySystemComponent::Client_SendGameplayEventToOwner_Implementation(FGameplayTag Tag,
+	FGameplayEventData Payload)
+{
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetAvatarActor(), Tag, Payload);
+}
+
 bool UBaseCharAbilitySystemComponent::IsUntouchable(UAbilitySystemComponent* TargetToCheck)
 {
 	 if ( TargetToCheck->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Zerolock.Untouchable",false)))
@@ -234,6 +239,18 @@ void UBaseCharAbilitySystemComponent::SendGameplayEventToTarget(FGameplayTag Tag
 	EventDataToSend.Target =TargetASC->GetAvatarActor();
 
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(TargetASC->GetAvatarActor(),Tag,EventDataToSend);
+	
+	if (GetOwner()->HasAuthority())
+	{
+		APawn* TargetPawn = Cast<APawn>(TargetASC->GetAvatarActor());
+		if (TargetPawn && !TargetPawn->IsLocallyControlled())
+		{
+			if (UBaseCharAbilitySystemComponent* TargetBaseASC = Cast<UBaseCharAbilitySystemComponent>(TargetASC))
+			{
+				TargetBaseASC->Client_SendGameplayEventToOwner(Tag, EventDataToSend);
+			}
+		}
+	}
 	
 }
 

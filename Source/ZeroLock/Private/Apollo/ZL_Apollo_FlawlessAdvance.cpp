@@ -4,23 +4,20 @@
 #include "Apollo/ZL_Apollo_FlawlessAdvance.h"
 
 #include "AbilitySystemComponent.h"
-#include "Abilities/Tasks/AbilityTask_ApplyRootMotionConstantForce.h"
-#include "Abilities/Tasks/AbilityTask_ApplyRootMotionMoveToForce.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Abilities/Tasks/AbilityTask_WaitInputPress.h"
-#include "Abilities/Tasks/AbilityTask_WaitInputRelease.h"
-#include "Camera/CameraComponent.h"
+#include "Engine/Engine.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GAS/BaseCharAbilitySystemComponent.h"
+#include "GAS/Tasks/ZL_AbilityTask_MoverMoveTo.h"
 #include "GAS/Tasks/ZL_WaitChargeRelease_Task.h"
 #include "GAS/Tasks/ZL_WaitDelay_Task.h"
+#include "Mover/ZeroMovementData.h"
+#include "Mover/ZeroMoverComponent.h"
 #include "ZeroLock/ZeroLockCharacter.h"
 
 UZL_Apollo_FlawlessAdvance::UZL_Apollo_FlawlessAdvance()
 {
-	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
-	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 
 
@@ -29,11 +26,6 @@ void UZL_Apollo_FlawlessAdvance::ActivateAbility(const FGameplayAbilitySpecHandl
                                                  const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
                                                  const FGameplayEventData* TriggerEventData)
 {
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
-	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-		return;
-	}
 	CurrentLungeCount = 0;
 	StartChargePhase();
 }
@@ -42,7 +34,7 @@ void UZL_Apollo_FlawlessAdvance::EndAbility(const FGameplayAbilitySpecHandle Han
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
-	//CommitAbility(GetCurrentAbilitySpecHandle(),GetCurrentActorInfo(),GetCurrentActivationInfo());
+	CommitAbility(GetCurrentAbilitySpecHandle(),GetCurrentActorInfo(),GetCurrentActivationInfo());
 	
 	if (UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get())
 	{
@@ -53,10 +45,7 @@ void UZL_Apollo_FlawlessAdvance::EndAbility(const FGameplayAbilitySpecHandle Han
 		AnimMontageTask->EndTask();
 	}
 	AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
-	if (Hero && Hero->GetCharacterMovement())
-	{
-		Hero->GetCharacterMovement()->SetMovementMode(MOVE_Falling);
-	}
+	
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
@@ -85,57 +74,65 @@ void UZL_Apollo_FlawlessAdvance::OnInitialMoveComplete()
 void UZL_Apollo_FlawlessAdvance::StartChargePhase()
 {
 	AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
-	if (Hero && Hero->GetCharacterMovement())
-	{
-		InitialMovementMode = Hero->GetCharacterMovement()->MovementMode;
-		Hero->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-		Hero->GetCharacterMovement()->StopMovementImmediately();
-	}
+    
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
 	{
 		ASC->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("ZeroLock.Abilities.MovementLock")));
 	}
-	
+    
 	if (!Hero) return;
+    
 	if (AnimMontageTask && AnimMontageTask->IsActive())
 	{
 		AnimMontageTask->EndTask();
 	}
-	AnimMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this,FName("AnimMontageAndWait"),ChargeMontage);
+	AnimMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, FName("AnimMontageAndWait"), ChargeMontage);
 	AnimMontageTask->ReadyForActivation();
-	FVector MoveDir = GetExactInputDirection();
-	FVector TargetLoc = Hero->GetActorLocation()+(MoveDir.GetSafeNormal() * ChargeVelocity);
+    
+	FVector MoveDir = Hero->GetInputWorldDir();
+	FVector StartLoc = Hero->GetActorLocation();
+	FVector TargetLoc = StartLoc + (MoveDir.GetSafeNormal() * ChargeVelocity);
 	
-	/*ActiveChargeMovementTask = UAbilityTask_ApplyRootMotionConstantForce::ApplyRootMotionConstantForce(this, NAME_None, MoveDir, ChargeVelocity, ChargeTime, false, nullptr,ERootMotionFinishVelocityMode::SetVelocity, FVector::ZeroVector, 0.f, false);
-	ActiveChargeMovementTask->OnFinish.AddDynamic(this, &UZL_Apollo_FlawlessAdvance::OnInitialMoveComplete);
-	ActiveChargeMovementTask->ReadyForActivation();*/
-	
-	ActiveChargeMovementTask = UAbilityTask_ApplyRootMotionMoveToForce::ApplyRootMotionMoveToForce(this,FName("InitChargeTask"),TargetLoc,ChargeTime,false,EMovementMode::MOVE_Falling,true,InitChargePathOffsetCurve,ERootMotionFinishVelocityMode::SetVelocity,FVector::ZeroVector,0.0f);
-	ActiveChargeMovementTask->OnTimedOutAndDestinationReached.AddDynamic(this,&UZL_Apollo_FlawlessAdvance::OnInitialMoveComplete);
-	ActiveChargeMovementTask->OnTimedOut.AddDynamic(this,&UZL_Apollo_FlawlessAdvance::OnInitialMoveComplete);
+	ActiveChargeMovementTask = UZL_AbilityTask_MoverMoveTo::ApplyMoverMoveTo(this, FName("InitChargeTask"), StartLoc, TargetLoc, ChargeTime,true);
+	ActiveChargeMovementTask->OnFinished.AddDynamic(this, &UZL_Apollo_FlawlessAdvance::OnInitialMoveComplete);
 	ActiveChargeMovementTask->ReadyForActivation();
 }
 FVector UZL_Apollo_FlawlessAdvance::GetExactInputDirection() const
 {
 	AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
-	if (!Hero) return FVector::ZeroVector;
-	
-	APlayerController* PlayerController = Cast<APlayerController>(Hero->GetController());
-	if (!PlayerController) return FVector::ZeroVector;
-	
-	FVector2D MovementVecotor = Hero->GetMoveVector();
-	
-	const FRotator Rotation = PlayerController->GetControlRotation();
-	const FRotator YawRotation(0, Rotation.Yaw, 0);
+	if (!Hero)
+	{
+		return FVector::ZeroVector;
+	}
 
+	UZeroMoverComponent* MoverComp = Hero->GetZeroMoverComponent();
+	if (!MoverComp)
+	{
+		return FVector::ZeroVector;
+	}
 
-	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+	if (Hero->IsLocallyControlled())
+	{
+		FRotator ControlRot = Hero->GetControlRotation();
+		FRotator YawRotation(0.0f, ControlRot.Yaw, 0.0f);
 
-	FVector CombinedDir = (ForwardDirection * MovementVecotor.Y) + (RightDirection * MovementVecotor.X);
+		FVector LocalInput(Hero->GetSyncedInput().Y, Hero->GetSyncedInput().X, 0.0f);
+		FVector WorldDirection = ControlRot.RotateVector(LocalInput);
+		
+		return WorldDirection.GetSafeNormal();
+	}
+ 
+	if (Hero->HasAuthority())
+	{
+		const FMoverSyncState& SyncState = MoverComp->GetSyncState();
+		if (const FCharacterDefaultInputs* DefaultInputs = SyncState.SyncStateCollection.FindDataByType<FCharacterDefaultInputs>())
+		{
+			FVector SyncedMoveDir = DefaultInputs->GetMoveInput();
+			return SyncedMoveDir;
+		}
+	}
 
-	
-	return CombinedDir;
+	return FVector::ZeroVector;
 }
 
 void UZL_Apollo_FlawlessAdvance::OnRelease(float TimeHeld)
@@ -150,7 +147,6 @@ void UZL_Apollo_FlawlessAdvance::OnRelease(float TimeHeld)
 
 void UZL_Apollo_FlawlessAdvance::OnChargeReleased(float TotalTime, bool bWasPerfect)
 {
-	FScopedPredictionWindow PredictionWindow(GetAbilitySystemComponentFromActorInfo(), true);
 	ZLOG("Released");
 	ExecuteLunge(bWasPerfect);
 }
@@ -161,45 +157,55 @@ void UZL_Apollo_FlawlessAdvance::ExecuteLunge(bool bIsPerfect)
 	{
 		ActiveChargeMovementTask->EndTask();
 	}
+    
 	AZeroLockCharacter* Character = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
 	if (!Character) return;
-	
-	//FVector LookDir = Character->GetFollowCamera()->GetForwardVector();
-	FVector LookDir = Character->GetBaseAimRotation().Vector();
-	//FVector LookDir = Character->GetBaseAimRotation().Vector();
+
+	UZeroMoverComponent* MoverComp = Character->FindComponentByClass<UZeroMoverComponent>();
+	FVector LookDir = Character->GetActorForwardVector();
+	if (Character->IsLocallyControlled() && Character->GetController())
+	{
+		LookDir = Character->GetController()->GetControlRotation().Vector();
+	}
+	else if (Character->HasAuthority() && MoverComp)
+	{
+		const FMoverSyncState& SyncState = MoverComp->GetSyncState();
+		
+		if (const FZeroMovementInputs* ZeroInputs = SyncState.SyncStateCollection.FindDataByType<FZeroMovementInputs>())
+		{
+			LookDir = ZeroInputs->LookDir.Vector();
+		}
+	}
 	float FinalVelocity = bIsPerfect ? LungeBurstVelocity.GetValueAtLevel(GetAbilityLevel()) * 1.5f : LungeBurstVelocity.GetValueAtLevel(GetAbilityLevel());
-	float CalculatedDistance = (FinalVelocity *0.2f) + ( 500);
+	float CalculatedDistance = (FinalVelocity * 0.2f) + 500.0f;
 
 	FVector StartLocation = Character->GetActorLocation();
 	FVector TargetLocation = StartLocation + (LookDir * CalculatedDistance);
-	
-	TArray<FHitResult> Hits;
-	TArray<AZeroLockCharacter*> Targets;
-	TArray<AActor*> Ignored;
-	Ignored.Add(Character);
-	float DamageToUse  = bIsPerfect? PerfectDamage.GetValueAtLevel(GetAbilityLevel()) : BaseDamageValue.GetValueAtLevel(GetAbilityLevel());
-	if (ReverseConeTraceMulti(GetWorld(),GetAvatarActorFromActorInfo()->GetActorLocation(),LookDir.Rotation(),CalculatedDistance, 10.0f, UEngineTypes::ConvertToTraceType(ECC_Pawn),false,Ignored,EDrawDebugTrace::ForDuration,Hits,Targets,true,FLinearColor::Green,FLinearColor::Red,1.5f))
-	{
-		if (Targets.Num() > 0)
-		{
-			for (AZeroLockCharacter* villan : Targets)
-			{
-				Character->GetMyAbilitySystemComp()->ApplySpiritDamage(villan->GetMyAbilitySystemComp(),DamageToUse);
-			}
-			if (bIsPerfect)
-			{
-				Character->GetMyAbilitySystemComp()->ApplyHeal(Character->GetMyAbilitySystemComp(),HealValue.GetValueAtLevel(GetAbilityLevel()));
-			}
-		}
-	}
-	LungeRootMotionTask = UAbilityTask_ApplyRootMotionMoveToForce::ApplyRootMotionMoveToForce(this,FName("lungeTask"),TargetLocation,ChargeTime,false,EMovementMode::MOVE_Falling,true,nullptr,ERootMotionFinishVelocityMode::SetVelocity,FVector::ZeroVector,0.0f);
-	LungeRootMotionTask->OnTimedOutAndDestinationReached.AddDynamic(this,&UZL_Apollo_FlawlessAdvance::OnLungeFinished);
-	LungeRootMotionTask->OnTimedOut.AddDynamic(this,&UZL_Apollo_FlawlessAdvance::OnLungeFinished);
+    
+    TArray<FHitResult> Hits;
+    TArray<AZeroLockCharacter*> Targets;
+    TArray<AActor*> Ignored;
+    Ignored.Add(Character);
+    float DamageToUse  = bIsPerfect ? PerfectDamage.GetValueAtLevel(GetAbilityLevel()) : BaseDamageValue.GetValueAtLevel(GetAbilityLevel());
+
+    if (ReverseConeTraceMulti(GetWorld(), GetAvatarActorFromActorInfo()->GetActorLocation(), LookDir.Rotation(), CalculatedDistance, 10.0f, UEngineTypes::ConvertToTraceType(ECC_Pawn), false, Ignored, EDrawDebugTrace::ForDuration, Hits, Targets, true, FLinearColor::Green, FLinearColor::Red, 1.5f))
+    {
+        if (Targets.Num() > 0)
+        {
+            for (AZeroLockCharacter* villan : Targets)
+            {
+                Character->GetMyAbilitySystemComp()->ApplySpiritDamage(villan->GetMyAbilitySystemComp(), DamageToUse);
+            }
+            if (bIsPerfect)
+            {
+                Character->GetMyAbilitySystemComp()->ApplyHeal(Character->GetMyAbilitySystemComp(), HealValue.GetValueAtLevel(GetAbilityLevel()));
+            }
+        }
+    }
+    
+	LungeRootMotionTask = UZL_AbilityTask_MoverMoveTo::ApplyMoverMoveTo(this, FName("LungeTask"), StartLocation, TargetLocation, ChargeTime,true);
+	LungeRootMotionTask->OnFinished.AddDynamic(this, &UZL_Apollo_FlawlessAdvance::OnLungeFinished);
 	LungeRootMotionTask->ReadyForActivation();
-	/*
-	UAbilityTask_ApplyRootMotionConstantForce* ActiveRootMotionTask = UAbilityTask_ApplyRootMotionConstantForce::ApplyRootMotionConstantForce(this, NAME_None, LookDir, FinalVelocity, ChargeTime, false, nullptr,ERootMotionFinishVelocityMode::SetVelocity, FVector::ZeroVector, 0.f, false);
-	ActiveRootMotionTask->OnFinish.AddDynamic(this, &UZL_Apollo_FlawlessAdvance::OnLungeFinished);
-	ActiveRootMotionTask->ReadyForActivation();*/
 }
 
 void UZL_Apollo_FlawlessAdvance::OnLungeFinished()
@@ -218,10 +224,10 @@ void UZL_Apollo_FlawlessAdvance::OnLungeFinished()
 		AnimMontageTask->EndTask();
 	}
 	AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
-	if (Hero && Hero->GetCharacterMovement())
-	{
-		Hero->GetCharacterMovement()->SetMovementMode(MOVE_Falling);
-	}
+	//if (Hero && Hero->GetCharacterMovement())
+	//{
+		//Hero->GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+	//}
 	if (CurrentLungeCount < MaxLunges)
 	{ 
 		UAbilityTask_WaitInputPress* WaitPress = UAbilityTask_WaitInputPress::WaitInputPress(this, false);

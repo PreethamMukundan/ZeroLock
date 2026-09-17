@@ -8,8 +8,12 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Engine/OverlapResult.h"
 #include "Components/SphereComponent.h"
+#include "Engine/Engine.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GAS/BaseCharAbilitySystemComponent.h"
+#include "GAS/Tasks/ZL_AbilityTask_MoverMoveTo.h"
+#include "GAS/Tasks/ZL_AbilityTask_Reach_MoverMoveTo.h"
+#include "Mover/ZeroMoverComponent.h"
 #include "ZeroLock/ZeroLockCharacter.h"
 
 
@@ -107,15 +111,19 @@ void UZL_Lash_GroundStrike::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		FVector MoveDir = (CurrentDashDestination - StartLoc).GetSafeNormal();
 		float Distance = FVector::Dist(StartLoc, CurrentDashDestination);
 		float Duration = (MovementSpeed > 0) ? (Distance / MovementSpeed) : 0.1f;
+		
+		UZL_AbilityTask_Reach_MoverMoveTo* MovementTask = UZL_AbilityTask_Reach_MoverMoveTo::ApplyMoverReachMoveTo(this, FName("LaunchTask"), StartLoc, CurrentDashDestination, Duration,50,Distance *4,true);
+		MovementTask->OnFinished.AddDynamic(this, &UZL_Lash_GroundStrike::OnMovementFinished);
+		MovementTask->ReadyForActivation();
 
-
+/*
 		UAbilityTask_ApplyRootMotionConstantForce* MoveTask = UAbilityTask_ApplyRootMotionConstantForce::ApplyRootMotionConstantForce(
 			this, FName("LashMove"), MoveDir, MovementSpeed, Duration, false, nullptr,
 			ERootMotionFinishVelocityMode::SetVelocity, FVector::ZeroVector, 0.f, false
 		);
 
 		MoveTask->OnFinish.AddDynamic(this, &UZL_Lash_GroundStrike::OnMovementFinished);
-		MoveTask->ReadyForActivation();
+		MoveTask->ReadyForActivation();*/
 	}
 	else
 	{
@@ -162,26 +170,20 @@ void UZL_Lash_GroundStrike::OnVictimCaught(UPrimitiveComponent* OverlappedComp, 
         	
             if (Hero->HasAuthority())
             {
-                TSharedPtr<FRootMotionSource_ConstantForce> DragForce = MakeShared<FRootMotionSource_ConstantForce>();
-                DragForce->InstanceName = FName("VictimDragWithOffset");
-                DragForce->AccumulateMode = ERootMotionAccumulateMode::Override;
-                DragForce->Priority = 10;
-                
-
-                DragForce->Force = ToDestination.GetSafeNormal() * MovementSpeed;
-                DragForce->Duration = SyncDuration;
-                
-                DragForce->FinishVelocityParams.Mode = ERootMotionFinishVelocityMode::SetVelocity;
-                DragForce->FinishVelocityParams.SetVelocity = FVector::ZeroVector;
-
-                Victim->GetCharacterMovement()->ApplyRootMotionSource(DragForce);
+            	if (UZeroMoverComponent* VictimMover = Victim->FindComponentByClass<UZeroMoverComponent>())
+            	{
+            		// Calculate exact velocity to reach the personal destination
+            		FVector DragVelocity = ToDestination.GetSafeNormal() * MovementSpeed;
+            		VictimMover->RequestSafeAbilityMove(ToDestination, SyncDuration);
+            	}
             }
         }
     }
 }
 
-void UZL_Lash_GroundStrike::OnMovementFinished()
+void UZL_Lash_GroundStrike::OnMovementFinished(bool didreach)
 {
+
 	ZLOG("MovementDone")
 	if (AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo()))
 	{
@@ -214,7 +216,7 @@ void UZL_Lash_GroundStrike::OnMovementFinished()
 					Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(villan->GetMyAbilitySystemComp(),DamageCalc);
 					if (mylevel>=2)
 					{
-						villan->LaunchCharacter(FVector(0,0,100),true,true);
+				//		villan->LaunchCharacter(FVector(0,0,100),true,true);
 						if (KnockUpEffect)
 						{
 							Hero->GetMyAbilitySystemComp()->ApplyGameplayEffect(villan->GetMyAbilitySystemComp(),KnockUpEffect,mylevel);

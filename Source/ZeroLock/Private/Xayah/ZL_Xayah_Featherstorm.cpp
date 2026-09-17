@@ -38,7 +38,7 @@ void UZL_Xayah_Featherstorm::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 	LaunchVel.Z = 1;
 	LaunchVel *= LaunchStrength;
 	
-	Hero->LaunchCharacter(LaunchVel, true, true);
+	//Hero->LaunchCharacter(LaunchVel, true, true);
 
 	UAbilityTask_WaitDelay* DelayTask = UAbilityTask_WaitDelay::WaitDelay(this, FireDelay);
 	DelayTask->OnFinish.AddDynamic(this, &UZL_Xayah_Featherstorm::FireFeathers);
@@ -52,7 +52,7 @@ void UZL_Xayah_Featherstorm::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
 	if (Hero)
 	{
-		Hero->GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+		//Hero->GetCharacterMovement()->SetMovementMode(MOVE_Falling);
 	}
 	if (UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get())
 	{
@@ -68,8 +68,8 @@ void UZL_Xayah_Featherstorm::FireFeathers()
 		ASC->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("ZeroLock.Abilities.MovementLock")));
 	}
 	AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
-	Hero->GetCharacterMovement()->BrakingDecelerationFlying =1000;
-	Hero->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+	//Hero->GetCharacterMovement()->BrakingDecelerationFlying =1000;
+	//Hero->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 	
 	AGameplayAbilityTargetActor_GroundTrace* MyTargetActor = GetWorld()->SpawnActor<AGameplayAbilityTargetActor_GroundTrace>(TargetActorClass);
 

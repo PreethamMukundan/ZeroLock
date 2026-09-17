@@ -51,6 +51,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ApplyGameplayEffectWithStacks(UAbilitySystemComponent* TargetASC,TSubclassOf<UGameplayEffect> EffectClass,int32 level,int32 StackNum);
 
+	UFUNCTION(Client, Reliable)
+	void Client_SendGameplayEventToOwner(FGameplayTag Tag, FGameplayEventData Payload);
 	
 	UFUNCTION(BlueprintCallable)
 	bool IsUntouchable(UAbilitySystemComponent* TargetToCheck);

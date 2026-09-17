@@ -48,7 +48,8 @@ public:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 	
 	class UZL_WaitDelay_Task* WaitTimeTask ;
-	class UAbilityTask_ApplyRootMotionMoveToForce* MoveToTask;
+	class UZL_AbilityTask_MoverMoveTo* MoveToTask;
+	class UAbilityTask_WaitDelay* TempWaitTask;
 	
 	
 	float HeightSave;

@@ -48,10 +48,10 @@ void UZeroBase_HeavyMelee::OnInputRelased(float TimeHeld)
     
     AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
 
-    if (Hero && Hero->GetCharacterMovement())
-    {
-        Hero->GetCharacterMovement()->MaxWalkSpeed = 600.f; 
-    }
+   // if (Hero && Hero->GetCharacterMovement())
+   // {
+   //     Hero->GetCharacterMovement()->MaxWalkSpeed = 600.f; 
+  //  }
 
     if (TimeHeld >= MeleeMinHoldTime)
     {
@@ -140,7 +140,7 @@ void UZeroBase_HeavyMelee::MeleeDamageExec(TSubclassOf<class UGameplayEffect> Me
                  
                  FVector KnockbackDir = (Villan->GetActorLocation() - Hero->GetActorLocation()).GetSafeNormal();
                  KnockbackDir.Z = 0.2f; 
-                 Villan->LaunchCharacter(KnockbackDir * KnockForce, false, false);
+                 //Villan->LaunchCharacter(KnockbackDir * KnockForce, false, false);
               }
            }
         }

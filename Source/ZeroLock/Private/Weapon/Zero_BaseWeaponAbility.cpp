@@ -6,6 +6,8 @@
 #include "AbilitySystemComponent.h"
 #include "ZeroBaseCharacterMovementComp.h"
 #include "Camera/CameraComponent.h"
+#include "Engine/Engine.h"
+#include "Engine/World.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Weapon/Zero_BaseProjectile.h"
 #include "ZeroLock/ZeroLockCharacter.h"
@@ -21,52 +23,55 @@ UZero_BaseWeaponAbility::UZero_BaseWeaponAbility()
 void UZero_BaseWeaponAbility::Fire()
 {
 	AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
-	if (Hero)
+	if (!Hero || !ProjectileClass)
 	{
-		
-		if (ProjectileClass)
-		{
-				
-			FVector Location = Hero->GetActorLocation() + Hero->GetFollowCamera()->GetForwardVector().GetSafeNormal()* 100.0f;
-			FRotator Rotation = Hero->GetActorRotation();
-			FVector CamTraceStartLocation = Hero->GetFollowCamera()->GetComponentLocation();
-			FVector CamTraceEndLocation = CamTraceStartLocation + Hero->GetFollowCamera()->GetForwardVector() * 10000.0f;
-			FHitResult Hit;
-			FCollisionQueryParams QueryParams;
-			QueryParams.AddIgnoredActor(Hero);
-			Rotation = UKismetMathLibrary::FindLookAtRotation(Location, CamTraceEndLocation);
-			
-			if (GetWorld()->LineTraceSingleByChannel(Hit,CamTraceStartLocation,CamTraceEndLocation,ECC_Pawn,QueryParams))
-			{
-				FVector HitLoc = Hit.ImpactPoint;
-				Rotation = UKismetMathLibrary::FindLookAtRotation(Location, HitLoc);
-			}
-				
-			FActorSpawnParameters SpawnParameters;
-			SpawnParameters.Owner = Hero;
-			SpawnParameters.Instigator = Hero->GetInstigator();
-			SpawnParameters.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-			GEngine->AddOnScreenDebugMessage(0, 5.f, FColor::Red, "Fire");
-			AZero_BaseProjectile* proj =GetWorld()->SpawnActor<AZero_BaseProjectile>(ProjectileClass,Location,Rotation,SpawnParameters);
-			if (proj)
-			{
-				proj->SetOwner(Hero);
-				proj->OwnerCharacter = Hero;
-			}
-			if (UZeroBaseCharacterMovementComp* MC = Cast<UZeroBaseCharacterMovementComp>(Hero->GetCharacterMovement()))
-			{
-				if (MC->IsCustomMovementMode(ECustomMovementMode::CMOVE_Slide))
-				{
-					EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
-					return;
-				}
-			}
-			CommitAbilityCost(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo);
-			EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
-		}
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		return;
 	}
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+	FVector EyeLocation;
+	FRotator IgnoredStaleRotation;
+	Hero->GetActorEyesViewPoint(EyeLocation, IgnoredStaleRotation);
+
+
+	FRotator EyeRotation = Hero->GetSyncedAimRotation();
+	FVector AimDir = EyeRotation.Vector();
+
+	FVector SpawnLocation = Hero->GetActorLocation() + (AimDir * 100.0f);
+
+	FVector TraceStart = EyeLocation;
+	FVector TraceEnd = TraceStart + (AimDir * 10000.0f);
+    
+    FHitResult Hit;
+    FCollisionQueryParams QueryParams;
+    QueryParams.AddIgnoredActor(Hero);
+    
+    FRotator ProjRotation = EyeRotation;
 	
+    if (GetWorld()->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Pawn, QueryParams))
+    {
+        ProjRotation = UKismetMathLibrary::FindLookAtRotation(SpawnLocation, Hit.ImpactPoint);
+    }
+    else
+    {
+        ProjRotation = UKismetMathLibrary::FindLookAtRotation(SpawnLocation, TraceEnd);
+    }
+
+    FActorSpawnParameters SpawnParameters;
+    SpawnParameters.Owner = Hero;
+    SpawnParameters.Instigator = Hero->GetInstigator();
+    SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    
+    DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Cyan, false, 10.0f);
+    
+    AZero_BaseProjectile* Proj = GetWorld()->SpawnActor<AZero_BaseProjectile>(ProjectileClass, SpawnLocation, ProjRotation, SpawnParameters);
+    if (Proj)
+    {
+         Proj->SetOwner(Hero);
+         Proj->OwnerCharacter = Hero;
+    }
+
+    CommitAbilityCost(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo);
+    EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UZero_BaseWeaponAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,

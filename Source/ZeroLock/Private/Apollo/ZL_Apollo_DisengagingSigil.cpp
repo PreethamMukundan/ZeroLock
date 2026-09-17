@@ -6,10 +6,17 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "GAS/BaseCharAbilitySystemComponent.h"
+#include "GAS/Tasks/ZL_AbilityTask_MoverMoveTo.h"
+#include "Mover/ZeroMoverComponent.h"
 #include "ZeroLock/ZeroLockCharacter.h"
 
 UZL_Apollo_DisengagingSigil::UZL_Apollo_DisengagingSigil()
 {
+}
+
+void UZL_Apollo_DisengagingSigil::OnMoveComplete()
+{
+   EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), true, false);
 }
 
 void UZL_Apollo_DisengagingSigil::OnAnimationPointTrigger()
@@ -58,16 +65,26 @@ void UZL_Apollo_DisengagingSigil::OnAnimationPointTrigger()
 
 
     FVector ForwardCM = Hero->GetActorForwardVector().GetSafeNormal();
-    ForwardCM.Z = -1;
+    ForwardCM.Z = 0;
     FVector LaunchVelocity = ForwardCM * (-1 * KnockbackStrength);
-    
-    Hero->GetMovementComponent()->StopMovementImmediately();
-    Hero->LaunchCharacter(LaunchVelocity, true, true);
+   
+   FVector MoveDir = Hero->GetInputWorldDir();
+   FVector moveLaunch = LaunchVelocity + (MoveDir * KnockbackStrength);
+   moveLaunch.Z = 0;
+   FVector StartLoc = Hero->GetActorLocation();
+   FVector TargetLoc = StartLoc + (moveLaunch) + FVector(0, 0, 100);
+ 
+	DrawDebugDirectionalArrow(GetWorld(), StartLoc, TargetLoc,20,FColor::Red, false, 10, 1);
+   DrawDebugSphere(GetWorld(),StartLoc,100,30,FColor::Yellow);
+   UZL_AbilityTask_MoverMoveTo* MovementTask = UZL_AbilityTask_MoverMoveTo::ApplyMoverMoveTo(this, FName("LaunchTask"), StartLoc, TargetLoc, 0.1,false);
+   MovementTask->OnFinished.AddDynamic(this, &UZL_Apollo_DisengagingSigil::OnMoveComplete);
+   MovementTask->ReadyForActivation();
+   // Hero->LaunchCharacter(LaunchVelocity, true, true);
 
 
     if (KnockBackMontage)
     {
        Hero->GetAbilitySystemComponent()->PlayMontage(this, GetCurrentActivationInfo(), KnockBackMontage, 1);
     }
-   EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), true, false);
+   
 }

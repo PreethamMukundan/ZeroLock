@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.6",
+	"EngineAssociation": "5.8",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -13,7 +13,8 @@
 				"GameplayAbilities",
 				"CommonUI",
 				"ModelViewViewModel",
-				"UMG"
+				"UMG",
+				"Mover"
 			]
 		},
 		{
@@ -76,6 +77,18 @@
 		},
 		{
 			"Name": "OnlineServicesOSSAdapter",
+			"Enabled": true
+		},
+		{
+			"Name": "Mover",
+			"Enabled": true
+		},
+		{
+			"Name": "ChaosMover",
+			"Enabled": true
+		},
+		{
+			"Name": "MoverExamples",
 			"Enabled": true
 		}
 	]

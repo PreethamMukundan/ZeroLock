@@ -9,11 +9,14 @@
 #include "Abilities/Tasks/AbilityTask_WaitInputRelease.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
+#include "Engine/Engine.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GAS/BaseCharAbilitySystemComponent.h"
 #include "GAS/BaseCharAttributeSet.h"
+#include "GAS/Tasks/ZL_AbilityTask_MoverMoveTo.h"
 #include "GAS/Tasks/ZL_WaitDelay_Task.h"
+#include "Mover/ZeroMoverComponent.h"
 #include "ZeroLock/ZeroLockCharacter.h"
 
 UZL_Apollo_ItaniLoSahn::UZL_Apollo_ItaniLoSahn()
@@ -28,8 +31,8 @@ void UZL_Apollo_ItaniLoSahn::ActivateAbility(const FGameplayAbilitySpecHandle Ha
     AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
     if (Hero)
     {
-        Hero->GetCharacterMovement()->StopMovementImmediately();
-        Hero->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+      Hero->GetZeroMoverComponent()->RequestStopMovement();
+        Hero->GetZeroMoverComponent()->QueueNextMode("Locked");
         HeightSave= Hero->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
         RadiusSave= Hero->GetCapsuleComponent()->GetScaledCapsuleRadius();
     }
@@ -112,13 +115,11 @@ void UZL_Apollo_ItaniLoSahn::ReleaseInputRelease(float TimeHeld)
         GetAbilitySystemComponentFromActorInfo()->CallServerSetReplicatedTargetData(CurrentSpecHandle, CurrentActivationInfo.GetActivationPredictionKey(), CurrentTargetData, FGameplayTag(), FPredictionKey());
     }
 
- 
-    MoveToTask = UAbilityTask_ApplyRootMotionMoveToForce::ApplyRootMotionMoveToForce(this, "MoveToTargetTask", FinalTarget, 0.2f, false, MOVE_None, false, nullptr, ERootMotionFinishVelocityMode::SetVelocity, FVector::ZeroVector, 0);
-    
-    MoveToTask->OnTimedOutAndDestinationReached.AddDynamic(this, &UZL_Apollo_ItaniLoSahn::OnMoveToDone);
+    MoveToTask =UZL_AbilityTask_MoverMoveTo::ApplyMoverMoveTo(this,"MoveToTask",TraceStart,FinalTarget,0.25,true);
+    MoveToTask->OnFinished.AddDynamic(this, &UZL_Apollo_ItaniLoSahn::OnMoveToDone);
     MoveToTask->ReadyForActivation();
     
-    UAbilityTask_WaitDelay* TempWaitTask = UAbilityTask_WaitDelay::WaitDelay(this,0.3);
+    TempWaitTask = UAbilityTask_WaitDelay::WaitDelay(this,0.3);
     TempWaitTask->OnFinish.AddDynamic(this,&UZL_Apollo_ItaniLoSahn::OnMoveToDone);
     TempWaitTask->ReadyForActivation();
     
@@ -126,17 +127,20 @@ void UZL_Apollo_ItaniLoSahn::ReleaseInputRelease(float TimeHeld)
 
 void UZL_Apollo_ItaniLoSahn::OnMoveToDone()
 {
+    if (TempWaitTask && TempWaitTask->IsActive())
+    {
+        TempWaitTask->OnFinish.RemoveDynamic(this, &UZL_Apollo_ItaniLoSahn::OnMoveToDone);
+        TempWaitTask->EndTask();
+    }
     if (MoveToTask && MoveToTask->IsActive())
     {
-        MoveToTask->OnTimedOutAndDestinationReached.RemoveDynamic(this, &UZL_Apollo_ItaniLoSahn::OnMoveToDone);
+        MoveToTask->OnFinished.RemoveDynamic(this, &UZL_Apollo_ItaniLoSahn::OnMoveToDone);
         MoveToTask->EndTask();
     }
     UAbilityTask_WaitDelay* WaitDelayTask = UAbilityTask_WaitDelay::WaitDelay(this, 1.8f);
     WaitDelayTask->OnFinish.AddDynamic(this, &UZL_Apollo_ItaniLoSahn::OnExecutecallback);
     WaitDelayTask->ReadyForActivation();
-    UAbilityTask_WaitDelay* WaitDelayTaskZ = UAbilityTask_WaitDelay::WaitDelay(this, 3.0f);
-    WaitDelayTaskZ->OnFinish.AddDynamic(this, &UZL_Apollo_ItaniLoSahn::OnTimeFinish);
-    WaitDelayTaskZ->ReadyForActivation();
+  
 }
 
 void UZL_Apollo_ItaniLoSahn::OnTimeFinish()
@@ -147,6 +151,9 @@ void UZL_Apollo_ItaniLoSahn::OnTimeFinish()
 
 void UZL_Apollo_ItaniLoSahn::OnExecutecallback()
 {
+    UAbilityTask_WaitDelay* WaitDelayTaskZ = UAbilityTask_WaitDelay::WaitDelay(this, 1.2f);
+    WaitDelayTaskZ->OnFinish.AddDynamic(this, &UZL_Apollo_ItaniLoSahn::OnTimeFinish);
+    WaitDelayTaskZ->ReadyForActivation();
     AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
     if (!Hero) return;
     Hero->GetCameraBoom()->CameraLagSpeed = 10.0f;
@@ -169,7 +176,6 @@ void UZL_Apollo_ItaniLoSahn::OnExecutecallback()
                         DamageAmp  = DamageAmp + ((BonusDamagePercent.GetValueAtLevel(GetAbilityLevel())/100)*DamageAmp);
                     }
                 }
-               // ZLOG(FString::SanitizeFloat(DamageAmp));
                 Villan->CustomTimeDilation = 1.0f;
                 Villan->GetAbilitySystemComponent()->RemoveGameplayCue(FGameplayTag::RequestGameplayTag("GameplayCue.Apollo.ItaniLoSahn",false));
                    
@@ -186,12 +192,12 @@ void UZL_Apollo_ItaniLoSahn::OnExecutecallback()
 
 void UZL_Apollo_ItaniLoSahn::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-    CommitAbility(GetCurrentAbilitySpecHandle(),GetCurrentActorInfo(),GetCurrentActivationInfo());
+   // CommitAbility(GetCurrentAbilitySpecHandle(),GetCurrentActorInfo(),GetCurrentActivationInfo());
 	
     AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
     if (Hero)
     {
-        Hero->GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+        Hero->GetZeroMoverComponent()->QueueNextMode("Falling");
         Hero->GetCameraBoom()->bEnableCameraLag = false;
         Hero->GetCameraBoom()->CameraLagSpeed = 10.0f;
         Hero->GetCapsuleComponent()->SetCapsuleHalfHeight(HeightSave);
@@ -210,6 +216,7 @@ void UZL_Apollo_ItaniLoSahn::EndAbility(const FGameplayAbilitySpecHandle Handle,
     }
 
     CurrentTargetData.Clear();
+    ZLOG("End Ability itani");
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
@@ -224,8 +231,7 @@ void UZL_Apollo_ItaniLoSahn::OnDashSphereOverlap(UPrimitiveComponent* Overlapped
         if (!Hero->IsOnSameTeam(Villan))
         {
             UniqueHitActors.Add(Villan);
-
-            // Create Target Data for the final execution
+            
             FGameplayAbilityTargetData_SingleTargetHit* NewData = new FGameplayAbilityTargetData_SingleTargetHit();
 
             NewData->HitResult.HitObjectHandle = FActorInstanceHandle(Villan);

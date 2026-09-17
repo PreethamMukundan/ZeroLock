@@ -16,7 +16,9 @@ class ZEROLOCK_API UZL_Apollo_DisengagingSigil : public UZL_BasePlayAnimation_An
 	
 public:
 	UZL_Apollo_DisengagingSigil();
-	
+
+	UFUNCTION()
+	void OnMoveComplete();
 	virtual void OnAnimationPointTrigger() override;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Damage")

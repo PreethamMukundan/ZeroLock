@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "Engine/OverlapResult.h"
 #include "GAS/BaseCharAbilitySystemComponent.h"
+#include "GAS/Tasks/ZL_AbilityTask_MoverMoveTo.h"
 #include "ZeroLock/ZeroLockCharacter.h"
 
 
@@ -46,18 +47,25 @@ void UZL_Lash_Grapple::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 						EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 						return;
 					}
-					FVector LaunchDiraction = (OutVillan->GetActorLocation() - Hero->GetActorLocation()).GetSafeNormal();
-					LaunchDiraction.Z = 0.75;
-					FVector LaunchVelocity = LaunchDiraction * GrappleLaunchStrength;
-					LaunchVelocity.Z+= HeightBoostInGrapple;
-			//		Hero->LaunchCharacter(LaunchVelocity,true,true);
+					FVector StartLoc = Hero->GetActorLocation();
+
+					FVector LaunchDir = (OutVillan->GetActorLocation() - StartLoc).GetUnsafeNormal2D();
+					LaunchDir.Z = 0.75f;
+					LaunchDir = LaunchDir.GetSafeNormal();
+
+					
+					float ImpulseDuration = 0.2f;    
+					FVector LaunchVelocity = LaunchDir * GrappleLaunchStrength;
+					FVector TargetLoc = StartLoc + (LaunchVelocity * ImpulseDuration);
+					UZL_AbilityTask_MoverMoveTo* MovementTask = UZL_AbilityTask_MoverMoveTo::ApplyMoverMoveTo(this, FName("LaunchTask"), StartLoc, TargetLoc, ImpulseDuration,false);
+					MovementTask->ReadyForActivation();
 					if (OnGrappleEffect)
 					{
 						Hero->GetMyAbilitySystemComp()->ApplyGameplayEffect(Hero->GetMyAbilitySystemComp(),OnGrappleEffect,mylevel);
 					}
-					//CommitAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo);
+					
 					EndAbility(GetCurrentAbilitySpecHandle(),GetCurrentActorInfo(),GetCurrentActivationInfo(),true,false);
-		
+					break;
 				}
 			}
 			

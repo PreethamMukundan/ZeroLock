@@ -25,10 +25,10 @@ public:
 	float ConeAngle =45;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grapple")
-	float HeightBoostInGrapple =100;
+	float HeightBoostInGrapple =1000;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grapple")
-	float GrappleLaunchStrength =100;
+	float GrappleLaunchStrength =1200;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grapple")
 	TSubclassOf<UGameplayEffect> OnGrappleEffect;

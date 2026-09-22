@@ -337,3 +337,18 @@ void UBaseCharAbilitySystemComponent::CheckActiveEffectDuration(const FActiveGam
 {
 	ActiveGameplayEffects.CheckDuration(Handle);
 }
+
+bool UBaseCharAbilitySystemComponent::TryConsumeClientReplicatedTargetData(FGameplayAbilitySpecHandle AbilityHandle,
+	FPredictionKey AbilityOriginalPredictionKey)
+{
+	TSharedPtr<FAbilityReplicatedDataCache> CachedData = AbilityTargetDataMap.Find(FGameplayAbilitySpecHandleAndPredictionKey(AbilityHandle, AbilityOriginalPredictionKey));
+	if (CachedData.IsValid())
+	{
+		const bool bConsumed = CachedData->TargetData.Num() > 0;
+		CachedData->TargetData.Clear();
+		CachedData->bTargetConfirmed = false;
+		CachedData->bTargetCancelled = false;
+		return bConsumed;
+	}
+	return false;
+}

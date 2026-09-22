@@ -62,13 +62,15 @@ void UZero_BaseWeaponAbility::Fire()
     SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     
     DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Cyan, false, 10.0f);
-    
-    AZero_BaseProjectile* Proj = GetWorld()->SpawnActor<AZero_BaseProjectile>(ProjectileClass, SpawnLocation, ProjRotation, SpawnParameters);
-    if (Proj)
-    {
-         Proj->SetOwner(Hero);
-         Proj->OwnerCharacter = Hero;
-    }
+	if (GetCurrentActivationInfo().ActivationMode == EGameplayAbilityActivationMode::Authority)
+	{
+		AZero_BaseProjectile* Proj = GetWorld()->SpawnActor<AZero_BaseProjectile>(ProjectileClass, SpawnLocation, ProjRotation, SpawnParameters);
+		if (Proj)
+		{
+			Proj->SetOwner(Hero);
+			Proj->OwnerCharacter = Hero;
+		}
+	}
 
     CommitAbilityCost(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo);
     EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
@@ -79,10 +81,9 @@ void UZero_BaseWeaponAbility::ActivateAbility(const FGameplayAbilitySpecHandle H
 	const FGameplayEventData* TriggerEventData)
 {
 	
-	if (GetCurrentActivationInfo().ActivationMode == EGameplayAbilityActivationMode::Authority)
-	{
+	
 		Fire();
-	}
+	
 
 	
 }

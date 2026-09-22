@@ -93,4 +93,8 @@ public:
 	void MarkActiveGameplayEffectDirty(FActiveGameplayEffect* ActiveGE);
  
 	void CheckActiveEffectDuration(const FActiveGameplayEffectHandle& Handle);
+	
+	/** Consumes cached TargetData from client (only TargetData) and returns whether any data was actually consumed. */
+	bool TryConsumeClientReplicatedTargetData(FGameplayAbilitySpecHandle AbilityHandle, FPredictionKey AbilityOriginalPredictionKey);
+
 };

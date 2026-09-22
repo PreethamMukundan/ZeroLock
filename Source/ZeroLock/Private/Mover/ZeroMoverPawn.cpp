@@ -203,20 +203,14 @@ void AZeroMoverPawn::OnZiplinePressed()
 
 FRotator AZeroMoverPawn::GetSyncedAimRotation() const
 {
-    if (IsLocallyControlled() && GetController())
-    {
-        return GetController()->GetControlRotation();
-    }
-    
-    if (HasAuthority() && MoverComponent)
-    {
+ 
         const FMoverSyncState& SyncState = MoverComponent->GetSyncState();
         
         if (const FZeroMovementInputs* ZeroInputs = SyncState.SyncStateCollection.FindDataByType<FZeroMovementInputs>())
         {
             return ZeroInputs->LookDir;
         }
-    }
+    
     
     return GetActorRotation();
 }

@@ -163,7 +163,7 @@ class ZEROLOCK_API UZL_Task_SpawnPredictedProjectile : public UAbilityTask
 	 * those variables.
 	 */
 	UFUNCTION(BlueprintCallable, Meta = (HidePin = "OwningAbility", DefaultToSelf = "OwningAbility", BlueprintInternalUseOnly = "True"), Category="Ability|Tasks")
-	static UZL_Task_SpawnPredictedProjectile* SpawnPredictedProjectile(UGameplayAbility* OwningAbility, TSubclassOf<AProjectile> ProjectileClass, FVector SpawnLocation, FRotator SpawnRotation);
+	static UZL_Task_SpawnPredictedProjectile* SpawnPredictedProjectile(UGameplayAbility* OwningAbility, TSubclassOf<AProjectile> ProjectileClass,TSubclassOf<AProjectile> Ser_Projectile, FVector SpawnLocation, FRotator SpawnRotation);
  
 	/** Spawn a fake projectile on the client and an authoritative projectile on the server. The server's projectile
 	 * will be forward predicted to sync with the client's, the projectiles will be linked together, and reconciliation
@@ -212,10 +212,10 @@ protected:
 	FActorSpawnParameters GenerateSpawnParams() const;
  
 	/** Helper to make spawn parameters for a fake projectile. */
-	FActorSpawnParameters GenerateSpawnParamsForFake(const uint32 ProjectileId) const;
+	//FActorSpawnParameters GenerateSpawnParamsForFake(const uint32 ProjectileId) const;
  
 	/** Helper to make spawn parameters for an authoritative projectile. */
-	FActorSpawnParameters GenerateSpawnParamsForAuth(const uint32 ProjectileId) const;
+	//FActorSpawnParameters GenerateSpawnParamsForAuth(const uint32 ProjectileId) const;
  
  
  

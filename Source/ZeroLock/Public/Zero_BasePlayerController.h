@@ -99,6 +99,6 @@ public:
 private:
 
 	/** Internal counter for projectile IDs. Starts at 1 because 0 is reversed for non-predicted projectiles. */
-	uint32 FakeProjectileIdCounter;
+	uint32 FakeProjectileIdCounter=1;
 	
 };

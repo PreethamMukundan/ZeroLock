@@ -300,10 +300,11 @@ public:
 	/** Initialize this projectile's ID. */
 	FORCEINLINE void InitProjectileId(uint32 InProjectileId) { ProjectileId = InProjectileId; }
  
-protected:
- 
 	/** Whether this projectile is a fake client-side projectile. Set before BeginPlay. */
 	bool bIsFakeProjectile;
+protected:
+ 
+	
  
 	/** This projectile's ID. Used to link fake and authoritative projectiles. Only valid on the owning client (i.e. the
 	 * client with the fake projectile). NULL_PROJECTILE_ID on other machines. Set before BeginPlay. */

@@ -186,7 +186,7 @@ void AProjectile::BeginPlay()
 	/* Projectiles can't be spawned directly on clients. A client-authoritative projectile can't perform gameplay logic,
 	 * so it would just be cosmetic, which is a waste of the projectile logic overhead. Just create a standalone
 	 * projectile class derived from AActor instead. */
-	if (!ensureAlwaysMsgf(!(GetNetMode() == NM_Client && HasAuthority() && !bIsFakeProjectile), TEXT("Spawned projectile (%s) directly on client, which is not allowed. Projectiles should be spawned on the server to be replicated to clients, or should be spawned predictively with the \"Spawn Predicted Projectile\" ability task."), *GetName()))
+	if (!(!(GetNetMode() == NM_Client && HasAuthority() && !bIsFakeProjectile), TEXT("Spawned projectile (%s) directly on client, which is not allowed. Projectiles should be spawned on the server to be replicated to clients, or should be spawned predictively with the \"Spawn Predicted Projectile\" ability task."), *GetName()))
 	{
 		Destroy();
 		return;

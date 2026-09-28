@@ -11,7 +11,8 @@ void UZL_GA_KnockbackAbility::ActivateAbility(const FGameplayAbilitySpecHandle H
                                               const FGameplayEventData* TriggerEventData)
 {
 	//Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
+	UE_LOG(LogTemp, Warning, TEXT("[%s] Knockback ActivateAbility, Victim=%s"),
+	HasAuthority(&ActivationInfo) ? TEXT("Server") : TEXT("Client"), *GetAvatarActorFromActorInfo()->GetName());
 	float Duration = TriggerEventData ? TriggerEventData->EventMagnitude : 0.2f;
 	FVector Velocity = FVector::ZeroVector;
 

@@ -101,6 +101,7 @@ void UBaseCharAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 	}
 	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
 	{
+		if (!TargetCharacter || !SourceCharacter) return;
 		AZero_BasePlayerState* Target_PS = TargetCharacter->GetPlayerState<AZero_BasePlayerState>();
 		AZero_BasePlayerState* Source_PS = SourceCharacter->GetPlayerState<AZero_BasePlayerState>();
 		if (Target_PS && Source_PS)

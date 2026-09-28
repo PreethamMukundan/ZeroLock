@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "BaseCharAbilitySystemComponent.generated.h"
 
+class UZL_Task_WaitSlamLocation;
 /**
  * 
  */
@@ -23,6 +24,10 @@ class ZEROLOCK_API UBaseCharAbilitySystemComponent : public UAbilitySystemCompon
 
 
 	virtual void OnRep_ActivateAbilities() override;
+	
+protected:
+	TMap<FPredictionKey, TWeakObjectPtr<UZL_Task_WaitSlamLocation>> PendingSlamTasks;
+	
 public:
 	UPROPERTY(BlueprintAssignable)
 	FNewAbilityAddedDelegate OnNewAbilityAdded;
@@ -90,6 +95,16 @@ public:
 	TArray<FActiveGameplayEffectHandle> GetAllActiveEffectHandles() const;
  
 
+	
+
+	UFUNCTION(Server, Reliable)
+	void ServerReportSlamLocation(FPredictionKey ActivationKey, FVector Location);
+	
+	TMap<FPredictionKey, FVector> CachedSlamLocations;
+	
+	void RegisterPendingSlamTask(const FPredictionKey& Key, UZL_Task_WaitSlamLocation* Task);
+	void UnregisterPendingSlamTask(const FPredictionKey& Key);
+	
 	void MarkActiveGameplayEffectDirty(FActiveGameplayEffect* ActiveGE);
  
 	void CheckActiveEffectDuration(const FActiveGameplayEffectHandle& Handle);

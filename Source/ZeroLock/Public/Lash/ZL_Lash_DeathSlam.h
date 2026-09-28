@@ -49,7 +49,9 @@ protected:
 
 	UFUNCTION()
 	void TargetSlamFinish();
-	
+	UFUNCTION()
+	void SlamLocationReceived(const FVector& ExactSlamLocation);
+
 	UFUNCTION()
 	void TargetPullFinish();
 
@@ -62,5 +64,6 @@ protected:
 	virtual void AbilityConfirmedAction(const FGameplayAbilityTargetDataHandle& Data) override;
 
 	static bool GetLookAtLocation(const AZeroLockCharacter* InActor, float BaseRadius, float HeightMultiplier, float MaxAllowedRadius, FHitResult& OutHit);
-
+	
+	class UZL_WaitDelay_Task* InitWaitTask;
 };

@@ -6,6 +6,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GameFramework/Pawn.h"
 #include "GAS/BaseGameplayAbility.h"
+#include "GAS/Tasks/ZL_Task_WaitSlamLocation.h"
 #include "ZeroLock/ZeroLock.h"
 
 void UBaseCharAbilitySystemComponent::OnGiveAbility(FGameplayAbilitySpec& AbilitySpec)
@@ -323,6 +324,35 @@ FActiveGameplayEffect* UBaseCharAbilitySystemComponent::GetActiveGameplayEffect_
 TArray<FActiveGameplayEffectHandle> UBaseCharAbilitySystemComponent::GetAllActiveEffectHandles() const
 {
 	return ActiveGameplayEffects.GetAllActiveEffectHandles();
+}
+
+void UBaseCharAbilitySystemComponent::RegisterPendingSlamTask(const FPredictionKey& Key,
+	UZL_Task_WaitSlamLocation* Task)
+{
+	PendingSlamTasks.Add(Key, Task);
+}
+
+void UBaseCharAbilitySystemComponent::UnregisterPendingSlamTask(const FPredictionKey& Key)
+{
+	PendingSlamTasks.Remove(Key);
+}
+
+
+void UBaseCharAbilitySystemComponent::ServerReportSlamLocation_Implementation(FPredictionKey ActivationKey,
+                                                                              FVector Location)
+{
+	if (TWeakObjectPtr<UZL_Task_WaitSlamLocation>* Found = PendingSlamTasks.Find(ActivationKey))
+	{
+		if (UZL_Task_WaitSlamLocation* Task = Found->Get())
+		{
+			Task->ReceiveLocationFromClient(Location);
+		}
+		PendingSlamTasks.Remove(ActivationKey);
+	}
+	else
+	{
+		CachedSlamLocations.Add(ActivationKey, Location);
+	}
 }
 
 void UBaseCharAbilitySystemComponent::MarkActiveGameplayEffectDirty(FActiveGameplayEffect* ActiveGE)

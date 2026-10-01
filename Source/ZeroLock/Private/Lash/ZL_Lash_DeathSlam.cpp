@@ -142,31 +142,7 @@ void UZL_Lash_DeathSlam::AbilityConfirmedAction(const FGameplayAbilityTargetData
            {
               if (AZeroLockCharacter* Victim = Cast<AZeroLockCharacter>(Target.Get()))
               {
-                 UAbilitySystemComponent* TargetASC = Victim->GetAbilitySystemComponent();
-                 if (TargetASC)
-                 {
-                    FActiveGameplayEffectHandle ActiveHandle = Hero->GetMyAbilitySystemComp()->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
-                    if (ActiveHandle.IsValid())
-                    {
-                       CurrentActiveEffectHandles.Add(ActiveHandle);
-                    }
-
-                    FVector VictimLoc = Victim->GetActorLocation();
-                    FVector ToDestination = TargetPullLocation - VictimLoc;
-                    FVector RequiredVelocity = ToDestination / PullTime;
-
-                    FGameplayEventData Payload;
-                    Payload.Instigator = Hero;
-                    Payload.Target = Victim;
-                    Payload.EventMagnitude = PullTime;
-
-                    FGameplayAbilityTargetData_LocationInfo* LocData = new FGameplayAbilityTargetData_LocationInfo();
-                    LocData->TargetLocation.LiteralTransform = FTransform(RequiredVelocity);
-                    LocData->TargetLocation.LocationType = EGameplayAbilityTargetingLocationType::LiteralTransform;
-                    Payload.TargetData.Add(LocData);
-
-                    TargetASC->HandleGameplayEvent(FGameplayTag::RequestGameplayTag(FName("Zerolock.Movement.Forced")), &Payload);
-                 }
+                 SendVictimMoveEvent(Hero, Victim, TEXT("Zerolock.Movement.PullTo"), PullTime, &TargetPullLocation);
               }
            }
        }
@@ -184,7 +160,7 @@ void UZL_Lash_DeathSlam::TargetPullFinish()
    {
       if (AZeroLockCharacter* Victim = Cast<AZeroLockCharacter>(Target.Get()))
       {
-         Victim->GetZeroMoverComponent()->RequestStopMovement();
+         SendVictimMoveEvent(Hero, Victim, TEXT("Zerolock.Movement.Stop"), 0.f);
       }
    }
     UZL_Task_WaitSlamLocation* SlamLocationTask = UZL_Task_WaitSlamLocation::FindSlamLocation(this, FName("SlamTask"),Hero,SlamRadius.GetValueAtLevel(GetCurrentAbilitySpec()->Level), 0.5f, 3000.f);
@@ -217,25 +193,7 @@ void UZL_Lash_DeathSlam::SlamLocationReceived(const FVector& ExactSlamLocation)
         {
            if (AZeroLockCharacter* Victim = Cast<AZeroLockCharacter>(Target.Get()))
            {
-              UAbilitySystemComponent* TargetASC = Victim->GetAbilitySystemComponent();
-              if (TargetASC)
-              {
-                 FVector VictimLoc = Victim->GetActorLocation();
-                 FVector ToDestination = TargetPullLocation - VictimLoc;
-                 FVector RequiredVelocity = ToDestination / PullTime;
-
-                 FGameplayEventData Payload;
-                 Payload.Instigator = Hero;
-                 Payload.Target = Victim;
-                 Payload.EventMagnitude = PullTime;
-
-                 FGameplayAbilityTargetData_LocationInfo* LocData = new FGameplayAbilityTargetData_LocationInfo();
-                 LocData->TargetLocation.LiteralTransform = FTransform(RequiredVelocity);
-                 LocData->TargetLocation.LocationType = EGameplayAbilityTargetingLocationType::LiteralTransform;
-                 Payload.TargetData.Add(LocData);
-
-                 TargetASC->HandleGameplayEvent(FGameplayTag::RequestGameplayTag(FName("Zerolock.Movement.Forced")), &Payload);
-              }
+              SendVictimMoveEvent(Hero, Victim, TEXT("Zerolock.Movement.PullTo"), PullTime, &TargetPullLocation);
            }
         }
     }
@@ -286,13 +244,7 @@ void UZL_Lash_DeathSlam::EndAbility(const FGameplayAbilitySpecHandle Handle, con
         {
            if (AZeroLockCharacter* Victim = Cast<AZeroLockCharacter>(Target.Get()))
            {
-              if (UZeroMoverComponent* VictimMover = Victim->FindComponentByClass<UZeroMoverComponent>())
-              {
-                 if (VictimMover->GetMovementModeName() == FName("Locked"))
-                 {
-                    VictimMover->QueueNextMode(FName("Falling"));
-                 }
-              }
+              SendVictimMoveEvent(Hero, Victim, TEXT("Zerolock.Movement.Release"), 0.f);
            }
         }
     }

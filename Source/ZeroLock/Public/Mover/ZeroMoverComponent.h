@@ -58,6 +58,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Mantle")
 	float MantleMaxAlignmentAngle = 45.0f;
 
+	void RequestSafePullTo(const FVector& Target, float Duration);
+	void RequestSafeStop();
+	void RequestSafeRelease();
+
+	bool bLatchedPullMove = false;
+	FVector LatchedPullTarget = FVector::ZeroVector;
+	float LatchedPullDuration = 0.f;
+	bool bLatchedStop = false;
+	bool bLatchedRelease = false;
+
+	
 protected:
 	bool HandleWallBounceCheck(const FZeroMovementInputs& ZeroInputs,const FName& CurrentMode);
 
@@ -83,6 +94,8 @@ protected:
 	void HandleCrouching(const FName& CurrentMode, const FZeroMovementInputs& ZeroInputs);
 		
 	bool TryMantle(const FCharacterDefaultInputs& DefaultInputs, const FZeroMovementInputs& ZeroInputs);
+	
+	bool ShouldIgnoreServerLatch() const;
 private:
 	int32 LocalAirJumpsUsed = 0;
 	

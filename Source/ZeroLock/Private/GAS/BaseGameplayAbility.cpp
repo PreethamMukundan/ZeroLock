@@ -509,6 +509,29 @@ void UBaseGameplayAbility::ApplyCost(const FGameplayAbilitySpecHandle Handle,
 	}
 }
 
+void UBaseGameplayAbility::SendVictimMoveEvent(AZeroLockCharacter* Hero, AZeroLockCharacter* Victim,
+	const TCHAR* TagName, float Magnitude, const FVector* Location)
+{
+	if (!Hero || !Victim) return;
+	UAbilitySystemComponent* TargetASC = Victim->GetAbilitySystemComponent();
+	if (!TargetASC) return;
+
+	FGameplayEventData Payload;
+	Payload.Instigator = Hero;
+	Payload.Target = Victim;
+	Payload.EventMagnitude = Magnitude;
+
+	if (Location)
+	{
+		FGameplayAbilityTargetData_LocationInfo* LocData = new FGameplayAbilityTargetData_LocationInfo();
+		LocData->TargetLocation.LiteralTransform = FTransform(*Location);
+		LocData->TargetLocation.LocationType = EGameplayAbilityTargetingLocationType::LiteralTransform;
+		Payload.TargetData.Add(LocData);
+	}
+
+	TargetASC->HandleGameplayEvent(FGameplayTag::RequestGameplayTag(FName(TagName)), &Payload);
+}
+
 FGameplayAttribute UBaseGameplayAbility::GetChargeAttribute() const
 {
 	switch (Slot)

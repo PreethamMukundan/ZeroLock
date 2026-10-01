@@ -165,6 +165,8 @@ public:
 	virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	virtual void ApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
 
+	
+	static void SendVictimMoveEvent(AZeroLockCharacter* Hero, AZeroLockCharacter* Victim,const TCHAR* TagName, float Magnitude, const FVector* Location = nullptr);
 protected:
 	
 	FGameplayAttribute GetChargeAttribute() const;

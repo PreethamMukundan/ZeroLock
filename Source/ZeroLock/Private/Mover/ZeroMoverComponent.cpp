@@ -76,6 +76,36 @@ void UZeroMoverComponent::OnMoverPreSimulationTick(const FMoverTimeStep& TimeSte
         
         QueueLayeredMove(DynamicMove);
     }
+    if (FoundZeroInputs->bWantsRelease && CurrentMode == FName("Locked"))
+    {
+        QueueNextMode(DefaultModeNames::Falling);
+    }
+
+    if (FoundZeroInputs->bWantsStop)
+    {
+        TSharedPtr<FLayeredMove_LinearVelocity> StopMove = MakeShared<FLayeredMove_LinearVelocity>();
+        StopMove->Velocity = FVector::ZeroVector;
+        StopMove->DurationMs = 100.f;
+        StopMove->MixMode = EMoveMixMode::OverrideVelocity;
+        QueueLayeredMove(StopMove);
+    }
+
+    if (FoundZeroInputs->bHasPullMove)
+    {
+        if (CurrentMode == DefaultModeNames::Walking || CurrentMode == FName("Locked"))
+        {
+            QueueNextMode(DefaultModeNames::Falling);
+        }
+
+        const FMoverDefaultSyncState* Sync = GetSyncState().SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
+
+        TSharedPtr<FLayeredMove_MoveTo> Pull = MakeShared<FLayeredMove_MoveTo>();
+        Pull->StartLocation  = Sync ? Sync->GetLocation_WorldSpace() : UpdatedComponent->GetComponentLocation();
+        Pull->TargetLocation = FoundZeroInputs->PullTarget;
+        Pull->DurationMs     = FoundZeroInputs->PullDuration * 1000.f;
+        Pull->MixMode        = EMoveMixMode::OverrideVelocity;
+        QueueLayeredMove(Pull);
+    }
 }
 
 void UZeroMoverComponent::InitializeComponent()
@@ -178,8 +208,31 @@ void UZeroMoverComponent::HandleCrouching(const FName& CurrentMode, const FZeroM
 }
 
 
+void UZeroMoverComponent::RequestSafePullTo(const FVector& Target, float Duration)
+{
+    if (ShouldIgnoreServerLatch()) return;
+    bLatchedPullMove = true;
+    LatchedPullTarget = Target;
+    LatchedPullDuration = Duration;
+}
 
+void UZeroMoverComponent::RequestSafeStop()
+{
+    if (ShouldIgnoreServerLatch()) return;
+    bLatchedStop = true;
+}
 
+void UZeroMoverComponent::RequestSafeRelease()
+{
+    if (ShouldIgnoreServerLatch()) return;
+    bLatchedRelease = true;
+}
+
+bool UZeroMoverComponent::ShouldIgnoreServerLatch() const
+{
+    const APawn* P = Cast<APawn>(GetOwner());
+    return P && !P->IsLocallyControlled() && P->GetRemoteRole() == ROLE_AutonomousProxy;
+}
 
 bool UZeroMoverComponent::HandleWallBounceCheck(const FZeroMovementInputs& ZeroInputs, const FName& CurrentMode)
 {
@@ -374,6 +427,7 @@ bool UZeroMoverComponent::TryMantle(const FCharacterDefaultInputs& DefaultInputs
 
 void UZeroMoverComponent::RequestSafeAbilityMove(FVector Velocity, float Duration)
 {
+    if (ShouldIgnoreServerLatch()) return;
     bLatchedAbilityMove = true;
     LatchedAbilityVelocity = Velocity;
     LatchedAbilityDuration = Duration;
@@ -381,6 +435,7 @@ void UZeroMoverComponent::RequestSafeAbilityMove(FVector Velocity, float Duratio
 
 void UZeroMoverComponent::RequestSafeDynamicAbilityMove(AActor* TargetActor, float Duration)
 {
+    if (ShouldIgnoreServerLatch()) return;
     bLatchedDynamicMove = true;
     LatchedDynamicActor = TargetActor;
     LatchedDynamicDuration = Duration;

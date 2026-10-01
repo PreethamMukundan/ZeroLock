@@ -161,6 +161,37 @@ void AZeroMoverPawn::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmd
     {
         ZeroInputs.bHasDynamicAbilityMove = false;
     }
+    if (MoverComponent && MoverComponent->bLatchedPullMove)
+    {
+        ZeroInputs.bHasPullMove = true;
+        ZeroInputs.PullTarget = MoverComponent->LatchedPullTarget;
+        ZeroInputs.PullDuration = MoverComponent->LatchedPullDuration;
+        MoverComponent->bLatchedPullMove = false;
+    }
+    else
+    {
+        ZeroInputs.bHasPullMove = false;
+    }
+
+    if (MoverComponent && MoverComponent->bLatchedStop)
+    {
+        ZeroInputs.bWantsStop = true;
+        MoverComponent->bLatchedStop = false;
+    }
+    else
+    {
+        ZeroInputs.bWantsStop = false;
+    }
+
+    if (MoverComponent && MoverComponent->bLatchedRelease)
+    {
+        ZeroInputs.bWantsRelease = true;
+        MoverComponent->bLatchedRelease = false;
+    }
+    else
+    {
+        ZeroInputs.bWantsRelease = false;
+    }
     
     bWantsToDashLatch = false;
     bWantsToHeavyMelee = false;

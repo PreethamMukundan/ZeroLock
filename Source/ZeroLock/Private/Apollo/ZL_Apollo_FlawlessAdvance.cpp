@@ -181,6 +181,7 @@ void UZL_Apollo_FlawlessAdvance::ExecuteLunge(bool bIsPerfect)
 
 	FVector StartLocation = Character->GetActorLocation();
 	FVector TargetLocation = StartLocation + (LookDir * CalculatedDistance);
+	float DistanceForTrace = CalculatedDistance + 500;
     
     TArray<FHitResult> Hits;
     TArray<AZeroLockCharacter*> Targets;
@@ -188,7 +189,7 @@ void UZL_Apollo_FlawlessAdvance::ExecuteLunge(bool bIsPerfect)
     Ignored.Add(Character);
     float DamageToUse  = bIsPerfect ? PerfectDamage.GetValueAtLevel(GetAbilityLevel()) : BaseDamageValue.GetValueAtLevel(GetAbilityLevel());
 
-    if (ReverseConeTraceMulti(GetWorld(), GetAvatarActorFromActorInfo()->GetActorLocation(), LookDir.Rotation(), CalculatedDistance, 10.0f, UEngineTypes::ConvertToTraceType(ECC_Pawn), false, Ignored, EDrawDebugTrace::ForDuration, Hits, Targets, true, FLinearColor::Green, FLinearColor::Red, 1.5f))
+    if (ReverseConeTraceMulti(GetWorld(), GetAvatarActorFromActorInfo()->GetActorLocation(), LookDir.Rotation(), DistanceForTrace, 10.0f, UEngineTypes::ConvertToTraceType(ECC_Pawn), false, Ignored, EDrawDebugTrace::ForDuration, Hits, Targets, true, FLinearColor::Green, FLinearColor::Red, 1.5f))
     {
         if (Targets.Num() > 0)
         {

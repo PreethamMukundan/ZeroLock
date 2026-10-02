@@ -1,0 +1,6 @@
+{
+  "enabledMcpjsonServers": [
+    "unreal-mcp"
+  ],
+  "enableAllProjectMcpServers": true
+}

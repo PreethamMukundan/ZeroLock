@@ -7,6 +7,7 @@
 #include "Animation/AnimMontage.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "DefaultMovementSet/InstantMovementEffects/BasicInstantMovementEffects.h"
 #include "DefaultMovementSet/LayeredMoves/BasicLayeredMoves.h"
 #include "DefaultMovementSet/LayeredMoves/MultiJumpLayeredMove.h"
 #include "DefaultMovementSet/Settings/StanceSettings.h"
@@ -105,6 +106,21 @@ void UZeroMoverComponent::OnMoverPreSimulationTick(const FMoverTimeStep& TimeSte
         Pull->DurationMs     = FoundZeroInputs->PullDuration * 1000.f;
         Pull->MixMode        = EMoveMixMode::OverrideVelocity;
         QueueLayeredMove(Pull);
+    }
+
+    if (FoundZeroInputs->bHasTeleport)
+    {
+        const FMoverDefaultSyncState* Sync = GetSyncState().SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
+        const FVector CurrentLocation = Sync ? Sync->GetLocation_WorldSpace() : UpdatedComponent->GetComponentLocation();
+
+        // The target comes from the client's input, so reject anything out of range.
+        if (FVector::DistSquared(CurrentLocation, FoundZeroInputs->TeleportTarget) <= FMath::Square(MaxTeleportDistance))
+        {
+            TSharedPtr<FTeleportEffect> Teleport = MakeShared<FTeleportEffect>();
+            Teleport->TargetLocation = FoundZeroInputs->TeleportTarget;
+            Teleport->bUseActorRotation = true;
+            QueueInstantMovementEffect(Teleport);
+        }
     }
 }
 
@@ -226,6 +242,13 @@ void UZeroMoverComponent::RequestSafeRelease()
 {
     if (ShouldIgnoreServerLatch()) return;
     bLatchedRelease = true;
+}
+
+void UZeroMoverComponent::RequestSafeTeleport(const FVector& Target)
+{
+    if (ShouldIgnoreServerLatch()) return;
+    bLatchedTeleport = true;
+    LatchedTeleportTarget = Target;
 }
 
 bool UZeroMoverComponent::ShouldIgnoreServerLatch() const

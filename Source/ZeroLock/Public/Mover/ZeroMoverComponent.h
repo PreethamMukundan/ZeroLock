@@ -61,12 +61,19 @@ public:
 	void RequestSafePullTo(const FVector& Target, float Duration);
 	void RequestSafeStop();
 	void RequestSafeRelease();
+	void RequestSafeTeleport(const FVector& Target);
 
 	bool bLatchedPullMove = false;
 	FVector LatchedPullTarget = FVector::ZeroVector;
 	float LatchedPullDuration = 0.f;
 	bool bLatchedStop = false;
 	bool bLatchedRelease = false;
+	bool bLatchedTeleport = false;
+	FVector LatchedTeleportTarget = FVector::ZeroVector;
+
+	/** Teleports further than this from the current location are rejected (client-sent target sanity check). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Teleport")
+	float MaxTeleportDistance = 10000.0f;
 
 	
 protected:

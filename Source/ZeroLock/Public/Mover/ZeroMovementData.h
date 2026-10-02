@@ -68,8 +68,14 @@ struct FZeroMovementInputs : public FMoverDataStructBase
 	UPROPERTY(BlueprintReadWrite, Category="Zero")
 	bool bWantsStop = false;
 	
-	UPROPERTY(BlueprintReadWrite, Category="Zero") 
+	UPROPERTY(BlueprintReadWrite, Category="Zero")
 	bool bWantsRelease = false;
+
+	UPROPERTY(BlueprintReadWrite, Category="Zero")
+	bool bHasTeleport = false;
+
+	UPROPERTY(BlueprintReadWrite, Category="Zero")
+	FVector TeleportTarget = FVector::ZeroVector;
 
     virtual UScriptStruct* GetScriptStruct() const override { return FZeroMovementInputs::StaticStruct(); }
     virtual FMoverDataStructBase* Clone() const override { return new FZeroMovementInputs(*this); }
@@ -101,6 +107,8 @@ struct FZeroMovementInputs : public FMoverDataStructBase
     	Ar << PullDuration;
     	Ar << bWantsStop;
     	Ar << bWantsRelease;
+    	Ar << bHasTeleport;
+    	Ar << TeleportTarget;
     	
     	Map->SerializeObject(Ar, AActor::StaticClass(), (UObject*&)DynamicTargetActor);
     

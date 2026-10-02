@@ -192,6 +192,17 @@ void AZeroMoverPawn::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmd
     {
         ZeroInputs.bWantsRelease = false;
     }
+
+    if (MoverComponent && MoverComponent->bLatchedTeleport)
+    {
+        ZeroInputs.bHasTeleport = true;
+        ZeroInputs.TeleportTarget = MoverComponent->LatchedTeleportTarget;
+        MoverComponent->bLatchedTeleport = false;
+    }
+    else
+    {
+        ZeroInputs.bHasTeleport = false;
+    }
     
     bWantsToDashLatch = false;
     bWantsToHeavyMelee = false;

@@ -146,6 +146,7 @@ class ZEROLOCK_API UZL_Task_SpawnPredictedProjectile : public UAbilityTask
 	 * Note that this delegate may have a volatile delay at higher latencies (when projectiles are delayed), so this
 	 * should not be used for gameplay logic. It is intended primarily for cosmetic effects and validation.
 	 */
+public:
 	UPROPERTY(BlueprintAssignable)
 	FSpawnPredictedProjectileDelegate Success;
  

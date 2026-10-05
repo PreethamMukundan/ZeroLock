@@ -170,8 +170,12 @@ public:
 	 * will be forward predicted to sync with the client's, the projectiles will be linked together, and reconciliation
 	 * will be performed by the projectiles themselves. */
 	virtual void Activate() override;
- 
- 
+
+	/** Unbinds the server's target data delegates, so a finished task can't consume the data meant for a later
+	 * spawn task in the same ability activation. */
+	virtual void OnDestroy(bool bInOwnerFinished) override;
+
+
  
 	// Internals.
  

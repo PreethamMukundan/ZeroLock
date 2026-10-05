@@ -1,0 +1,61 @@
+{
+	"folders": [
+		{
+			"name": "ZeroLock",
+			"path": "."
+		},
+		{
+			"name": "Source",
+			"path": "Source"
+		},
+		{
+			"name": "Config",
+			"path": "Config"
+		},
+		{
+			"name": "Plugins",
+			"path": "Plugins"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.ini": "ini",
+			"*.uproject": "json",
+			"*.uplugin": "json",
+			"*.Build.cs": "csharp",
+			"*.Target.cs": "csharp"
+		},
+		"files.exclude": {
+			"**/Binaries": true,
+			"**/Intermediate": true,
+			"**/DerivedDataCache": true,
+			"**/Saved": true,
+			"**/.vs": true
+		},
+		"search.exclude": {
+			"**/Content": true,
+			"**/Binaries": true,
+			"**/Intermediate": true,
+			"**/DerivedDataCache": true,
+			"**/Saved": true
+		},
+		"files.watcherExclude": {
+			"**/Content/**": true,
+			"**/Binaries/**": true,
+			"**/Intermediate/**": true,
+			"**/DerivedDataCache/**": true,
+			"**/Saved/**": true
+		},
+		"C_Cpp.default.cppStandard": "c++20",
+		"C_Cpp.files.exclude": {
+			"**/Intermediate": true,
+			"**/Binaries": true
+		}
+	},
+	"extensions": {
+		"recommendations": [
+			"ms-vscode.cpptools",
+			"ms-dotnettools.csharp"
+		]
+	}
+}

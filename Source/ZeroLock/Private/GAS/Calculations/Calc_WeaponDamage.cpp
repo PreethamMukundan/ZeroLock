@@ -14,6 +14,7 @@ struct Zero_WeaponDamageStatics
 	DECLARE_ATTRIBUTE_CAPTUREDEF(WeaponResistanceReduction);
 	DECLARE_ATTRIBUTE_CAPTUREDEF(FlatWeapon);
 	DECLARE_ATTRIBUTE_CAPTUREDEF(WeaponLifeSteal);
+	DECLARE_ATTRIBUTE_CAPTUREDEF(UniversalDamage);
 	DECLARE_ATTRIBUTE_CAPTUREDEF(Damage);
 
 	Zero_WeaponDamageStatics()
@@ -23,6 +24,7 @@ struct Zero_WeaponDamageStatics
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UBaseCharAttributeSet,Damage, Source, true);
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UBaseCharAttributeSet,FlatWeapon, Source,true);
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UBaseCharAttributeSet,WeaponLifeSteal,Source, false);
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UBaseCharAttributeSet,UniversalDamage, Source, true);
 		
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UBaseCharAttributeSet,WeaponResistanceReduction,Target,false);
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UBaseCharAttributeSet, WeaponResistance, Target, false);
@@ -41,6 +43,7 @@ UCalc_WeaponDamage::UCalc_WeaponDamage()
 	RelevantAttributesToCapture.Add(WeaponDamageStatics().WeaponResistanceDef);
 	RelevantAttributesToCapture.Add(WeaponDamageStatics().WeaponResistanceReductionDef);
 	RelevantAttributesToCapture.Add(WeaponDamageStatics().DamageDef);
+	RelevantAttributesToCapture.Add(WeaponDamageStatics().UniversalDamageDef);
 }
 
 void UCalc_WeaponDamage::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams,
@@ -88,6 +91,11 @@ void UCalc_WeaponDamage::Execute_Implementation(const FGameplayEffectCustomExecu
 	float DamageBase = Damage + FlatWeapon;
 	
 	float UnmitigatedDamage = DamageBase + (DamageBase * WeaponDamage/100);
+
+	float UniversalDamage = 0.0f;
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(WeaponDamageStatics().UniversalDamageDef, EvaluationParameters, UniversalDamage);
+	UniversalDamage = FMath::Max<float>(UniversalDamage, 0.0f);
+	UnmitigatedDamage *= 1.0f + (UniversalDamage/100);
 
 	float NetWeaponResistance = WeaponResistance - WeaponResistanceReduction;
 	

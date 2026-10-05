@@ -51,4 +51,23 @@ Params.WorldToGravityQuat = MoverComp->GetWorldToGravityTransform();
 Params.bUseAccelerationForVelocityMove = CommonLegacySettings->bUseAccelerationForVelocityMove;
 
 OutProposedMove = UAirMovementUtils::ComputeControlledFreeMove(Params);
+
+if (bPreserveMomentum)
+{
+	const FVector UpDirection = MoverComp->GetUpDirection();
+	FVector Velocity = bIgnoreVerticalMomentum ? FVector::VectorPlaneProject(Params.PriorVelocity, UpDirection) : Params.PriorVelocity;
+
+	if (SteerAcceleration > 0.0f && CharacterInputs)
+	{
+		const FVector SteerDirection = FVector::VectorPlaneProject(CharacterInputs->GetMoveInput_WorldSpace(), UpDirection).GetClampedToMaxSize(1.0f);
+		if (!SteerDirection.IsNearlyZero())
+		{
+			// Never let steering add speed past MaxSteerSpeed, but keep any faster momentum we came in with.
+			const float SpeedLimit = FMath::Max(Velocity.Size(), MaxSteerSpeed);
+			Velocity = (Velocity + SteerDirection * SteerAcceleration * DeltaSeconds).GetClampedToMaxSize(SpeedLimit);
+		}
+	}
+
+	OutProposedMove.LinearVelocity = Velocity;
+}
 }

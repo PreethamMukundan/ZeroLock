@@ -18,6 +18,8 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 
+DECLARE_MULTICAST_DELEGATE(FOnJumpInputPressed);
+
 UCLASS()
 class ZEROLOCK_API AZeroMoverPawn : public APawn, public IMoverInputProducerInterface
 {
@@ -25,6 +27,12 @@ class ZEROLOCK_API AZeroMoverPawn : public APawn, public IMoverInputProducerInte
 
 public:
     AZeroMoverPawn();
+
+    /** Broadcast on the locally controlled pawn when the jump input is pressed (e.g. so abilities can be cancelled by jumping). */
+    FOnJumpInputPressed OnJumpInputPressed;
+
+    /** Call from an OnJumpInputPressed listener to stop this press from reaching the mover (no jump, air jump or mantle). */
+    void ConsumeJumpPress() { bJumpPressConsumed = true; }
 
     UZeroMoverComponent* GetZeroMoverComponent() const { return MoverComponent; }
     USkeletalMeshComponent* GetSkeletalMeshComponent() const { return MeshComponent; }
@@ -109,6 +117,7 @@ private:
 
     FVector2D CachedMoveInput = FVector2D::ZeroVector;
     bool bLocalJumpPressed = false;
+    bool bJumpPressConsumed = false;
     bool bWasJumpPressedLastFrame = false;
     bool bCachedWantsToCrouch = false;
     bool bLocalSlideIntentValid = false;

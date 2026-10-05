@@ -320,6 +320,19 @@ void UZL_Task_SpawnPredictedProjectile::OnSpawnDataCancelled()
     EndTask();
 }
 
+void UZL_Task_SpawnPredictedProjectile::OnDestroy(bool bInOwnerFinished)
+{
+    if (AbilitySystemComponent.IsValid())
+    {
+       const FGameplayAbilitySpecHandle& SpecHandle = GetAbilitySpecHandle();
+       const FPredictionKey& ActivationPredictionKey = GetActivationPredictionKey();
+       AbilitySystemComponent->AbilityTargetDataSetDelegate(SpecHandle, ActivationPredictionKey).RemoveAll(this);
+       AbilitySystemComponent->AbilityTargetDataCancelledDelegate(SpecHandle, ActivationPredictionKey).RemoveAll(this);
+    }
+
+    Super::OnDestroy(bInOwnerFinished);
+}
+
 void UZL_Task_SpawnPredictedProjectile::OnTaskRejected()
 {
     AZero_BasePlayerController* ZeroPc = (Ability && Ability->GetCurrentActorInfo()) ? Cast<AZero_BasePlayerController>(Ability->GetCurrentActorInfo()->PlayerController.Get()) : nullptr;

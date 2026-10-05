@@ -10,6 +10,7 @@ struct Zero_MeleeDamageStatics
 {
 	DECLARE_ATTRIBUTE_CAPTUREDEF(MeleeDamage);
 	DECLARE_ATTRIBUTE_CAPTUREDEF(MeleeLifeSteal);
+	DECLARE_ATTRIBUTE_CAPTUREDEF(UniversalDamage);
 	DECLARE_ATTRIBUTE_CAPTUREDEF(Damage);
 	DECLARE_ATTRIBUTE_CAPTUREDEF(WeaponDamage);
 
@@ -26,6 +27,7 @@ struct Zero_MeleeDamageStatics
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UBaseCharAttributeSet,Damage, Source, true);
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UBaseCharAttributeSet,MeleeDamage, Source,true);
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UBaseCharAttributeSet,MeleeLifeSteal,Source, false);
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UBaseCharAttributeSet,UniversalDamage, Source, true);
 		
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UBaseCharAttributeSet,WeaponResistanceReduction,Target,false);
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UBaseCharAttributeSet, WeaponResistance, Target, false);
@@ -44,6 +46,7 @@ UCalc_Melee_Damage::UCalc_Melee_Damage()
 	RelevantAttributesToCapture.Add(MeleeDamageStatics().MeleeDamageDef);
 	RelevantAttributesToCapture.Add(MeleeDamageStatics().MeleeLifeStealDef);
 	RelevantAttributesToCapture.Add(MeleeDamageStatics().DamageDef);
+	RelevantAttributesToCapture.Add(MeleeDamageStatics().UniversalDamageDef);
 	
 	RelevantAttributesToCapture.Add(MeleeDamageStatics().WeaponResistanceDef);
 	RelevantAttributesToCapture.Add(MeleeDamageStatics().MeleeResistanceDef);
@@ -104,6 +107,11 @@ void UCalc_Melee_Damage::Execute_Implementation(const FGameplayEffectCustomExecu
 	float DamageBase = Damage;
 	
 	float UnmitigatedDamage = DamageBase + ((DamageBase * WeaponDamage/100)*0.5) + (DamageBase * MeleeDamage/100);
+
+	float UniversalDamage = 0.0f;
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(MeleeDamageStatics().UniversalDamageDef, EvaluationParameters, UniversalDamage);
+	UniversalDamage = FMath::Max<float>(UniversalDamage, 0.0f);
+	UnmitigatedDamage *= 1.0f + (UniversalDamage/100);
 
 	float NetWeaponResistance = WeaponResistance - WeaponResistanceReduction;
 	float NetMeleeResistance = MeleeResistance - MeleeResistanceReduction;

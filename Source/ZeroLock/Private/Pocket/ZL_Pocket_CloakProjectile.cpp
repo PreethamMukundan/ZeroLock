@@ -24,8 +24,38 @@ AZL_Pocket_CloakProjectile::AZL_Pocket_CloakProjectile(const FObjectInitializer&
 	HitboxComp->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
 	HitboxComp->SetGenerateOverlapEvents(true);
 
+	/* Slide along walls instead of sticking to them. A "bounce" with no bounciness and no friction strips the velocity
+	 * into the wall and keeps the part along it; OnBounce then restores the full speed. */
+	ProjectileMovement->bShouldBounce = true;
+	ProjectileMovement->Bounciness = 0.0f;
+	ProjectileMovement->Friction = 0.0f;
+	ProjectileMovement->bBounceAngleAffectsFriction = false;
+	bStraightenProjectileOnBounce = false;
+	bLimitBounces = false;
+
 	// Lifetime is owned by the FlyingCloak ability, which destroys the projectile on EndAbility.
 	InitialLifeSpan = 0.0f;
+}
+
+void AZL_Pocket_CloakProjectile::OnBounce(const FHitResult& ImpactResult, const FVector& ImpactVelocity)
+{
+	// Intentionally not calling Super: straightening and bounce limits don't apply to sliding.
+	if (!bPreserveSpeedOnSlide)
+	{
+		return;
+	}
+
+	const FVector SlideDir = ProjectileMovement->Velocity.GetSafeNormal();
+	const FVector ImpactDir = ImpactVelocity.GetSafeNormal();
+
+	// Near head-on hits leave no direction to slide in, so let the projectile stop against the wall.
+	if (SlideDir.IsNearlyZero() || FMath::Abs(ImpactDir | ImpactResult.ImpactNormal) > MaxSlideImpactDot)
+	{
+		ProjectileMovement->Velocity = FVector::ZeroVector;
+		return;
+	}
+
+	ProjectileMovement->Velocity = SlideDir * ImpactVelocity.Size();
 }
 
 void AZL_Pocket_CloakProjectile::OnStop(const FHitResult& Hit)

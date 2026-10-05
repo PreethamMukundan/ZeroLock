@@ -151,6 +151,11 @@ public:
 	FGameplayAttributeData MeleeLifeSteal;
 	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, MeleeLifeSteal)
 
+	// Percent bonus applied to all outgoing damage (spirit, weapon and melee), on top of the type-specific bonuses.
+	UPROPERTY(BlueprintReadOnly,Category = "Damage Attribute Set", ReplicatedUsing= OnRep_UniversalDamage)
+	FGameplayAttributeData UniversalDamage;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, UniversalDamage)
+
 
 	UPROPERTY(BlueprintReadOnly,Category="CooldownAndDuration",ReplicatedUsing= OnRep_CooldownReduction)
 	FGameplayAttributeData CooldownReduction;
@@ -295,6 +300,9 @@ protected:
 
 	UFUNCTION()
 	virtual void OnRep_MeleeResistanceReduction(const FGameplayAttributeData& OldValue);
+
+	UFUNCTION()
+	virtual void OnRep_UniversalDamage(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
 	virtual void OnRep_CooldownReduction(const FGameplayAttributeData& OldValue);

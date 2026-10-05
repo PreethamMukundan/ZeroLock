@@ -39,6 +39,7 @@ UBaseCharAttributeSet::UBaseCharAttributeSet()
 	MeleeResistance = 0.0f;
 	MeleeResistanceReduction = 0.0f;
 	MeleeLifeSteal = 0.0f;
+	UniversalDamage = 0.0f;
 	
 }
 void UBaseCharAttributeSet::PreAttributeChange(const FGameplayAttribute & Attribute, float & NewValue)
@@ -258,6 +259,7 @@ void UBaseCharAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet,MeleeResistance, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet,MeleeLifeSteal, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet,MeleeResistanceReduction, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet,UniversalDamage, COND_None, REPNOTIFY_OnChanged);
 
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet,CooldownReduction, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet,DebufReduction, COND_None, REPNOTIFY_OnChanged);
@@ -474,4 +476,9 @@ void UBaseCharAttributeSet::OnRep_DebufReduction(const FGameplayAttributeData& O
 void UBaseCharAttributeSet::OnRep_DurationExtension(const FGameplayAttributeData& OldValue)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet,DurationExtension, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_UniversalDamage(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet,UniversalDamage, OldValue);
 }

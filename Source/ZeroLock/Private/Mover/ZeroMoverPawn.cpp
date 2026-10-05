@@ -222,7 +222,14 @@ void AZeroMoverPawn::OnLook(const FInputActionValue& Value)
 
 void AZeroMoverPawn::OnJumpPressed()
 {
-    bLocalJumpPressed = true;
+    bJumpPressConsumed = false;
+    OnJumpInputPressed.Broadcast();
+
+    // A listener (e.g. an ability cancelled by jumping) can swallow the press so it never becomes a jump.
+    if (!bJumpPressConsumed)
+    {
+        bLocalJumpPressed = true;
+    }
 }
 void AZeroMoverPawn::OnJumpReleased()
 {

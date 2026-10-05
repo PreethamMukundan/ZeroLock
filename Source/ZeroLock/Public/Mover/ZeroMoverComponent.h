@@ -75,8 +75,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Teleport")
 	float MaxTeleportDistance = 10000.0f;
 
-	
+	/** Mode the pawn is held in while rooted. Must ignore move input (e.g. a ZeroFloatMode without bPreserveMomentum). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Rooted")
+	FName RootedModeName = FName("Locked");
+
+	/** True while the owner has the ZeroLock.Movement.Rooted tag: the pawn is held in place and only teleports are applied. */
+	bool IsRooted() const;
+
+
 protected:
+	void HandleRooted(const FMoverTimeStep& TimeStep, const FName& CurrentMode);
+
+	void HandleTeleportInput(const FZeroMovementInputs& ZeroInputs);
+
 	bool HandleWallBounceCheck(const FZeroMovementInputs& ZeroInputs,const FName& CurrentMode);
 
 	void HandleDashInputs(const FCharacterDefaultInputs& DefaultInputs, const FZeroMovementInputs& ZeroInputs);

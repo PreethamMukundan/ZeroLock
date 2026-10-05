@@ -2,6 +2,8 @@
 
 
 #include "Mover/ZeroMoverComponent.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -14,7 +16,8 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
-#include "Mover/ZeroMovementData.h" 
+#include "GAS/ZL_GameplayTags.h"
+#include "Mover/ZeroMovementData.h"
 #include "Mover/ZeroMoverPawn.h"
 
 UZeroMoverComponent::UZeroMoverComponent()
@@ -32,7 +35,14 @@ void UZeroMoverComponent::OnMoverPreSimulationTick(const FMoverTimeStep& TimeSte
     if (!FoundDefaults || !FoundZeroInputs) return;
 
     FName CurrentMode = GetMovementModeName();
-    
+
+    if (IsRooted())
+    {
+        HandleRooted(TimeStep, CurrentMode);
+        HandleTeleportInput(*FoundZeroInputs);
+        return;
+    }
+
     if (FoundZeroInputs->bJumpHold)
     {
         if (TryMantle(*FoundDefaults,*FoundZeroInputs))
@@ -108,19 +118,51 @@ void UZeroMoverComponent::OnMoverPreSimulationTick(const FMoverTimeStep& TimeSte
         QueueLayeredMove(Pull);
     }
 
-    if (FoundZeroInputs->bHasTeleport)
-    {
-        const FMoverDefaultSyncState* Sync = GetSyncState().SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
-        const FVector CurrentLocation = Sync ? Sync->GetLocation_WorldSpace() : UpdatedComponent->GetComponentLocation();
+    HandleTeleportInput(*FoundZeroInputs);
+}
 
-        // The target comes from the client's input, so reject anything out of range.
-        if (FVector::DistSquared(CurrentLocation, FoundZeroInputs->TeleportTarget) <= FMath::Square(MaxTeleportDistance))
-        {
-            TSharedPtr<FTeleportEffect> Teleport = MakeShared<FTeleportEffect>();
-            Teleport->TargetLocation = FoundZeroInputs->TeleportTarget;
-            Teleport->bUseActorRotation = true;
-            QueueInstantMovementEffect(Teleport);
-        }
+bool UZeroMoverComponent::IsRooted() const
+{
+    const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+    return ASC && ASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_MOVEMENT_ROOTED);
+}
+
+void UZeroMoverComponent::HandleRooted(const FMoverTimeStep& TimeStep, const FName& CurrentMode)
+{
+    if (CurrentMode != RootedModeName)
+    {
+        QueueNextMode(RootedModeName);
+    }
+
+    // Kill any momentum right away; the rooted mode ignores input, so the pawn stays put once it's at zero.
+    const FMoverDefaultSyncState* Sync = GetSyncState().SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
+    if (Sync && !Sync->GetVelocity_WorldSpace().IsNearlyZero())
+    {
+        TSharedPtr<FLayeredMove_LinearVelocity> StopMove = MakeShared<FLayeredMove_LinearVelocity>();
+        StopMove->Velocity = FVector::ZeroVector;
+        StopMove->DurationMs = TimeStep.StepMs;
+        StopMove->MixMode = EMoveMixMode::OverrideVelocity;
+        QueueLayeredMove(StopMove);
+    }
+}
+
+void UZeroMoverComponent::HandleTeleportInput(const FZeroMovementInputs& ZeroInputs)
+{
+    if (!ZeroInputs.bHasTeleport)
+    {
+        return;
+    }
+
+    const FMoverDefaultSyncState* Sync = GetSyncState().SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
+    const FVector CurrentLocation = Sync ? Sync->GetLocation_WorldSpace() : UpdatedComponent->GetComponentLocation();
+
+    // The target comes from the client's input, so reject anything out of range.
+    if (FVector::DistSquared(CurrentLocation, ZeroInputs.TeleportTarget) <= FMath::Square(MaxTeleportDistance))
+    {
+        TSharedPtr<FTeleportEffect> Teleport = MakeShared<FTeleportEffect>();
+        Teleport->TargetLocation = ZeroInputs.TeleportTarget;
+        Teleport->bUseActorRotation = true;
+        QueueInstantMovementEffect(Teleport);
     }
 }
 

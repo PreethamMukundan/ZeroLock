@@ -25,5 +25,20 @@ namespace ZerolockGameplayTagsForBinding
 	 * has in ActivationBlockedTags). Abilities that are already active still get their input presses. */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_ABILITIES_BLOCKED)
 
+	/** SetByCaller tag for the damage that UCalc_Spirit_Damage turns into spirit damage. */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SETBYCALLER_SPIRIT)
+
+	/** Asset tag for damage that can bring the target down to 1 health but never kill it (see UBaseCharAttributeSet::PostGameplayEffectExecute). */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_DAMAGE_NONLETHAL)
+
+	/** Granted while Pocket's Affliction DOT is ticking on the owner. */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_AFFLICTED)
+
+	/** UCalc_Healing heals nothing while the target has this tag. */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_HEAL_BLOCKED)
+
+	/** Triggers UZL_StatusTimerAbility on the victim (send it with UZL_StatusTimerAbility::SendStatusTimer). */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EVENT_STATUS_TIMER)
+
 }
 

@@ -5,6 +5,7 @@
 
 #include "GameplayEffect.h"
 #include "GameplayEffectExtension.h"
+#include "GAS/ZL_GameplayTags.h"
 #include "Zero_BasePlayerController.h"
 #include "Zero_BasePlayerState.h"
 #include "Chaos/Deformable/MuscleActivationConstraints.h"
@@ -109,8 +110,13 @@ void UBaseCharAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		{
 			if (Target_PS->TeamID != Source_PS->TeamID)
 			{
-				const float LocalDamageDone = GetDamage();
+				float LocalDamageDone = GetDamage();
 				SetDamage(0.f);
+				// Non-lethal damage (e.g. Affliction) can take the target down to 1 health, never kill it.
+				if (SpecAssetTags.HasTag(ZerolockGameplayTagsForBinding::TAG_DAMAGE_NONLETHAL))
+				{
+					LocalDamageDone = FMath::Min(LocalDamageDone, FMath::Max(GetCurrentHealth() - 1.0f, 0.0f));
+				}
 				if (LocalDamageDone > 0.0f)
 				{
 					bool wasAlive = true;

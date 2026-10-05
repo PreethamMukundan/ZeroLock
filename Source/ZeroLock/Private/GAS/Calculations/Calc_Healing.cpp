@@ -4,6 +4,7 @@
 #include "GAS/Calculations/Calc_Healing.h"
 
 #include "GAS/BaseCharAttributeSet.h"
+#include "GAS/ZL_GameplayTags.h"
 
 struct Zero_HealStatics
 {
@@ -52,6 +53,12 @@ void UCalc_Healing::Execute_Implementation(const FGameplayEffectCustomExecutionP
 	FAggregatorEvaluateParameters EvaluationParameters;
 	EvaluationParameters.SourceTags = SourceTags;
 	EvaluationParameters.TargetTags = TargetTags;
+
+	// Level 3 Affliction (and anything else that grants it) stops all healing.
+	if (TargetTags && TargetTags->HasTag(ZerolockGameplayTagsForBinding::TAG_STATUS_HEAL_BLOCKED))
+	{
+		return;
+	}
 
 
 	float HealingBonus = 0.0f;

@@ -16,10 +16,13 @@
 #include "Engine/OverlapResult.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "Zero_BasePlayerController.h"
 #include "Components/MeshComponent.h"
+#include "Particles/ParticleSystemComponent.h"
+#include "ZeroLock/ZeroLockCharacter.h"
 #include "Engine/Engine.h"
 #include "Sound/SoundBase.h"
 #include "ZeroLock/ZeroLock.h"
@@ -45,6 +48,12 @@ AProjectile::AProjectile(const FObjectInitializer& ObjectInitializer)
 	HitboxComp->bReceivesDecals = false;
 	HitboxComp->SetupAttachment(RootComponent);
 	HitboxComp->SetShouldUpdatePhysicsVolume(false);
+
+	// Optional trail (e.g. bullet tracer). Inert until a Template is assigned in the BP.
+	TrailComp = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("TrailComponent"));
+	TrailComp->SetupAttachment(RootComponent);
+	TrailComp->bAutoActivate = true;
+	TrailComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	// Set up our projectile movement.
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
@@ -95,6 +104,10 @@ AProjectile::AProjectile(const FObjectInitializer& ObjectInitializer)
 	ImpactGameplayEffect = nullptr;
 	bUseFilter = true;
 	ImpactEffectDirection = EEffectDirection::InProjectileDirection;
+	bApplyWeaponDamage = false;
+	WeaponDamage = 1.0f;
+	HitCharacterParticle = nullptr;
+	HitWorldParticle = nullptr;
 	AreaRadius = 0.0f;
 	AreaOffset = FVector(0.0f);
 	AreaGameplayEffect = nullptr;
@@ -386,6 +399,11 @@ void AProjectile::DisableAndHide()
 			NiagaraComp->TickComponent(0.0f, LEVELTICK_All, nullptr);
 			NiagaraComp->Deactivate();
 			NiagaraComp->SetAutoDestroy(true);
+		}
+		// Stop emitting trails, but let the existing trail particles fade out.
+		else if (UParticleSystemComponent* ParticleComp = Cast<UParticleSystemComponent>(InComponent))
+		{
+			ParticleComp->DeactivateSystem();
 		}
 		// Stop looping audio (i.e. ambient sounds).
 		else if (UAudioComponent* AudioComp = Cast<UAudioComponent>(InComponent))
@@ -758,6 +776,15 @@ void AProjectile::Detonate(bool bHasDirectImpactTarget, AActor* OtherActor, UPri
 				// Always spawn detonation FX. Don't spawn decals if we hit a target (e.g. a player character).
 				DetonationFX.ExecuteEffects(this, HitLocation, Normal.Rotation(), OtherComp, bHasDirectImpactTarget);
 
+				// Cascade impact FX. Skip when detonating from lifespan expiring without hitting anything.
+				if (UParticleSystem* ImpactParticle = bHasDirectImpactTarget ? HitCharacterParticle : HitWorldParticle)
+				{
+					if (bHasDirectImpactTarget || IsValid(OtherActor) || IsValid(OtherComp))
+					{
+						UGameplayStatics::SpawnEmitterAtLocation(this, ImpactParticle, HitLocation, Normal.Rotation());
+					}
+				}
+
 				/* Spawn missed impact FX if we didn't directly hit a target (i.e. detonated against the environment),
 				 * unless we didn't actually hit anything (i.e. detonated from our lifespan expiring). */
 				if (!bHasDirectImpactTarget && (IsValid(OtherActor) || IsValid(OtherComp)))
@@ -795,7 +822,7 @@ void AProjectile::Detonate(bool bHasDirectImpactTarget, AActor* OtherActor, UPri
 		if (IsServerProjectile())
 		{
 			// If there was a direct impact on a target, apply the impact GE to them.
-			if (ImpactGameplayEffect && bHasDirectImpactTarget && OtherActor)
+			if ((ImpactGameplayEffect || bApplyWeaponDamage) && bHasDirectImpactTarget && OtherActor)
 			{
 				const FVector Normal =  (ImpactEffectDirection == EEffectDirection::InProjectileDirection) ? GetActorRotation().Vector() :
 										(ImpactEffectDirection == EEffectDirection::InVelocityDirection) ? ProjectileMovement->Velocity.GetSafeNormal() :
@@ -990,7 +1017,22 @@ FVector AProjectile::GetAreaOfEffectOrigin() const
 
 void AProjectile::ApplyEffectToTarget(const bool bDirectImpact, const AActor* Target, const FHitResult& Hit) const
 {
-	
+	if (!bDirectImpact || !bApplyWeaponDamage)
+	{
+		return;
+	}
+
+	const AZeroLockCharacter* Shooter = Cast<AZeroLockCharacter>(GetOwner());
+	const AZeroLockCharacter* Victim = Cast<AZeroLockCharacter>(Target);
+	if (!Shooter || !Victim || Shooter == Victim)
+	{
+		return;
+	}
+
+	if (UBaseCharAbilitySystemComponent* SourceASC = Shooter->GetMyAbilitySystemComp())
+	{
+		SourceASC->ApplyWeaponDamage(Victim->GetMyAbilitySystemComp(), WeaponDamage);
+	}
 }
 
 void AProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

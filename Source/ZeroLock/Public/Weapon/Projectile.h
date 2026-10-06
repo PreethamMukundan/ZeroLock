@@ -15,6 +15,8 @@ class AZero_BasePlayerController;
 class UArrowComponent;
 class UCapsuleComponent;
 class UGameplayEffect;
+class UParticleSystem;
+class UParticleSystemComponent;
 class UProjectileMovementComponent;
 class USphereComponent;
  
@@ -372,6 +374,10 @@ protected:
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
 	TObjectPtr<UCapsuleComponent> HitboxComp;
+
+	/** Looping trail attached to the projectile (e.g. a bullet tracer). Set its Template in the BP to enable it. */
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Projectile|FX")
+	TObjectPtr<UParticleSystemComponent> TrailComp;
  
  
  
@@ -502,6 +508,22 @@ protected:
 	 * not VFX. (Area effects are always applied with FromProjectilePosition.) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile", Meta = (EditCondition = "ImpactGameplayEffect != nullptr"))
 	EEffectDirection ImpactEffectDirection;
+
+	/** If true, a direct hit on a character applies weapon damage through the instigator's ASC (ApplyWeaponDamage). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile|Damage")
+	bool bApplyWeaponDamage;
+
+	/** Base value passed to ApplyWeaponDamage on a direct hit. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile|Damage", Meta = (EditCondition = "bApplyWeaponDamage"))
+	float WeaponDamage;
+
+	/** Cascade particle spawned when this projectile hits a character. */
+	UPROPERTY(EditDefaultsOnly, Category = "Projectile|FX")
+	TObjectPtr<UParticleSystem> HitCharacterParticle;
+
+	/** Cascade particle spawned when this projectile hits the environment. */
+	UPROPERTY(EditDefaultsOnly, Category = "Projectile|FX")
+	TObjectPtr<UParticleSystem> HitWorldParticle;
  
 	/** Called when this projectile stops because it hit a valid target, hit a blocking surface, or stopped moving (e.g.
 	 * ran out of bounces). Applies ImpactGameplayEffect to the hit actor (if bHasDirectImpactTarget is true), triggers

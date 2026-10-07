@@ -34,6 +34,10 @@ public:
     /** Call from an OnJumpInputPressed listener to stop this press from reaching the mover (no jump, air jump or mantle). */
     void ConsumeJumpPress() { bJumpPressConsumed = true; }
 
+    /** Clips used by ABP_DeadlockHero (UZL_DeadlockAnimInstance) for this pawn. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+    TObjectPtr<class UZL_DeadlockAnimSet> DeadlockAnimSet;
+
     UZeroMoverComponent* GetZeroMoverComponent() const { return MoverComponent; }
     USkeletalMeshComponent* GetSkeletalMeshComponent() const { return MeshComponent; }
     

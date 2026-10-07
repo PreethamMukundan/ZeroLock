@@ -26,6 +26,9 @@ public class ZeroEditorModule : ModuleRules
                 "Blutility",
                 "UMG",
                 "UMGEditor",
+                "AnimGraph",
+                "AnimGraphRuntime",
+                "BlueprintGraph",
             }
         );
     }

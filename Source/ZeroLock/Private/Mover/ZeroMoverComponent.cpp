@@ -374,6 +374,8 @@ void UZeroMoverComponent::HandleDashInputs(const FCharacterDefaultInputs& Defaul
     {
         if (!GetLastTimeStep().bIsResimulating)
         {
+            ++DashCount;
+            LastDashDirection = DashDirection;
             PlayDirectionalDashMontage(DashDirection);
         }
     }

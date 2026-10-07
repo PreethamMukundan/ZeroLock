@@ -1,0 +1,54 @@
+{
+  "deadlock_dir": "E:/SteamInstallFile/steamapps/common/Deadlock",
+  "source2viewer_cli": "E:/Tools/cli-windows-x64/Source2Viewer-CLI.exe",
+  "blender": "E:/SteamInstallFile/steamapps/common/Blender/blender.exe",
+  "output_dir": "E:/Repo/ZeroLock/ZeroLock/Saved/DeadlockImporter",
+  "ue_dest_root": "/Game/Developers/rpm86/Deadlock",
+
+  "normal_flip_green": true,
+
+  "animations": {
+    "mode": "filtered",
+    "_mode_help": "filtered = use include/exclude below, all = every clip, none = mesh only",
+    "include": [
+      "^(weapon|out_of_combat|item)_(stand|crouch)_idle$",
+      "^primary_(stand_)?idle$",
+      "^(weapon|out_of_combat)_(crouch_)?run_(center|n|ne|e|se|s|sw|w|nw)$",
+      "^primary_walk_(n|ne|e|se|s|sw|w|nw)$",
+      "^primary_sprint_(n|ne|e|se|s|sw|w|nw)$",
+      "^primary_crouch_walk_(n|ne|e|se|s|sw|w|nw)$",
+      "^run_to_stop_",
+      "^turn_",
+      "^jump_",
+      "^in_air_(apex|down)_loop$",
+      "^in_air_loop_(apex|down)$",
+      "^(landing_impact|land_impact_idle|hard_landing)$",
+      "^wall_jump$",
+      "^zipline_(attached_start|attached_loop|grab|loop|latched_loop)$",
+      "^(idle_aim|aim_weapon_(idle|crouch))(_up|_down)?$",
+      "^dash_",
+      "^slide_(start|loop|getup)$",
+      "^mantle_\\d+$",
+      "^wall_attach_",
+      "^aim_(idle|run|crouch)(_up|_down)?$",
+      "^shoot_",
+      "^reload_",
+      "^melee_",
+      "^parry",
+      "^ability_",
+      "^cast_",
+      "^throw$",
+      "^knockdown_",
+      "^stagger",
+      "^(standing|crouching)_stunned$",
+      "^death_",
+      "^ui_",
+      "^hero_pose$"
+    ],
+    "exclude": [
+      "_add$",
+      "retarget",
+      "^(bindpose|ref|null_add)$"
+    ]
+  }
+}

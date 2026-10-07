@@ -105,6 +105,15 @@ protected:
 	UAnimMontage* DashRightMontage;
 	
 	void PlayDirectionalDashMontage(const FVector& DashDirection);
+
+public:
+	/** Increments each time a dash starts on this machine (not during resimulation). Read by the Deadlock anim instance. */
+	int32 DashCount = 0;
+
+	/** World-space direction of the last dash. */
+	FVector LastDashDirection = FVector::ForwardVector;
+
+protected:
 	
 	
 	void HandleAirJumpTracking(const FName& CurrentMode, const FZeroMovementInputs& ZeroInputs);

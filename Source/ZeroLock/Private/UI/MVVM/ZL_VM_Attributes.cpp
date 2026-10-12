@@ -60,6 +60,44 @@ const FString UZL_VM_Attributes::GetFinalAmmoText() const
 	return ammoText;
 }
 
+void UZL_VM_Attributes::SetStamina(const float& stamina)
+{
+	if (UE_MVVM_SET_PROPERTY_VALUE(Stamina,stamina))
+	{
+		BroadcastStaminaDerived();
+	}
+}
+
+void UZL_VM_Attributes::SetMaxStamina(const float& maxstamina)
+{
+	if (UE_MVVM_SET_PROPERTY_VALUE(MaxStamina,maxstamina))
+	{
+		BroadcastStaminaDerived();
+	}
+}
+
+float UZL_VM_Attributes::GetStaminaRechargeProgress() const
+{
+	if (Stamina >= MaxStamina - KINDA_SMALL_NUMBER)
+	{
+		return 1.0f;
+	}
+	return FMath::Frac(Stamina);
+}
+
+FText UZL_VM_Attributes::GetStaminaText() const
+{
+	return FText::FromString(FString::Printf(TEXT("%d/%d"), GetStaminaCharges(), FMath::RoundToInt(MaxStamina)));
+}
+
+void UZL_VM_Attributes::BroadcastStaminaDerived()
+{
+	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetStaminaCharges);
+	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetStaminaRechargeProgress);
+	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetStaminaPercentage);
+	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetStaminaText);
+}
+
 void UZL_VM_Attributes::SetVM_ChargePhase(UZL_VM_ChargePercent* inVM)
 {
 

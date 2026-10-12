@@ -31,7 +31,7 @@ VM property pattern: `UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)`
 ### Who owns which VM
 | VM | Owner | Fed by |
 |---|---|---|
-| `UZL_VM_Attributes` (Health, MaxHealth, Ammo, MaxAmmo, IsInfiniteAmmo, VM_ChargePhase; `GetHealthPercentage`, `GetFinalAmmoText`) | `AZeroLockCharacter` (`CreateVM_Att`), mirrored to `AZero_BasePlayerState::CurrentVM` | GAS attribute callbacks `HealthAttributeChanged`, `AmmoAttributeChange` in `ZeroLockCharacter.cpp` |
+| `UZL_VM_Attributes` (Health, MaxHealth, Ammo, MaxAmmo, IsInfiniteAmmo, VM_ChargePhase, Stamina, MaxStamina; `GetHealthPercentage`, `GetFinalAmmoText`, `GetStaminaCharges`, `GetStaminaRechargeProgress`, `GetStaminaPercentage`, `GetStaminaText`) | `AZeroLockCharacter` (`CreateVM_Att`), mirrored to `AZero_BasePlayerState::CurrentVM` | GAS attribute callbacks `HealthAttributeChanged`, `AmmoAttributeChange`, `StaminaAttributeChanged` in `ZeroLockCharacter.cpp`. The owning player's Stamina comes from `MoverStaminaChanged` (predicted), not the lagging attribute |
 | `UZL_VM_AbilitiesContainer` (4 `UZL_VM_AbilityIcon` slots), `UZL_VM_ProgressionStack` | `UZL_AbilityUIManagerComponent` on the character | ASC events (below) and `BaseGameplayAbility` timers |
 | `UZL_VM_GameState` (AllyTeam, EnemyTeam, FormattedGameTime), `UZL_VM_PlayerInfo` per player | `AZero_BaseGameState` | game state |
 | `UZl_CharacterSelectionVM` | `UZL_CharacterSelectionSubsystem` (game instance) | hero select |
@@ -51,6 +51,7 @@ VM property pattern: `UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)`
 - Timer: `UZL_HUD_GameTimer` ← `AZero_BaseGameState::OnGameTimeUpdated`.
 - Team bar: `UZL_GameState_Bar` (`OnAllyTeamChanged/OnEnemyTeamChanged`) → `UZL_PlayerInfoBox`. `UZL_HUD_TeamList_View` is the old, effectively dead version.
 - Damage numbers: attribute set → client RPC `AZero_BasePlayerController::ShowDamageNumber` → `AZeroLockCharacter::AddDamageNumber` → `UZL_BaseDamageWidgetComponent` → `UZL_DamagePopUpBase` (1 s accumulate; BP event `AddindividualDamageNumber`, TypeID 0 spirit / 1 weapon / 2 other).
+- Stamina: `UZL_HUD_StaminaBar` (`UI/HUD/`, `UCommonUserWidget`) reads the owning pawn's `UZL_VM_Attributes` every tick and builds one `UProgressBar` pip per MaxStamina point inside BindWidget `PipBox` (optional `StaminaText`). Style via `PipStyle`, `FullColor`, `RechargingColor`, `PipSize`.
 - Crosshair: `UZL_HUD_PlayerBase::CF_ChargePhaseInit(VM)` swaps gun crosshair ↔ `UZL_AbilityChargePhase` in `CrosshairSwitcher`.
 
 ## Screens

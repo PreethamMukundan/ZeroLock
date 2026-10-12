@@ -139,6 +139,8 @@ void AZeroMoverPawn::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmd
     {
         ZeroInputs.LookDir = Controller->GetControlRotation();
     }
+    ZeroInputs.bIsRooted = MoverComponent && MoverComponent->IsRooted();
+
     if (MoverComponent && MoverComponent->bLatchedAbilityMove)
     {
         ZeroInputs.bHasAbilityMove = true;

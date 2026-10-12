@@ -22,6 +22,10 @@ UBaseCharAttributeSet::UBaseCharAttributeSet()
 	HealingReduction = 0.0f;
 	CurrentSpeed = 0.0f;
 	CurrentJump = 0.0f;
+	// Deadlock-style defaults: 3 stamina, one back every 5 seconds. Override them in the hero's DefaultGameplayEffect.
+	MaxStamina = 3.0f;
+	Stamina = 3.0f;
+	StaminaRegenRate = 0.2f;
 	Soul =0;
 	FireRate = 0.0f;
 	WeaponDamage = 0.0f;
@@ -244,6 +248,10 @@ void UBaseCharAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, CurrentSpeed, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, CurrentJump, COND_None, REPNOTIFY_OnChanged);
 	
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, Stamina, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, MaxStamina, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, StaminaRegenRate, COND_None, REPNOTIFY_OnChanged);
+
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, Soul, COND_None, REPNOTIFY_OnChanged);
 	
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, FireRate, COND_None, REPNOTIFY_OnChanged);
@@ -376,6 +384,21 @@ void UBaseCharAttributeSet::OnRep_HealingReduction(const FGameplayAttributeData&
 void UBaseCharAttributeSet::OnRep_HealingBonus(const FGameplayAttributeData& OldValue)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, HealingBonus, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_Stamina(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, Stamina, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_MaxStamina(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, MaxStamina, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_StaminaRegenRate(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, StaminaRegenRate, OldValue);
 }
 
 void UBaseCharAttributeSet::OnRep_Souls(const FGameplayAttributeData & OldValue)

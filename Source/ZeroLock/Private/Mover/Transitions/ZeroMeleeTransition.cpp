@@ -16,7 +16,8 @@ FTransitionEvalResult UZeroMeleeTransition::Evaluate_Implementation(const FSimul
 	
 	if (const FZeroMovementInputs* ZeroInputs = Params.StartState.InputCmd.InputCollection.FindDataByType<FZeroMovementInputs>())
 	{
-		if (ZeroInputs->bWantsToMelee)
+		// Component-level transitions run in every mode, including the rooted one; a lunge would break the root.
+		if (ZeroInputs->bWantsToMelee && !ZeroInputs->bIsRooted)
 		{
 			EvalResult.NextMode = MeleeModeName;
 		}

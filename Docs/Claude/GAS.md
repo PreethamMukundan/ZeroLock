@@ -21,6 +21,7 @@ All replicated `COND_None` (health and charges `REPNOTIFY_Always`). Percent stat
 | Meta (not replicated) | `Damage`, `Healing` |
 | Health | `CurrentHealth`, `MaximumHealth`, `HealthRegeneration`, `HealingBonus` (source), `HealingReduction` (target) |
 | Movement | `CurrentSpeed`, `CurrentJump` (**not wired to Mover**; handlers commented out / TODO) |
+| Stamina | `Stamina` (server mirror of the Mover-simulated value; don't modify it with GEs), `MaxStamina` (default 3), `StaminaRegenRate` per second (default 0.2). Defaults set in the ctor; override in `DefaultGameplayEffect`. Air jumps and dashes cost 1 (Movement.md) |
 | Economy | `Soul` |
 | Weapon | `FireRate` (seconds between shots), `WeaponDamage` %, `FlatWeapon`, `WeaponResistance`, `WeaponResistanceReduction`, `WeaponLifeSteal`, `CurrentAmmo`, `MaxAmmo` |
 | Spirit | `SpiritDamage` %, `FlatSpirit`, `SpiritResistance`, `SpiritResistanceReduction`, `SpiritLifeSteal` |

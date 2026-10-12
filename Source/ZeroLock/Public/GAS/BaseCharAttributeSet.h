@@ -75,6 +75,21 @@ public:
 	FGameplayAttributeData CurrentJump;
 	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, CurrentJump)
 
+	// Stamina is simulated by UZeroMoverComponent (predicted, rolls back); the server mirrors it here for replication and UI.
+	// Effects that modify Stamina directly get overwritten by the mover. Change MaxStamina / StaminaRegenRate instead.
+	UPROPERTY(BlueprintReadOnly, Category = "Stamina Attribute Set", ReplicatedUsing = OnRep_Stamina)
+	FGameplayAttributeData Stamina;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, Stamina)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stamina Attribute Set", ReplicatedUsing = OnRep_MaxStamina)
+	FGameplayAttributeData MaxStamina;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, MaxStamina)
+
+	// Stamina regained per second.
+	UPROPERTY(BlueprintReadOnly, Category = "Stamina Attribute Set", ReplicatedUsing = OnRep_StaminaRegenRate)
+	FGameplayAttributeData StaminaRegenRate;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, StaminaRegenRate)
+
 	UPROPERTY(BlueprintReadOnly, Category = "Soul Attribute Set", ReplicatedUsing = OnRep_Souls)
 	FGameplayAttributeData Soul;
 	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, Soul)
@@ -244,6 +259,15 @@ protected:
 
 	UFUNCTION()
 	virtual void OnRep_HealingBonus(const FGameplayAttributeData& OldValue);
+
+	UFUNCTION()
+	virtual void OnRep_Stamina(const FGameplayAttributeData& OldValue);
+
+	UFUNCTION()
+	virtual void OnRep_MaxStamina(const FGameplayAttributeData& OldValue);
+
+	UFUNCTION()
+	virtual void OnRep_StaminaRegenRate(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
 	virtual void OnRep_Souls(const FGameplayAttributeData& OldValue);

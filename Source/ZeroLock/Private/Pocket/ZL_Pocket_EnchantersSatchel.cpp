@@ -202,11 +202,7 @@ void UZL_Pocket_EnchantersSatchel::EndAbility(const FGameplayAbilitySpecHandle H
 			DrawExitDebug(Hero, Villans.Num() > 0);
 		}
 
-		// The rooted tag is removed by Super, so the mover takes this mode on its next tick.
-		if (MoverComp)
-		{
-			MoverComp->QueueNextMode(ExitModeName);
-		}
+		// Super removes the rooted tag; the mover sees it in the next input and switches to its RootedExitModeName.
 	}
 
 	if (MoverComp)

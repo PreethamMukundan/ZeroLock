@@ -77,6 +77,10 @@ struct FZeroMovementInputs : public FMoverDataStructBase
 	UPROPERTY(BlueprintReadWrite, Category="Zero")
 	FVector TeleportTarget = FVector::ZeroVector;
 
+	// Sampled from the owner's ZeroLock.Movement.Rooted tag when the input is produced, so client and server root on the same frame.
+	UPROPERTY(BlueprintReadWrite, Category="Zero")
+	bool bIsRooted = false;
+
     virtual UScriptStruct* GetScriptStruct() const override { return FZeroMovementInputs::StaticStruct(); }
     virtual FMoverDataStructBase* Clone() const override { return new FZeroMovementInputs(*this); }
 
@@ -109,7 +113,8 @@ struct FZeroMovementInputs : public FMoverDataStructBase
     	Ar << bWantsRelease;
     	Ar << bHasTeleport;
     	Ar << TeleportTarget;
-    	
+    	Ar << bIsRooted;
+
     	Map->SerializeObject(Ar, AActor::StaticClass(), (UObject*&)DynamicTargetActor);
     
     	
@@ -117,6 +122,74 @@ struct FZeroMovementInputs : public FMoverDataStructBase
        bOutSuccess = true;
        return true;
     }
+};
+
+// Per-frame simulation state that must roll back with the rest of the Mover sync state:
+// stamina, air jumps and air dashes used since leaving the ground, time left on the current dash,
+// and whether the previous frame was rooted / sliding.
+USTRUCT(BlueprintType)
+struct FZeroMoverSimState : public FMoverDataStructBase
+{
+	GENERATED_BODY()
+
+	// Negative until the first sim tick fills it with the owner's max stamina.
+	UPROPERTY(BlueprintReadOnly, Category = "Zero|State")
+	float Stamina = -1.0f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Zero|State")
+	int32 AirJumpsUsed = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Zero|State")
+	int32 AirDashesUsed = 0;
+
+	// Jumps are ignored while this is above zero.
+	UPROPERTY(BlueprintReadOnly, Category = "Zero|State")
+	float DashRemainingMs = 0.0f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Zero|State")
+	bool bWasRooted = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Zero|State")
+	bool bWasSliding = false;
+
+	virtual UScriptStruct* GetScriptStruct() const override { return FZeroMoverSimState::StaticStruct(); }
+	virtual FMoverDataStructBase* Clone() const override { return new FZeroMoverSimState(*this); }
+
+	virtual bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess) override
+	{
+		Super::NetSerialize(Ar, Map, bOutSuccess);
+		Ar << Stamina;
+		Ar << AirJumpsUsed;
+		Ar << AirDashesUsed;
+		Ar << DashRemainingMs;
+		Ar << bWasRooted;
+		Ar << bWasSliding;
+		bOutSuccess = true;
+		return true;
+	}
+
+	virtual bool ShouldReconcile(const FMoverDataStructBase& AuthorityState) const override
+	{
+		const FZeroMoverSimState* AuthState = static_cast<const FZeroMoverSimState*>(&AuthorityState);
+		return !FMath::IsNearlyEqual(Stamina, AuthState->Stamina, 0.05f) ||
+			AirJumpsUsed != AuthState->AirJumpsUsed ||
+			AirDashesUsed != AuthState->AirDashesUsed ||
+			!FMath::IsNearlyEqual(DashRemainingMs, AuthState->DashRemainingMs, 1.0f) ||
+			bWasRooted != AuthState->bWasRooted ||
+			bWasSliding != AuthState->bWasSliding;
+	}
+
+	virtual void Interpolate(const FMoverDataStructBase& From, const FMoverDataStructBase& To, float Pct) override
+	{
+		const FZeroMoverSimState* FromState = static_cast<const FZeroMoverSimState*>(&From);
+		const FZeroMoverSimState* ToState = static_cast<const FZeroMoverSimState*>(&To);
+		Stamina = FMath::Lerp(FromState->Stamina, ToState->Stamina, Pct);
+		AirJumpsUsed = ToState->AirJumpsUsed;
+		AirDashesUsed = ToState->AirDashesUsed;
+		DashRemainingMs = ToState->DashRemainingMs;
+		bWasRooted = ToState->bWasRooted;
+		bWasSliding = ToState->bWasSliding;
+	}
 };
 
 USTRUCT(BlueprintType)

@@ -1,4 +1,4 @@
-﻿// Copyright Preetham Mukundan (C) 2026
+// Copyright Preetham Mukundan (C) 2026
 
 #include "Mover/ZeroSlideMode.h"
 #include "MoveLibrary/MovementUtils.h"
@@ -15,38 +15,31 @@ UZeroSlideMode::UZeroSlideMode(const FObjectInitializer& ObjectInitializer)
 {
 	SlideInitialSpeedBoost = 500.0f;
 	SlideGravityForce = 1200.0f;
-	SlideSteeringAuthority = 2500.0f; 
-	SlideFriction = 0.5f; 
+	SlideSteeringAuthority = 2500.0f;
+	SlideFriction = 0.5f;
 	SlideMinSpeed = 150.0f;
 	SlideJumpImpulse = 650.0f;
 }
 
-
-void UZeroSlideMode::SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState)
+void UZeroSlideMode::GenerateMove_Implementation(const FMoverSimContext& SimContext, const FMoverTickStartData& StartState, const FMoverTimeStep& TimeStep, FProposedMove& OutProposedMove) const
 {
-	const float DeltaSeconds = Params.TimeStep.StepMs * 0.001f;
+	const float DeltaSeconds = TimeStep.StepMs * 0.001f;
 
-    const FZeroMovementInputs* Inputs = Params.StartState.InputCmd.InputCollection.FindDataByType<FZeroMovementInputs>();
-    const FCharacterDefaultInputs* DefaultInputs = Params.StartState.InputCmd.InputCollection.FindDataByType<FCharacterDefaultInputs>();
-    const FMoverDefaultSyncState* StartingSyncState = Params.StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
+    const FZeroMovementInputs* Inputs = StartState.InputCmd.InputCollection.FindDataByType<FZeroMovementInputs>();
+    const FCharacterDefaultInputs* DefaultInputs = StartState.InputCmd.InputCollection.FindDataByType<FCharacterDefaultInputs>();
+    const FMoverDefaultSyncState* StartingSyncState = StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
 
-    if (!StartingSyncState || !Params.MovingComps.UpdatedComponent.IsValid())
+    if (!StartingSyncState)
     {
-       OutputState.MovementEndState.NextModeName = DefaultModeNames::Walking;
        return;
     }
 
-    USceneComponent* UpdatedComponent = Params.MovingComps.UpdatedComponent.Get();
-    OutputState.SyncState.MovementMode = TEXT("Sliding");
-    FMoverDefaultSyncState& OutputSyncState = OutputState.SyncState.SyncStateCollection.FindOrAddMutableDataByType<FMoverDefaultSyncState>();
-    
     FVector CurrentVelocity = StartingSyncState->GetVelocity_WorldSpace();
 
-
-    if (Params.StartState.SyncState.MovementMode != TEXT("Sliding"))
+    if (StartState.SyncState.MovementMode != TEXT("Sliding"))
     {
        FVector BoostDir = FVector::ZeroVector;
-       
+
        if (DefaultInputs && !DefaultInputs->GetMoveInput().IsNearlyZero())
        {
            BoostDir = DefaultInputs->GetMoveInput().GetSafeNormal2D();
@@ -63,15 +56,13 @@ void UZeroSlideMode::SimulationTick_Implementation(const FSimulationTickParams& 
        CurrentVelocity += BoostDir * SlideInitialSpeedBoost;
     }
 
-    FRotator TargetOrient = UpdatedComponent->GetComponentRotation();
+    FRotator TargetOrient = StartingSyncState->GetOrientation_WorldSpace();
     if (Inputs)
     {
        TargetOrient = Inputs->LookDir.Vector().ToOrientationRotator();
     }
     TargetOrient.Pitch = 0.0f;
     TargetOrient.Roll = 0.0f;
-    FQuat NewRot = TargetOrient.Quaternion();
-   
 
     FVector CumulativeForces = FVector::DownVector * SlideGravityForce;
 
@@ -96,11 +87,11 @@ void UZeroSlideMode::SimulationTick_Implementation(const FSimulationTickParams& 
     if (Inputs && CurrentVelocity.Size2D() > 10.0f)
     {
        float Speed2D = CurrentVelocity.Size2D();
-       
+
        FVector TargetDir2D = bIsMovingBackward ? -LookDir2D : LookDir2D;
 
        FVector BlendedDir = FMath::VInterpConstantTo(VelDir2D, TargetDir2D, DeltaSeconds, 5.0f);
-       
+
        CurrentVelocity = BlendedDir.GetSafeNormal2D() * Speed2D + FVector(0, 0, CurrentVelocity.Z);
     }
 
@@ -109,18 +100,50 @@ void UZeroSlideMode::SimulationTick_Implementation(const FSimulationTickParams& 
     float Speed = CurrentVelocity.Size2D();
     if (Speed > 0.0f)
     {
-       float FrictionDrop = SlideFriction * 500.0f * DeltaSeconds; 
+       float FrictionDrop = SlideFriction * 500.0f * DeltaSeconds;
        float NewSpeed = FMath::Max(Speed - FrictionDrop, 0.0f);
        CurrentVelocity = CurrentVelocity.GetSafeNormal2D() * NewSpeed + FVector(0, 0, CurrentVelocity.Z);
     }
 
+    OutProposedMove.LinearVelocity = CurrentVelocity;
+}
+
+void UZeroSlideMode::SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState)
+{
+	const float DeltaSeconds = Params.TimeStep.StepMs * 0.001f;
+
+    const FZeroMovementInputs* Inputs = Params.StartState.InputCmd.InputCollection.FindDataByType<FZeroMovementInputs>();
+    const FMoverDefaultSyncState* StartingSyncState = Params.StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>();
+
+    if (!StartingSyncState || !Params.MovingComps.UpdatedComponent.IsValid())
+    {
+       OutputState.MovementEndState.NextModeName = DefaultModeNames::Walking;
+       return;
+    }
+
+    USceneComponent* UpdatedComponent = Params.MovingComps.UpdatedComponent.Get();
+    OutputState.SyncState.MovementMode = TEXT("Sliding");
+    FMoverDefaultSyncState& OutputSyncState = OutputState.SyncState.SyncStateCollection.FindOrAddMutableDataByType<FMoverDefaultSyncState>();
+
+    // Slide velocity from GenerateMove, or a layered move's override of it.
+    FVector CurrentVelocity = Params.ProposedMove.LinearVelocity;
+
+    FRotator TargetOrient = UpdatedComponent->GetComponentRotation();
+    if (Inputs)
+    {
+       TargetOrient = Inputs->LookDir.Vector().ToOrientationRotator();
+    }
+    TargetOrient.Pitch = 0.0f;
+    TargetOrient.Roll = 0.0f;
+    FQuat NewRot = TargetOrient.Quaternion();
+
     FVector OldLocation = UpdatedComponent->GetComponentLocation();
     FVector MoveDelta = CurrentVelocity * DeltaSeconds;
-    
+
     FHitResult Hit(1.f);
     FMovementRecord MoveRecord;
     MoveRecord.SetDeltaSeconds(DeltaSeconds);
-   
+
     UMovementUtils::TrySafeMoveAndSlideUpdatedComponent(Params.MovingComps, MoveDelta, NewRot, true, Hit, ETeleportType::None, MoveRecord, true);
 
 

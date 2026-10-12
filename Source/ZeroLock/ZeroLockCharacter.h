@@ -134,6 +134,9 @@ protected:
 	void HealthAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void AmmoAttributeChange(const FOnAttributeChangeData& OnAttributeChangeData);
 	void SpeedAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData);
+	void StaminaAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData);
+	/** Stamina from the mover simulation: mirrored into the attribute on the server, shown directly for the owning player. */
+	void MoverStaminaChanged(float NewStamina, float MaxStamina);
 	void AddEventForDeath();
 	
 	virtual void BeginPlay() override;

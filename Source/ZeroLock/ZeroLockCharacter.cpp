@@ -23,6 +23,7 @@
 #include "Input/KeybindManagerSubsystem.h"
 #include "Items/Zero_Item_Inventory_Component.h"
 #include "Kismet/GameplayStatics.h"
+#include "Mover/ZeroMoverComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "UI/Damage/ZL_BaseDamageWidgetComponent.h"
 #include "UI/MVVM/ZL_VM_Attributes.h"
@@ -107,9 +108,14 @@ void AZeroLockCharacter::InitializeFloatingStatusBar()
 void AZeroLockCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	ParryComp->SetVisibility(false);
-	
+
+	if (UZeroMoverComponent* MoverComp = GetZeroMoverComponent())
+	{
+		MoverComp->OnStaminaChanged.AddUObject(this, &AZeroLockCharacter::MoverStaminaChanged);
+	}
+
 	if (GetMesh())
 	{
 		GetMesh()->CustomDepthStencilValue = 1;
@@ -186,7 +192,9 @@ void AZeroLockCharacter::InitializeAttributes()
 		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCurrentSpeedAttribute()).AddUObject(this, &AZeroLockCharacter::SpeedAttributeChanged);
 		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxAmmoAttribute()).AddUObject(this, &AZeroLockCharacter::AmmoAttributeChange);
 		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCurrentAmmoAttribute()).AddUObject(this, &AZeroLockCharacter::AmmoAttributeChange);
-		
+		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetStaminaAttribute()).AddUObject(this, &AZeroLockCharacter::StaminaAttributeChanged);
+		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxStaminaAttribute()).AddUObject(this, &AZeroLockCharacter::StaminaAttributeChanged);
+
 		AbilitySystemComp->OnNewAbilityAdded.AddUniqueDynamic(this, &ThisClass::NewAbilityAddedLocal);
 	}
 }
@@ -484,6 +492,11 @@ void AZeroLockCharacter::ResetCharacter()
 
 	float Max = AttributeSet->GetMaximumHealth();
 	AttributeSet->SetCurrentHealth(Max);
+
+	if (UZeroMoverComponent* MoverComp = GetZeroMoverComponent())
+	{
+		MoverComp->RequestStaminaRefill();
+	}
 	if (PC) EnableInput(PC);
 	bIsDead = false;
 }
@@ -588,6 +601,8 @@ void AZeroLockCharacter::CreateVM_Att()
 		VM_Attributes->SetAmmo(static_cast<int32>(AttributeSet->GetCurrentAmmo()));
 		VM_Attributes->SetMaxAmmo(static_cast<int32>(AttributeSet->GetMaxAmmo()));
 		VM_Attributes->SetIsInfiniteAmmo(false);
+		VM_Attributes->SetStamina(AttributeSet->GetStamina());
+		VM_Attributes->SetMaxStamina(AttributeSet->GetMaxStamina());
 	}
 	if (AZero_BasePlayerState* PS = GetPlayerState<AZero_BasePlayerState>())
 	{
@@ -747,6 +762,45 @@ void AZeroLockCharacter::AmmoAttributeChange(const FOnAttributeChangeData& OnAtt
 	
 	GetVM_Attributes()->SetMaxAmmo(static_cast<int32>(MaxA));
 	GetVM_Attributes()->SetAmmo(static_cast<int32>(currentA));
+}
+
+void AZeroLockCharacter::StaminaAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData)
+{
+	if (!AttributeSet) return;
+
+	UZL_VM_Attributes* VM = GetVM_Attributes();
+	if (!VM) return;
+
+	VM->SetMaxStamina(AttributeSet->GetMaxStamina());
+
+	// The owning player's stamina comes straight from the mover's prediction (MoverStaminaChanged); the replicated value lags behind it.
+	if (!IsLocallyControlled())
+	{
+		VM->SetStamina(AttributeSet->GetStamina());
+	}
+}
+
+void AZeroLockCharacter::MoverStaminaChanged(float NewStamina, float MaxStamina)
+{
+	if (HasAuthority() && AbilitySystemComp && AttributeSet)
+	{
+		// Regen changes it every frame; skip tiny steps to keep replication down, but always land exactly on empty/full.
+		const float Current = AttributeSet->GetStamina();
+		const bool bAtLimit = NewStamina <= 0.0f || NewStamina >= MaxStamina;
+		if (bAtLimit ? Current != NewStamina : !FMath::IsNearlyEqual(Current, NewStamina, 0.01f))
+		{
+			AbilitySystemComp->SetNumericAttributeBase(UBaseCharAttributeSet::GetStaminaAttribute(), NewStamina);
+		}
+	}
+
+	if (IsLocallyControlled())
+	{
+		if (UZL_VM_Attributes* VM = GetVM_Attributes())
+		{
+			VM->SetMaxStamina(MaxStamina);
+			VM->SetStamina(NewStamina);
+		}
+	}
 }
 
 void AZeroLockCharacter::SpeedAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData)

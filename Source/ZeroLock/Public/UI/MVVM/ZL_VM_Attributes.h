@@ -68,5 +68,38 @@ private:
 
 	UPROPERTY(BlueprintReadOnly,FieldNotify,Getter,Setter,meta=(AllowPrivateAccess=true))
 	UZL_VM_ChargePercent* VM_ChargePhase;
-	
+
+
+	//Stamina
+public:
+	float GetStamina() const {return Stamina;}
+	void SetStamina(const float& stamina);
+
+	float GetMaxStamina() const {return MaxStamina;}
+	void SetMaxStamina(const float& maxstamina);
+
+	// Whole stamina points ready to spend (the pips that are full).
+	UFUNCTION(BlueprintPure,FieldNotify)
+	int32 GetStaminaCharges() const { return FMath::FloorToInt(Stamina + KINDA_SMALL_NUMBER); }
+
+	// 0-1 fill of the stamina point that is currently regenerating (1 when stamina is full).
+	UFUNCTION(BlueprintPure,FieldNotify)
+	float GetStaminaRechargeProgress() const;
+
+	UFUNCTION(BlueprintPure,FieldNotify)
+	float GetStaminaPercentage() const { return MaxStamina > 0.0f ? Stamina / MaxStamina : 0.0f; }
+
+	// "2/3"
+	UFUNCTION(BlueprintPure,FieldNotify)
+	FText GetStaminaText() const;
+
+private:
+	UPROPERTY(BlueprintReadOnly,FieldNotify,Getter,Setter,meta=(AllowPrivateAccess=true))
+	float Stamina;
+
+	UPROPERTY(BlueprintReadOnly,FieldNotify,Getter,Setter,meta=(AllowPrivateAccess=true))
+	float MaxStamina;
+
+	void BroadcastStaminaDerived();
+
 };

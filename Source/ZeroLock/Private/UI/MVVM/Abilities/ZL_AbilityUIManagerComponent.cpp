@@ -120,7 +120,7 @@ void UZL_AbilityUIManagerComponent::BeginPlay()
 	if (Hero && Hero->IsLocallyControlled())
 	{
 		UAbilitySystemComponent* ASC = Hero->GetAbilitySystemComponent();
-		Hero->GetMyAbilitySystemComp()->OnAbilityUpgraded.AddDynamic(this,&ThisClass::UZL_AbilityUIManagerComponent::AbilityUpgradeCallBackFromASC);
+		Hero->GetMyAbilitySystemComp()->OnAbilityUpgraded.AddDynamic(this,&ThisClass::AbilityUpgradeCallBackFromASC);
 		Hero->GetMyAbilitySystemComp()->OnNewAbilityAdded.AddUniqueDynamic(this, &ThisClass::OnAbilityAdded);
 		ASC->OnActiveGameplayEffectAddedDelegateToSelf.AddUObject(this, &ThisClass::OnGEApplied);
 		TArray<FGameplayAbilitySpecHandle> AbilitySpecHandles;

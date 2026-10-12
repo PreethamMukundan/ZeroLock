@@ -48,10 +48,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Visuals")
 	TSubclassOf<AZL_Pocket_SuitcaseActor> SuitcaseClass;
 
-	/** Mode queued when Pocket comes out of the suitcase. */
-	UPROPERTY(EditDefaultsOnly, Category = "Movement")
-	FName ExitModeName = FName("Falling");
-
 	UPROPERTY()
 	UZL_WaitDelay_Task* MaxDurationTask;
 

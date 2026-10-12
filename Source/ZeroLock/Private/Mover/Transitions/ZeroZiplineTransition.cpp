@@ -26,7 +26,8 @@ FTransitionEvalResult UZeroZiplineTransition::Evaluate_Implementation(const FSim
 
 	if (const FZeroMovementInputs* ZeroInputs = Params.StartState.InputCmd.InputCollection.FindDataByType<FZeroMovementInputs>())
 	{
-		if (ZeroInputs->bWantsToZipline) 
+		// Component-level transitions run in every mode, including the rooted one; mounting would break the root.
+		if (ZeroInputs->bWantsToZipline && !ZeroInputs->bIsRooted)
 		{
 			FVector CamLocation = OwnerActor->GetActorLocation();
 			FVector CamForward = ZeroInputs->LookDir.Vector();

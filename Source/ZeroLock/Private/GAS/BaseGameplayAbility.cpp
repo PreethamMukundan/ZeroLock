@@ -113,7 +113,7 @@ void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle
 		{
 			CooldownTimeToUse = ChargeRechargeDuration;
 		}
-		SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName(  "Ability.Cooldown.Duration" )), CooldownTimeToUse);
+		SpecHandle.Data.Get()->SetSetByCallerMagnitude(ZerolockGameplayTagsForBinding::TAG_SETBYCALLER_COOLDOWN_DURATION, CooldownTimeToUse);
 		FActiveGameplayEffectHandle GEHandle=ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
 		if (GEHandle.IsValid())
 		{

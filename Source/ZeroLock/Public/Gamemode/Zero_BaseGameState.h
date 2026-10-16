@@ -23,6 +23,10 @@ class ZEROLOCK_API AZero_BaseGameState : public AGameStateBase
 
 public:
 
+	/** Copied from AZero_BaseGameModeBase::bAllowHeroSwap in InitGameState so clients know whether the hero select (H) may open. */
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Heroes")
+	bool bAllowHeroSwap = false;
+
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	int32 TeamRedScore = 0;
 

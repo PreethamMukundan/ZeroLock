@@ -116,9 +116,17 @@ void UZL_AbilityUIManagerComponent::BeginPlay()
 			InitializeTagMap();
 		}
 	}
+	BindToLocalHero();
+}
+
+void UZL_AbilityUIManagerComponent::BindToLocalHero()
+{
+	if (bBoundToHeroASC || !HasBegunPlay()) return;
+
 	AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetOwner());
-	if (Hero && Hero->IsLocallyControlled())
+	if (Hero && Hero->IsLocallyControlled() && Hero->GetMyAbilitySystemComp())
 	{
+		bBoundToHeroASC = true;
 		UAbilitySystemComponent* ASC = Hero->GetAbilitySystemComponent();
 		Hero->GetMyAbilitySystemComp()->OnAbilityUpgraded.AddDynamic(this,&ThisClass::AbilityUpgradeCallBackFromASC);
 		Hero->GetMyAbilitySystemComp()->OnNewAbilityAdded.AddUniqueDynamic(this, &ThisClass::OnAbilityAdded);

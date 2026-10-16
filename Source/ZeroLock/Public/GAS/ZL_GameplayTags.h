@@ -28,6 +28,9 @@ namespace ZerolockGameplayTagsForBinding
 	/** SetByCaller tag for the damage that UCalc_Spirit_Damage turns into spirit damage. */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SETBYCALLER_SPIRIT)
 
+	/** SetByCaller tag for a cooldown GE's duration (UBaseGameplayAbility::ApplyCooldown sets it, UZL_GE_BaseCooldown reads it). */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SETBYCALLER_COOLDOWN_DURATION)
+
 	/** Asset tag for damage that can bring the target down to 1 health but never kill it (see UBaseCharAttributeSet::PostGameplayEffectExecute). */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_DAMAGE_NONLETHAL)
 

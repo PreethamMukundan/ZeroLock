@@ -41,8 +41,14 @@ public:
 	
 	UFUNCTION()
 	void OnAbilityAdded(FGameplayAbilitySpec& Spec);
+
+	/** Binds the owner's ASC events and replays its abilities, once, if the owner is locally controlled.
+	 *  BeginPlay tries it; a pawn possessed after BeginPlay (hero swap) needs AZeroLockCharacter::NotifyHUDHeroReady to call it again. */
+	void BindToLocalHero();
 protected:
 	virtual void BeginPlay() override;
+
+	bool bBoundToHeroASC = false;
 
 	UPROPERTY()
 	TMap<FGameplayTag, UZL_VM_AbilityIcon*> StackTagToSlotMap;

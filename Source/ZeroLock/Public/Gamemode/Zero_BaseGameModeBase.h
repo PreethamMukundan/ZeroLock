@@ -37,6 +37,19 @@ public:
 	void HandlePlayerDeath(AZeroLockCharacter* DeadPawn, AController* DeadController);
 	void RespawnPlayer(AController* Controller); // changed to accept Controller (safe)
 
+	/** Whether this game mode allows swapping hero mid-match (H key / swap pad). Off: the hero select won't open and ServerSwapHero is rejected. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Heroes")
+	bool bAllowHeroSwap = false;
+
+	virtual void InitGameState() override;
+
+	/** If true (and bAllowHeroSwap), ServerSwapHero is only accepted while the pawn stands on an AZL_HeroSwapPad. Off: swap anywhere (H key). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Heroes")
+	bool bHeroSwapRequiresPad = false;
+
+	/** Replace PC's pawn with a fresh HeroClass pawn at the same spot. Without a pawn it only records the selection. */
+	void SwapHero(class AZero_BasePlayerController* PC, TSubclassOf<AZeroLockCharacter> HeroClass);
+
 private:
 	void AssignTeam(class AZero_BasePlayerState* PS);
 	APawn* SpawnPawnDefault(TSubclassOf<AZeroLockCharacter> PawnClass, AController* Controller, AActor* StartSpot);

@@ -189,6 +189,7 @@ AZero_BasePlayerState* AZero_BaseGameState::GetLocalPlayerState() const
 void AZero_BaseGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AZero_BaseGameState, bAllowHeroSwap);
 	DOREPLIFETIME(AZero_BaseGameState, TeamRedScore);
 	DOREPLIFETIME(AZero_BaseGameState, TeamBlueScore);
 	DOREPLIFETIME(AZero_BaseGameState, TeamRedArray);

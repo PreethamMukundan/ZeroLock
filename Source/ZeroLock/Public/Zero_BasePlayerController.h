@@ -34,6 +34,10 @@ public:
 
 	void ClientSelectHero(TSubclassOf<AZeroLockCharacter> HeroClass);
 
+	/** Swap the current pawn for HeroClass in place. With AZero_BaseGameModeBase::bHeroSwapRequiresPad, only while the pawn is on an AZL_HeroSwapPad. */
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Heroes")
+	void ServerSwapHero(TSubclassOf<AZeroLockCharacter> HeroClass);
+
 	UFUNCTION(Server, Reliable)
 	void ServerSetStartLocation(FVector loc);
 

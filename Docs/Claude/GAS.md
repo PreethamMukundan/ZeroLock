@@ -66,7 +66,7 @@ All replicated `COND_None` (health and charges `REPNOTIFY_Always`). Percent stat
 | `UZL_GA_KnockbackAbility`, `UZL_GA_PullToAbility`, `UZL_GA_ReleaseAbility`, `UZL_GA_StopAbility` | Victim abilities triggered by `Zerolock.Movement.Forced/PullTo/Release/Stop` events → Mover `RequestSafe*`. | |
 | `UZL_StatusTimerAbility` | Victim HUD status bar. `SendStatusTimer(Instigator, TargetASC, StatusTag, Duration)` (server) → `Zerolock.Event.StatusTimer`. | |
 
-Cooldown: `CommitAbility` → `ApplyCooldown` (spec of cooldown GE, `CooldownTags` into DynamicGrantedTags, SetByCaller `Ability.Cooldown.Duration` = `GetCoolDownTime()` = `CooldownDuration[level] × (1 − CDR/100)`, or `ChargeRechargeDuration` for charged). Charges: `OnGiveAbility` sets `MaxCharges_N`/`AbilityCharges_N` from `Slot`; `CheckCost` needs ≥1; `ApplyCost` −1 and applies the recharge GE.
+Cooldown: `CommitAbility` → `ApplyCooldown` (spec of cooldown GE, `CooldownTags` into DynamicGrantedTags, SetByCaller `Ability.Cooldown.Duration` (native `TAG_SETBYCALLER_COOLDOWN_DURATION`; `UZL_GE_BaseCooldown` and `BP_ZL_GE` read their duration from it) = `GetCoolDownTime()` = `CooldownDuration[level] × (1 − CDR/100)`, or `ChargeRechargeDuration` for charged). Charges: `OnGiveAbility` sets `MaxCharges_N`/`AbilityCharges_N` from `Slot`; `CheckCost` needs ≥1; `ApplyCost` −1 and applies the recharge GE.
 
 ## Tasks (`GAS/Tasks/`)
 `UGAST_PlayMontageAndWaitForEvent` (GASDocumentation port), `UZL_AbilityTask_MoverMoveTo` (velocity move, `bStopAtEnd`), `UZL_AbilityTask_Reach_MoverMoveTo` (ends on Walking/near target), `UZL_AbilityTask_MoverMoveToActor`, `UZL_Task_WaitSlamLocation` (camera trace, radius grows with height; client RPCs result), `UZL_WaitChargeRelease_Task` (hold-to-charge, sets Mover "Locked"→"Falling", perfect window), `UZL_WaitDelay_Task` (progress UI). **Legacy CharacterMovement tasks (no-ops on Mover pawns):** `UGAST_MeleeMoveTo`, `UZL_Task_ApplyRootMotion`.
@@ -97,7 +97,7 @@ Cooldown: `CommitAbility` → `ApplyCooldown` (spec of cooldown GE, `CooldownTag
 - Asset tag typo `"ZeroLLock.Abilities"` (`BaseGameplayAbility.cpp:24`) → `BlockAbilitiesWithTag` matches nothing.
 - `ApplyGameplayEffectToTarget/Self` end the ability on null input but don't return (`:38-43`, `:64-69`).
 - `SetSlot()` never called; charged abilities without BP `Slot` share `AbilityCharges_1`.
-- `UZL_GE_BaseCooldown` sets no SetByCaller duration in C++; works only if BP GEs/overrides use SetByCaller `Ability.Cooldown.Duration`.
+- A cooldown of 0 (`CooldownDuration` 0 at the ability's level, or 100% CDR) makes the cooldown GE instant: the server keeps nothing, while the client's predicted copy never expires and leaves the cooldown tag on.
 - `GrantAbilityOfClassX` calls `SetInputID` on the CDO (`ZeroLockCharacter.cpp:270`).
 - Victim Release/Stop abilities need TargetData but `SendVictimMoveEvent` only adds it with a location; DeathSlam sends them without (`ZL_Lash_DeathSlam.cpp:163,247`) → no-ops. Victim abilities are also blocked by the victim's `ZeroLock.Abilities.*` tags.
 - `ApplyHeal`, `ApplyGameplayEffect*` lack authority checks; `IsUntouchable` runs before the authority check.

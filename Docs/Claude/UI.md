@@ -4,6 +4,7 @@ Code: `Source/ZeroLock/{Public,Private}/UI/` (65 classes). Widget BPs: `Content/
 
 ## Layering
 - `AZL_HUDClass` (`UI/HUD/ZL_HUDClass`): local controller only. BeginPlay creates `BaseUILayer` (`WBP_BaseUILayout`) as `RootLayer`, then virtual `PushHUD()` pushes `PlayerInGameHUD` onto `UI.Layer.Game`.
+- `AZL_HUDClass` also owns the in-game hero select (H key, runtime-built input action, `Open/Close/ToggleHeroSelect`), see GameFlow.md "In-game hero swap".
 - `AZL_MainMenu_HUD_Class` overrides `PushHUD` → `UI.Layer.Menu`, shows cursor.
 - `UZL_BaseUILayout` (root, `UCommonActivatableWidget`): four BindWidget stacks `GameStack`, `MenuStack`, `ItemShopStack`, `PopUpStack` mapped by `FUITag` in `NativeOnInitialized`.
   - `PushWidgetToLayer(Tag, Class)`: pushes only if the layer is empty or its active widget is a different class (no toggle/remove).
@@ -38,7 +39,7 @@ VM property pattern: `UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)`
 | `UZL_VM_ChargePercent` | set by `BaseGameplayAbility` into `VM_Attributes->VM_ChargePhase` | charged abilities (perfect window) |
 
 ### `UZL_AbilityUIManagerComponent`
-- BeginPlay: creates 4 slots (Secondary, Ability1, Ability2, Ultimate) keyed by input tags `ZerolockGameplayTagsForBinding::TAG_INPUT_SECONDRY/ABILITY_1/ABILITY_2/ULTIMATE`. Locally controlled: binds ASC `OnAbilityUpgraded`, `OnNewAbilityAdded`, `OnActiveGameplayEffectAddedDelegateToSelf`, then replays existing specs.
+- BeginPlay: creates 4 slots (Secondary, Ability1, Ability2, Ultimate) keyed by input tags `ZerolockGameplayTagsForBinding::TAG_INPUT_SECONDRY/ABILITY_1/ABILITY_2/ULTIMATE`, then `BindToLocalHero()` (once; also called from `AZeroLockCharacter::NotifyHUDHeroReady` for pawns possessed after BeginPlay, e.g. hero swap). Locally controlled: binds ASC `OnAbilityUpgraded`, `OnNewAbilityAdded`, `OnActiveGameplayEffectAddedDelegateToSelf`, then replays existing specs.
 - `OnAbilityAdded`: slot found by spec `DynamicSpecSourceTags`; fills icon, name, descriptions (base + L1–3), charges (`AbilityCharges_N`/`MaxCharges_N` by `EGameplayAbilitySlot`), cooldown tags, `StackTag`.
 - Cooldowns: 0.033 s looping `RefreshCooldowns` timer while any cooldown tag is active.
 - Upgrades: click HUD icon → `IncrementAbilityLevel` → `Server_UpgradeAbility(Class, Level)` → server sets `Spec.Level`, `MarkAbilitySpecDirty`.
@@ -56,7 +57,7 @@ VM property pattern: `UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)`
 
 ## Screens
 - **Main menu**: `UZL_MainMenu` (Login → Main via `MainSwitcher`), `UZL_LoginPage` (BP wires EOS login), `UZL_MainScreen` (Play/Settings/Quit). `ShowLobbyScreen`/`ShowSettingsScreen` empty; lobby classes are stubs.
-- **Hero select**: `UZL_HeroSelectionScreen` (tile view of `UZL_Character_Data_Asset`; hover sets current character, mouse move rotates the 3D preview `AZL_CharacterSelector_Actor`; click handler empty). `UZL_CharacterIcon` tiles.
+- **Hero select**: `UZL_HeroSelectionScreen` (tile view of `UZL_Character_Data_Asset`; hover sets current character, mouse move rotates the 3D preview `AZL_CharacterSelector_Actor`; click does nothing unless `bSwapHeroOnClick`, which also sets menu input mode and makes a click swap hero, used by `WBP_HeroSwap` on `AZL_HeroSwapPad`, see GameFlow.md). On VM `OnCharacterChanged` it tints the ability background images named in `AbilityBackgroundWidgetNames` (default `Image_3`-`Image_6`, the WBP's auto names) with the hero's `IconColor`, `NoHeroAbilityBackgroundColor` when none. In `WBP_HeroSwap` those backgrounds are circles (brush RoundedBox, `HalfHeightRadius`) and the icons (`Image_61`, `Image`, `Image_1`, `Image_2`) are tinted black. `UZL_CharacterIcon` tiles.
 - **Item shop**: `UZL_ItemShop_Base` (async-loads `DT_ItemList` rows `FItemTableRow{TSoftObjectPtr<UZero_Item_data>}`; All/Weapon/Spirit/Vitality views; `ItemPressed` → `ServerBuyItem`/`ServerSellItem`), `UZL_ItemShopCategory` (4 tier tile views), `UZL_ITemIcon` (`EItemState`: Default, **Sold = owned**, ReadyToUpgrade, Blocked), `UZL_ItemTooltipWidget`, `UZL_Hero_HUD_Inventory` (2-row slots from `ItemDelegate`).
 - **Keybinds**: `UKeybindManagerSubsystem` (LocalPlayer, `Input/`) → `UZL_VM_KeyBindingList` → `UZL_KeyBindingScreen` / `UZL_KeyBindingingRow` (sic).
 - `UImageDownloader`: dev-only HTTP image fetcher (shop images from `Content/Scripts/response.json`) living in the runtime module.
@@ -72,7 +73,7 @@ VM property pattern: `UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)`
 - **Server trusts client ability upgrades**: `Server_UpgradeAbility_Validate` returns true; no level cap or skill-point check server-side (`:70-74`, cap only client-side `:38`).
 - `UZL_VM_AbilityIcon::GetChargePercent` (`ZL_VM_AbilityIcon.h:108`) integer division and /0; `UZL_VM_Attributes::GetHealthPercentage` (`ZL_VM_Attributes.h:28`) /0 before attributes arrive.
 - `Zero_BaseGameState.cpp:164-168` writes `UZL_VM_PlayerInfo` fields directly (no FieldNotify), Assists never set, and `UZL_PlayerInfoBox` snapshots once → team-bar K/D/A likely doesn't update live.
-- Widgets grabbing `GetPlayerPawn(0)` once at init (stat panels, inventory, shop) never rebind on respawn/hero swap; ASC delegates never removed; `UZL_ItemShop_Base::ItemPressed:171` crashes without a pawn.
+- Widgets grabbing `GetPlayerPawn(0)` once at init (stat panels, inventory, shop) never rebind on their own (`AZL_HUDClass::HandleHeroReady` recreates the Game-layer HUD with a fresh instance when a new local pawn is ready, see GameFlow.md hero swap; the shop on `UI.Layer.Itemshop` is not rebuilt); ASC delegates never removed; `UZL_ItemShop_Base::ItemPressed:171` crashes without a pawn.
 - Shop buy/sell state machine duplicated in `UZL_ItemShopCategory::OnItemSelected` and `UZL_ItemShop_Base::ItemPressed`; buying from a category tab depends on the All list having a generated entry (tile views virtualize).
 - `UZL_HUD_AbilityIcon::NativeOnMouseButtonUp` levels up on any mouse release.
 - `UZL_KDA_Bar` on pure clients may never bind if the PlayerState replicated before the widget existed.

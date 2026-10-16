@@ -4,6 +4,9 @@
 #include "Zero_BasePlayerController.h"
 
 #include "Zero_BasePlayerState.h"
+#include "EngineUtils.h"
+#include "CharacterSelector/ZL_HeroSwapPad.h"
+#include "Gamemode/Zero_BaseGameModeBase.h"
 #include "Net/UnrealNetwork.h"
 #include "ZeroLock/ZeroLockCharacter.h"
 
@@ -15,6 +18,40 @@ void AZero_BasePlayerController::ServerSetSelectedHero_Implementation(TSubclassO
 void AZero_BasePlayerController::ClientSelectHero(TSubclassOf<AZeroLockCharacter> HeroClass)
 {
 	ServerSetSelectedHero(HeroClass);
+}
+
+void AZero_BasePlayerController::ServerSwapHero_Implementation(TSubclassOf<AZeroLockCharacter> HeroClass)
+{
+	if (!HeroClass || HeroClass->HasAnyClassFlags(CLASS_Abstract)) return;
+
+	AZero_BaseGameModeBase* GM = GetWorld()->GetAuthGameMode<AZero_BaseGameModeBase>();
+	if (!GM) return;
+	if (!GM->bAllowHeroSwap)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[PC] ServerSwapHero: %s, game mode %s doesn't allow hero swap"), *GetName(), *GM->GetClass()->GetName());
+		return;
+	}
+
+	APawn* CurrentPawn = GetPawn();
+	if (CurrentPawn && GM->bHeroSwapRequiresPad)
+	{
+		bool bOnPad = false;
+		for (AZL_HeroSwapPad* Pad : TActorRange<AZL_HeroSwapPad>(GetWorld()))
+		{
+			if (Pad->IsPawnOnPad(CurrentPawn))
+			{
+				bOnPad = true;
+				break;
+			}
+		}
+		if (!bOnPad)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[PC] ServerSwapHero: %s is not on a hero swap pad, ignoring"), *GetName());
+			return;
+		}
+	}
+
+	GM->SwapHero(this, HeroClass);
 }
 
 void AZero_BasePlayerController::ServerSetStartLocation_Implementation(FVector loc)

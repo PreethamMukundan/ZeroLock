@@ -53,7 +53,6 @@ Main branch `main`; feature branches `feature/Hero/<Hero>`.
 - Security/trust: server trusts client projectile spawn transform and fire rate; `ServerHandleDeath` callable by any client; `Server_UpgradeAbility` unvalidated; latched Mover moves unvalidated (Weapons.md, GameFlow.md, UI.md, Movement.md).
 - GAS: `Damage` meta attribute not reset on friendly hits; lifesteal before team check; melee mitigation precedence bug; `"ZeroLLock.Abilities"` typo (GAS.md).
 - Items: selling deducts souls instead of refunding; upgrade path broken (GAS.md).
-- Hero select never reaches the server (`ServerSetSelectedHero` uncalled), so everyone spawns `DefaultHeroClass` (GameFlow.md).
 - Lash DeathSlam slam damage broken; Riposte can hang; Itani leaves client time dilation (Heroes.md).
 - Mover: slide landing buffer unreachable, slide has no ground tag/ledge check; `GetSyncedAimRotation` always returns actor rotation; melee/zipline sync state not reset (Movement.md).
 - `Config/DefaultEngine.ini:43` malformed `GameViewportClientClassName` line (UI.md, GameFlow.md).

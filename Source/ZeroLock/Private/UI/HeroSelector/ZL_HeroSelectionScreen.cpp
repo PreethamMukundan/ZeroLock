@@ -4,12 +4,15 @@
 #include "UI/HeroSelector/ZL_HeroSelectionScreen.h"
 
 #include "CommonTileView.h"
+#include "Components/Image.h"
 #include "CharacterSelector/ZL_CharacterSelectionSubsystem.h"
 #include "CharacterSelector/ZL_CharacterSelectionVM.h"
 #include "CharacterSelector/ZL_Character_Data_Asset.h"
 
 #include "UI/ItemShop/ZL_ItemShop_Base.h"
 #include "ZeroLock/ZeroLock.h"
+#include "Zero_BasePlayerController.h"
+#include "ZeroLock/ZeroLockCharacter.h"
 
 #include "MVVMSubsystem.h"
 #include "View/MVVMView.h"
@@ -56,6 +59,12 @@ void UZL_HeroSelectionScreen::NativeOnInitialized()
 	
 
 
+	if (SelectionVM)
+	{
+		SelectionVM->OnCharacterChanged.AddUniqueDynamic(this, &UZL_HeroSelectionScreen::HandleCharacterChanged);
+		HandleCharacterChanged(SelectionVM->CurrentCharacter);
+	}
+
 	if (HeroSelectionList)
 	{
 		HeroSelectionList->OnItemIsHoveredChanged().AddUObject(this, &UZL_HeroSelectionScreen::HandleOnHoveredChanged);
@@ -76,8 +85,81 @@ void UZL_HeroSelectionScreen::HandleOnHoveredChanged(UObject* Item, bool bIsHove
 	}
 }
 
+void UZL_HeroSelectionScreen::NativeDestruct()
+{
+	// The VM outlives this widget (game instance).
+	if (SelectionVM)
+	{
+		SelectionVM->OnCharacterChanged.RemoveDynamic(this, &UZL_HeroSelectionScreen::HandleCharacterChanged);
+	}
+	Super::NativeDestruct();
+}
+
+void UZL_HeroSelectionScreen::HandleCharacterChanged(UZL_Character_Data_Asset* NewCharacter)
+{
+	const FLinearColor Tint = NewCharacter ? FLinearColor(NewCharacter->IconColor) : NoHeroAbilityBackgroundColor;
+	for (const FName& WidgetName : AbilityBackgroundWidgetNames)
+	{
+		if (UImage* Background = Cast<UImage>(GetWidgetFromName(WidgetName)))
+		{
+			Background->SetColorAndOpacity(Tint);
+		}
+	}
+}
+
+void UZL_HeroSelectionScreen::NativeOnActivated()
+{
+	Super::NativeOnActivated();
+
+	// The VM lives on the game instance and keeps the last hovered hero. Start every open with no preview,
+	// otherwise hovering that same hero again doesn't fire OnCharacterChanged.
+	if (SelectionVM)
+	{
+		SelectionVM->SetCurrentCharacter(nullptr);
+	}
+}
+
+TOptional<FUIInputConfig> UZL_HeroSelectionScreen::GetDesiredInputConfig() const
+{
+	if (bSwapHeroOnClick)
+	{
+		return FUIInputConfig(ECommonInputMode::Menu, EMouseCaptureMode::NoCapture);
+	}
+	return Super::GetDesiredInputConfig();
+}
+
+UWidget* UZL_HeroSelectionScreen::NativeGetDesiredFocusTarget() const
+{
+	// Give keyboard focus to the list so key presses reach NativeOnKeyDown (they bubble up from it).
+	if (bSwapHeroOnClick && HeroSelectionList)
+	{
+		return HeroSelectionList;
+	}
+	return Super::NativeGetDesiredFocusTarget();
+}
+
+FReply UZL_HeroSelectionScreen::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	if (bSwapHeroOnClick && CloseKey.IsValid() && InKeyEvent.GetKey() == CloseKey && !InKeyEvent.IsRepeat())
+	{
+		DeactivateWidget();
+		return FReply::Handled();
+	}
+	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
+
 void UZL_HeroSelectionScreen::HandleOnSelectionChanged(UObject* Item)
 {
+	if (!bSwapHeroOnClick) return;
+
+	UZL_Character_Data_Asset* Data = Cast<UZL_Character_Data_Asset>(Item);
+	if (!Data || !Data->CharacterClass) return;
+
+	if (AZero_BasePlayerController* PC = GetOwningPlayer<AZero_BasePlayerController>())
+	{
+		PC->ServerSwapHero(Data->CharacterClass);
+	}
+	DeactivateWidget();
 }
 
 FReply UZL_HeroSelectionScreen::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)

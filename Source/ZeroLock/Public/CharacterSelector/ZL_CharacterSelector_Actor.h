@@ -4,9 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "CharacterSelector/ZL_Character_Data_Asset.h"
 #include "ZL_CharacterSelector_Actor.generated.h"
 
-class UZL_Character_Data_Asset;
+class UPointLightComponent;
 class UZl_CharacterSelectionVM;
 
 UCLASS()
@@ -45,8 +46,29 @@ public:
 	class USpringArmComponent* SpringArm;
 	FRotator TargetSpringArmRot;
 
-	// Function to change mesh + animation at runtime
-	void SetPreview(USkeletalMesh* NewMesh, class UAnimSequence* NewAnim);
+	// Function to change mesh + animation at runtime. A null mesh clears the preview. PoseTime >= 0 freezes on that frame.
+	void SetPreview(USkeletalMesh* NewMesh, class UAnimSequence* NewAnim, float PoseTime = -1.f);
+
+	/** Spring arm rotation the mouse sway is applied around (from the current preview settings). */
+	float BaseCameraYaw = -90.f;
+	float BaseCameraPitch = 0.f;
+
+	/** Moves the lights/camera and sets exposure for a hero (or the defaults). */
+	void ApplyPreviewSettings(const FZL_HeroPreviewSettings& Settings, const FLinearColor& IconColor);
+
+	// Preview-only lights: lighting channel 1, which only PreviewMesh receives, so level lights don't change the look per map.
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UPointLightComponent> KeyLight;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UPointLightComponent> FillLight;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UPointLightComponent> RimLight;
+
+	/** Used when no hero is shown or the hero's data asset doesn't override PreviewSettings. */
+	UPROPERTY(EditAnywhere, Category = "Preview")
+	FZL_HeroPreviewSettings DefaultPreviewSettings;
 
 
 	UPROPERTY(EditAnywhere, Category = "Camera Control")

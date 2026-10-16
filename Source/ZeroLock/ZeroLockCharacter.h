@@ -175,6 +175,11 @@ public:
 
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
+	virtual void OnRep_Controller() override;
+
+	/** Tells the local HUD this pawn is usable (locally controlled + PlayerState + ASC), once. Lets the HUD rebind after a hero swap. */
+	void NotifyHUDHeroReady();
+	bool bNotifiedHUDHeroReady = false;
 
 	bool bIsPrimaryPressed =false;
 	void PrimaryFirePressed();

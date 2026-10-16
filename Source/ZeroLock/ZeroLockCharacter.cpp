@@ -26,6 +26,7 @@
 #include "Mover/ZeroMoverComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "UI/Damage/ZL_BaseDamageWidgetComponent.h"
+#include "UI/HUD/ZL_HUDClass.h"
 #include "UI/MVVM/ZL_VM_Attributes.h"
 #include "UI/MVVM/Abilities/ZL_AbilityUIManagerComponent.h"
 #include "UI/OverHead/ZL_OverHeadDisplay.h"
@@ -295,6 +296,7 @@ void AZeroLockCharacter::PossessedBy(AController* NewController)
 	InitializeAttributes();
 	GiveAbilities();
 	InitializeFloatingStatusBar();
+	NotifyHUDHeroReady();
 }
 
 void AZeroLockCharacter::OnRep_PlayerState()
@@ -304,9 +306,39 @@ void AZeroLockCharacter::OnRep_PlayerState()
 	AbilitySystemComp->InitAbilityActorInfo(this, this);
 
 	InitializeAttributes();
-	
+
 	CreateVM_Att();
 	InitializeFloatingStatusBar();
+	NotifyHUDHeroReady();
+}
+
+void AZeroLockCharacter::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+	NotifyHUDHeroReady();
+}
+
+void AZeroLockCharacter::NotifyHUDHeroReady()
+{
+	if (bNotifiedHUDHeroReady || IsNetMode(NM_DedicatedServer)) return;
+	if (!IsLocallyControlled() || !GetPlayerState()) return;
+
+	// BeginPlay ran before possession for a pawn spawned mid-match (hero swap), so its local-only setup was skipped.
+	if (AbilityUIManager)
+	{
+		AbilityUIManager->BindToLocalHero();
+	}
+	if (OverHeadDisplay)
+	{
+		OverHeadDisplay->SetVisibility(false);
+	}
+
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (AZL_HUDClass* HUD = PC ? Cast<AZL_HUDClass>(PC->GetHUD()) : nullptr)
+	{
+		bNotifiedHUDHeroReady = true;
+		HUD->HandleHeroReady(this);
+	}
 }
 
 void AZeroLockCharacter::PrimaryFirePressed()

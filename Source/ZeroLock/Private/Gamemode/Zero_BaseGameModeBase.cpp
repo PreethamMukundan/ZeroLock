@@ -246,6 +246,54 @@ void AZero_BaseGameModeBase::RespawnPlayer(AController* Controller)
     }
 }
 
+void AZero_BaseGameModeBase::InitGameState()
+{
+    Super::InitGameState();
+
+    if (AZero_BaseGameState* GS = GetGameState<AZero_BaseGameState>())
+    {
+        GS->bAllowHeroSwap = bAllowHeroSwap;
+    }
+}
+
+void AZero_BaseGameModeBase::SwapHero(AZero_BasePlayerController* PC, TSubclassOf<AZeroLockCharacter> HeroClass)
+{
+    if (!PC || !HeroClass) return;
+
+    PC->SelectedHeroClass = HeroClass;
+
+    APawn* OldPawn = PC->GetPawn();
+    if (!OldPawn || OldPawn->GetClass() == HeroClass) return;
+
+    const FVector Loc = OldPawn->GetActorLocation();
+    const FRotator Rot(0.f, PC->GetControlRotation().Yaw, 0.f);
+    const AZeroLockCharacter* OldHero = Cast<AZeroLockCharacter>(OldPawn);
+    const FVector OldStartLocation = OldHero ? OldHero->StartLocation : Loc;
+
+    PC->UnPossess();
+    OldPawn->Destroy();
+
+    FActorSpawnParameters Params;
+    Params.Owner = PC;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    Params.ObjectFlags |= RF_Transient;
+
+    AZeroLockCharacter* NewHero = GetWorld()->SpawnActor<AZeroLockCharacter>(HeroClass, Loc, Rot, Params);
+    if (!NewHero)
+    {
+        UE_LOG(LogTemp, Error, TEXT("[GM] SwapHero: Failed to spawn %s for %s"), *GetNameSafe(HeroClass), *PC->GetName());
+        RestartPlayer(PC);
+        return;
+    }
+
+    // Keep the team respawn point, not the pad.
+    NewHero->StartLocation = OldStartLocation;
+    PC->Possess(NewHero);
+    PC->SetControlRotation(Rot);
+
+    UE_LOG(LogTemp, Log, TEXT("[GM] SwapHero: %s is now %s"), *PC->GetName(), *GetNameSafe(HeroClass));
+}
+
 /** Assign teams by counting current players on each team (server-only) */
 void AZero_BaseGameModeBase::AssignTeam(class AZero_BasePlayerState* PS)
 {

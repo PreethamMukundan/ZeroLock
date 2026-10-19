@@ -45,6 +45,7 @@ void UZL_VM_KeyBindingList::HandleSubsystemBindingsUpdated()
 		NewRow->SetMappingName(Data.MappingName);
 		NewRow->SetActionName(Data.ActionName);
 		NewRow->SetCurrentKey(Data.CurrentKey);
+		NewRow->DisplayCategory = Data.DisplayCategory;
 		NewRow->SetSubsystemRef(SubsystemRef);
         
 		KeybindRows.Add(NewRow);

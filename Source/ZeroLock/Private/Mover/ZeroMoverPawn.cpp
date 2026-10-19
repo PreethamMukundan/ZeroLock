@@ -11,6 +11,7 @@
 #include "DefaultMovementSet/Settings/StanceSettings.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Input/KeybindManagerSubsystem.h"
 #include "Mover/ZeroMoverComponent.h"
 
 AZeroMoverPawn::AZeroMoverPawn()
@@ -66,6 +67,12 @@ void AZeroMoverPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
         if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
         {
             Subsystem->AddMappingContext(DefaultMappingContext, 0);
+        }
+
+        // Settings > KeyBinding lists the remappable mappings of this context (and applies saved remaps).
+        if (UKeybindManagerSubsystem* Keybinds = ULocalPlayer::GetSubsystem<UKeybindManagerSubsystem>(PlayerController->GetLocalPlayer()))
+        {
+            Keybinds->InitializeKeybinds(DefaultMappingContext);
         }
     }
 

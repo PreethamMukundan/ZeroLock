@@ -16,15 +16,14 @@ void UKeybindManagerSubsystem::InitializeKeybinds(UInputMappingContext* BaseIMC)
     UEnhancedInputLocalPlayerSubsystem* EISubsystem = GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
     if (!EISubsystem)
     {
-        ZLOG_COLOR_TIME("FAILED: EISubsystem is NULL! (Called too early?)", FColor::Red, 10.0f);
+        //ZLOG_COLOR_TIME("FAILED: EISubsystem is NULL! (Called too early?)", FColor::Red, 10.0f);
     }
     else if (!EISubsystem->GetUserSettings())
     {
-        ZLOG_COLOR_TIME("FAILED: UserSettings is NULL! (Check Project Settings)", FColor::Orange, 10.0f);
+     //   ZLOG_COLOR_TIME("FAILED: UserSettings is NULL! (Check Project Settings)", FColor::Orange, 10.0f);
     }
     else
     {
-        ZLOG_COLOR_TIME("SUCCESS: SubsystemContext set", FColor::Emerald, 10.0f);
         EISubsystem->GetUserSettings()->RegisterInputMappingContext(BaseIMC);
     }
 
@@ -42,7 +41,7 @@ void UKeybindManagerSubsystem::RefreshKeybindData()
     if (!EISubsystem || !EISubsystem->GetUserSettings()) return;
 
     UEnhancedInputUserSettings* UserSettings = EISubsystem->GetUserSettings();
-    UEnhancedPlayerMappableKeyProfile* Profile = UserSettings->GetCurrentKeyProfile();
+    UEnhancedPlayerMappableKeyProfile* Profile = UserSettings->GetActiveKeyProfile();
 
     CurrentKeybinds.Empty();
 
@@ -60,7 +59,9 @@ void UKeybindManagerSubsystem::RefreshKeybindData()
         NewData.DisplayCategory = Mapping.GetDisplayCategory();
       
 
-        if (!Mapping.Action->ActionDescription.IsEmpty()) {
+        if (!Mapping.GetDisplayName().IsEmpty()) {
+            NewData.ActionName = Mapping.GetDisplayName();
+        } else if (!Mapping.Action->ActionDescription.IsEmpty()) {
             NewData.ActionName = Mapping.Action->ActionDescription; 
         } else {
             NewData.ActionName = FText::FromName(Mapping.Action->GetFName());
@@ -72,7 +73,8 @@ void UKeybindManagerSubsystem::RefreshKeybindData()
         if (Profile)
         {
 
-            if (const FKeyMappingRow* MappingRow = Profile->FindKeyMappingRow(Mapping.Action->GetFName()))
+            // Profile rows are keyed by the player-mappable mapping name, not the action name.
+            if (const FKeyMappingRow* MappingRow = Profile->FindKeyMappingRow(NewData.MappingName))
             {
                 for (const FPlayerKeyMapping& PlayerMapping : MappingRow->Mappings)
                 {
@@ -116,6 +118,4 @@ void UKeybindManagerSubsystem::RemapKey(FName MappingName, FKey NewKey)
 
 
     EISubsystem->RequestRebuildControlMappings(FModifyContextOptions(), EInputMappingRebuildType::RebuildWithFlush);
-
-   // RefreshKeybindData();
 }

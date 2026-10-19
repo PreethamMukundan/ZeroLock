@@ -35,6 +35,9 @@ class ZEROLOCK_API AZL_HUDClass : public AHUD
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UCommonActivatableWidget> PlayerInGameHUD;
+	
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UCommonActivatableWidget> SettingsMenu;
 
 	/** In-game hero select (hero swap). Pushed onto UI.Layer.Menu. Should be a UZL_HeroSelectionScreen with bSwapHeroOnClick (WBP_HeroSwap). */
 	UPROPERTY(EditDefaultsOnly, Category="HeroSwap")

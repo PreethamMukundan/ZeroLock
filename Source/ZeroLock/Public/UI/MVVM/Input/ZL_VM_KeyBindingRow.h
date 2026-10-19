@@ -31,6 +31,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, FieldNotify, Setter, Getter, Category = "Keybindings")
 	FInputChord CurrentKey;
 
+	/** Player-mappable settings DisplayCategory (Movement / Abilities / Combat); the keybinding screen groups rows by it. */
+	UPROPERTY(BlueprintReadOnly, Category = "Keybindings")
+	FText DisplayCategory;
+
 	void SetSubsystemRef(UKeybindManagerSubsystem* SubsystemRefX);
 	UKeybindManagerSubsystem* GetSubsystemRef()const{return SubsystemRef;};
 	

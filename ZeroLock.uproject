@@ -14,7 +14,8 @@
 				"CommonUI",
 				"ModelViewViewModel",
 				"UMG",
-				"Mover"
+				"Mover",
+				"CoreUObject"
 			]
 		},
 		{

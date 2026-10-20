@@ -52,6 +52,14 @@ struct ZEROLOCK_API FZLDeadlockAnimState
 	UPROPERTY(BlueprintReadOnly, Category = "Deadlock")
 	bool bWallJumping = false;
 
+	/** The pawn's ASC has ZeroLock.Stun (replicated tag, so simulated proxies see it too). */
+	UPROPERTY(BlueprintReadOnly, Category = "Deadlock")
+	bool bStunned = false;
+
+	/** In the Mover heavy melee lunge (MeleeModeName). */
+	UPROPERTY(BlueprintReadOnly, Category = "Deadlock")
+	bool bHeavyMelee = false;
+
 	/** Increments on every jump, air jump and wall jump, so the anim graph can restart the jump clip. */
 	UPROPERTY(BlueprintReadOnly, Category = "Deadlock")
 	int32 JumpCount = 0;
@@ -123,6 +131,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Deadlock|Modes")
 	FName AirJumpingModeName = TEXT("AirJumping");
 
+	UPROPERTY(EditDefaultsOnly, Category = "Deadlock|Modes")
+	FName MeleeModeName = TEXT("Melee");
+
 	/** A dash is detected when horizontal speed exceeds this fraction of UZeroMoverComponent::DashSpeed. */
 	UPROPERTY(EditDefaultsOnly, Category = "Deadlock", meta = (ClampMin = "0.1", ClampMax = "1"))
 	float DashDetectSpeedRatio = 0.75f;
@@ -149,6 +160,7 @@ private:
 
 	TWeakObjectPtr<AZeroMoverPawn> OwnerPawn;
 	TWeakObjectPtr<UCharacterMoverComponent> Mover;
+	TWeakObjectPtr<class UAbilitySystemComponent> OwnerASC;
 
 	bool bWasOnGround = true;
 	bool bWasDashBurst = false;

@@ -117,7 +117,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Inputs")
     FVector GetInputWorldDir() const;
 
+    /** Bumped each time the heavy melee hold triggers (local input). Light melee on the same key compares it across a
+     * press to tell a tap from a hold (AZeroLockCharacter::LightMeleeReleased). */
+    int32 GetHeavyMeleeTriggerCount() const { return HeavyMeleeTriggerCount; }
+
 private:
+    int32 HeavyMeleeTriggerCount = 0;
 
     FVector2D CachedMoveInput = FVector2D::ZeroVector;
     bool bLocalJumpPressed = false;

@@ -26,6 +26,8 @@ AZeroMoverPawn ──DeadlockAnimSet──► DA_<Hero>_AnimSet (UZL_DeadlockAni
   - run / crouch authored speed from `root_motion` bone travel of the N clip (`MeasureCycleSpeed`), falling back to `ReferenceRunSpeed` 600 / `ReferenceCrouchSpeed` 300 when the clip is in place;
   - `SlideFromAirStartTime`: the asset value, or (when -1) the lowest pelvis point in the first 60% of `SlideStart` (`MeasureSlideLandTime`).
 - `NativeUpdateAnimation`: velocity in actor space, ground/vertical speed, aim pitch (`GetBaseAimRotation`), mode flags by name (`Sliding`, `Dashing`, `Ziplining`, `WallJumping`, `AirJumping`).
+- `bStunned`: the pawn's ASC has `ZeroLock.Stun` (`TAG_STUN`; replicated tag, so simulated proxies see it). The node then plays `StunStart` (optional, once) into `StunLoop` full body, no aim offset, no dash layer. A set without either clip shows no stun pose. The importer fills `stun_loop` from `standing_stunned` / `crouching_stunned` / `knockdown_medium_loop`; `StunStart` is set by hand.
+- `bHeavyMelee`: Mover mode `MeleeModeName` ("Melee", the heavy melee lunge) → `HeavyMeleeStart` (`melee_start`) into `HeavyMeleeLoop` (`melee_dash`), blended in over `JumpBlendTime` (the lunge is ~0.25 s). `LightMeleeMontage` (`AM_<Hero>_Melee_Quick1`) is used by `UZeroBase_LightMelee`. Importer: `ANIM_SET_SLOTS` + `ANIM_SET_MONTAGES`; a full import now builds montages before the anim set. Fill existing sets with `py ".../ue_import.py" Lash Pocket Apollo --anim-set-only` (resets hand edits to those sets).
 - One-frame events are **counters** (`JumpCount`, `LandCount`, `DashCount`) so the worker thread can't miss them:
   - Dash: Mover `DashCount` changed (local/server), or fallback speed burst > `DashSpeed × 0.75` with 0.35 s debounce (simulated proxies).
   - Jump: took off going up (>100), air kick (+250 in one frame), or entered AirJumping/WallJumping.
@@ -34,7 +36,7 @@ AZeroMoverPawn ──DeadlockAnimSet──► DA_<Hero>_AnimSet (UZL_DeadlockAni
 ## Node (`FAnimNode_ZLDeadlockHero`)
 **Layer stack** (max 4). A state change pushes a layer that fades in over its blend time; older layers share the remaining weight proportionally and are removed under 0.001. `PushLayer(State, BlendTime, Clip, StartTime)`.
 
-**Update** order: counters → `TimeSinceAirborne` → dash (`ChooseDashClip` by dominant axis; held for `DashHoldTime` 0.45 s or while bursting, jump cancels) → `ChooseState()` priority Zipline > Slide > WallJump > Air > Crouch/Ground → per-state push rules:
+**Update** order: counters → `TimeSinceAirborne` → dash (`ChooseDashClip` by dominant axis; held for `DashHoldTime` 0.45 s or while bursting, jump cancels) → `ChooseState()` priority Stunned > HeavyMelee > Zipline > Slide > WallJump > Air > Crouch/Ground → per-state push rules:
 - Air: new jump restarts with `JumpStart`/`AirJumpStart` (0.08 s); ledge walk-off has no clip (0.2 s).
 - Ground/Crouch: Land layer (0.06 s, `HardLand` above `HardLandSpeed` 1400) only when landing nearly stopped; Land exits after min(clip, `LandHoldTime` 0.35) or 0.1 s if moving.
 - Slide: within 0.25 s of being airborne → start `SlideStart` at `SlideFromAirStartTime` with 0.08 s blend (skips the clip's hop). From a run → from 0 with 0.2 s.
@@ -45,7 +47,7 @@ AZeroMoverPawn ──DeadlockAnimSet──► DA_<Hero>_AnimSet (UZL_DeadlockAni
 ## Hooking up a hero
 1. Duplicate `BP_Deadlock_Lash` (or `BP_Mover_Monkey`) → `BP_Deadlock_<Hero>`.
 2. Mesh: `SK_<Hero>`, Anim Class `ABP_DeadlockHero`, scale ≈0.7.
-3. Class Defaults: Deadlock Anim Set = `DA_<Hero>_AnimSet`.
+3. Class Defaults: Deadlock Anim Set = `DA_<Hero>_AnimSet`. Also fix or clear **Light/Heavy Melee Montage** (Animation/melee): a duplicate keeps the source hero's, and they win over the anim set's `LightMeleeMontage` (BP_Deadlock_Pocket played Lash's light melee until 2026-10-19).
 4. Abilities play `AM_<Hero>_<Ability>_*` (DefaultSlot). Switch a montage to `UpperBody` to keep legs running.
 - ABP Root Motion Mode is "Root Motion from Montages Only"; the node strips root motion in the pose anyway.
 - Debug: `ShowDebug Animation` prints set, speed, MoveAlpha, aim, layer weights. Animation Insights shows state + set.

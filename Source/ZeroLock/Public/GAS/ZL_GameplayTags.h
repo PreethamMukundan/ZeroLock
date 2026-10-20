@@ -47,6 +47,15 @@ namespace ZerolockGameplayTagsForBinding
 	/** UCalc_Healing heals nothing while the target has this tag. */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_HEAL_BLOCKED)
 
+	/** Stunned: AZeroLockCharacter::Stunned cancels abilities and disables input; ABP_DeadlockHero plays StunLoop. */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STUN)
+
+	/** Parrying (BPGE_Parry): a melee strike that lands on the owner stuns the attacker instead (AZeroLockCharacter::MeleeStrike). */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_MELEE_PARRY)
+
+	/** Sent to the owner by a light melee montage notify: UZeroBase_LightMelee strikes on it. */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EVENT_MELEE_HIT)
+
 	/** Triggers UZL_StatusTimerAbility on the victim (send it with UZL_StatusTimerAbility::SendStatusTimer). */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EVENT_STATUS_TIMER)
 

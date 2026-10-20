@@ -22,6 +22,8 @@ enum class EZLDeadlockPoseState : uint8
 	Dash,
 	WallJump,
 	Zipline,
+	Stunned,
+	HeavyMelee,
 };
 
 /**

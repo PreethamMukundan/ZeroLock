@@ -1,97 +1,125 @@
 //Copyright Preetham Mukundan (C) 2026
 
 #include "GAS/ZeroBase_LightMelee.h"
-#include "AbilitySystemComponent.h"
-#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "Engine/OverlapResult.h"
-#include "GAS/BaseCharAbilitySystemComponent.h"
+#include "Abilities/Tasks/AbilityTask_WaitDelay.h"
+#include "Animation/ZL_DeadlockAnimSet.h"
+#include "Components/CapsuleComponent.h"
+#include "GAS/ZL_GameplayTags.h"
+#include "GAS/Tasks/GAST_PlayMontageAndWaitForEvent.h"
 #include "ZeroLock/ZeroLockCharacter.h"
 
 UZeroBase_LightMelee::UZeroBase_LightMelee()
 {
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-    
+
     // Make the ability locally predicted so the client doesn't wait for the server to swing
     NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 }
 
-void UZeroBase_LightMelee::OnFinish()
+UAnimMontage* UZeroBase_LightMelee::FindMontage() const
 {
-    EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+    if (LightMeleeMontage)
+    {
+        return LightMeleeMontage;
+    }
+    const AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
+    if (!Hero)
+    {
+        return nullptr;
+    }
+    if (Hero->LightMeleeMontage)
+    {
+        return Hero->LightMeleeMontage;
+    }
+    return Hero->DeadlockAnimSet ? Hero->DeadlockAnimSet->LightMeleeMontage.Get() : nullptr;
 }
 
 void UZeroBase_LightMelee::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                            const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
                                            const FGameplayEventData* TriggerEventData)
 {
+    bStruck = false;
+    if (!Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo()) || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+    {
+       EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+       return;
+    }
+
+    UAnimMontage* Montage = FindMontage();
+    if (!Montage)
+    {
+       // No animation set up yet: still hit, so the attack works.
+       Strike();
+       FinishAbility(false);
+       return;
+    }
+
+    UGAST_PlayMontageAndWaitForEvent* MontageTask = UGAST_PlayMontageAndWaitForEvent::PlayMontageAndWaitForEvent(
+       this, FName("LightMelee"), Montage, FGameplayTagContainer(ZerolockGameplayTagsForBinding::TAG_EVENT_MELEE_HIT), MontagePlayRate);
+    MontageTask->EventReceived.AddDynamic(this, &UZeroBase_LightMelee::OnHitEvent);
+    MontageTask->OnBlendOut.AddDynamic(this, &UZeroBase_LightMelee::OnMontageEnded);
+    MontageTask->OnCompleted.AddDynamic(this, &UZeroBase_LightMelee::OnMontageEnded);
+    MontageTask->OnInterrupted.AddDynamic(this, &UZeroBase_LightMelee::OnMontageCancelled);
+    MontageTask->OnCancelled.AddDynamic(this, &UZeroBase_LightMelee::OnMontageCancelled);
+    MontageTask->ReadyForActivation();
+
+    // Fallback timing for montages without an Event.Melee.Hit notify (whichever comes first wins).
+    UAbilityTask_WaitDelay* HitDelay = UAbilityTask_WaitDelay::WaitDelay(this, HitTime / FMath::Max(MontagePlayRate, 0.01f));
+    HitDelay->OnFinish.AddDynamic(this, &UZeroBase_LightMelee::Strike);
+    HitDelay->ReadyForActivation();
+}
+
+void UZeroBase_LightMelee::OnHitEvent(FGameplayTag EventTag, FGameplayEventData EventData)
+{
+    Strike();
+}
+
+void UZeroBase_LightMelee::Strike()
+{
+    if (bStruck)
+    {
+       return;
+    }
+    bStruck = true;
+
     AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
-    if (!Hero)
+    if (!Hero || !HasAuthority(&CurrentActivationInfo))
     {
-       EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
-       return;
-    }
-    if (Hero->LightMeleeMontage)
-    {
-       UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, FName("LightMelee"), Hero->LightMeleeMontage);
-       MontageTask->OnCompleted.AddDynamic(this, &UZeroBase_LightMelee::OnFinish);
-       MontageTask->OnInterrupted.AddDynamic(this, &UZeroBase_LightMelee::OnFinish); // Good practice to catch interruptions
-       MontageTask->OnCancelled.AddDynamic(this, &UZeroBase_LightMelee::OnFinish);
-       MontageTask->ReadyForActivation();
-    }
-    else
-    {
-       EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
        return;
     }
 
-    if (Hero->HasAuthority())
+    // Flat aim from the Mover input, so the server swings where the client looks.
+    FVector Forward = GetHeroAimDirection();
+    Forward.Z = 0.f;
+    Forward = Forward.GetSafeNormal();
+    if (Forward.IsNearlyZero())
     {
-        UAbilitySystemComponent* AbilitySystemComp = Hero->GetAbilitySystemComponent();
-       
-        FCollisionShape Cap = FCollisionShape::MakeSphere(100.f);
-        FVector OverlapLocation = Hero->GetActorLocation() + Hero->GetActorForwardVector() * 100.f;
-        TArray<FOverlapResult> Overlaps;
-        TArray<AZeroLockCharacter*> HitActors;
-        
-        if(GetWorld()->OverlapMultiByObjectType(Overlaps, OverlapLocation, FQuat::Identity, FCollisionObjectQueryParams(ECC_GameTraceChannel1), Cap))
-        {
-           FGameplayTag ParryTag = FGameplayTag::RequestGameplayTag(FName("ZeroLock.Melee.Parry"), false);
-           
-           for(const FOverlapResult& Overlap : Overlaps)
-           {
-              AZeroLockCharacter* Villan = Cast<AZeroLockCharacter>(Overlap.GetActor());
-              
-
-              if (!Villan || Villan == Hero || HitActors.Contains(Villan))
-              {
-                 continue;
-              }
-              
-              HitActors.Add(Villan);
-              
-              if (Villan->GetAbilitySystemComponent()->HasMatchingGameplayTag(ParryTag))
-              {
-                 if (AbilitySystemComp && ParryEffect)
-                 {
-                    FGameplayEffectContextHandle EffectContext = AbilitySystemComp->MakeEffectContext();
-                    EffectContext.AddSourceObject(this);
-
-                    FGameplayEffectSpecHandle SpecHandle = AbilitySystemComp->MakeOutgoingSpec(ParryEffect, 1, EffectContext);
-
-                    if (SpecHandle.IsValid())
-                    {
-                       AbilitySystemComp->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-                    }
-                 }
-                 break; 
-              }
-              
-              // Apply Damage
-              if (AbilitySystemComp && LightMeleeDamageEffect)
-              {
-                 Hero->GetMyAbilitySystemComp()->ApplyMeleeDamage(Villan->GetMyAbilitySystemComp(),30);
-              }
-           }
-        }
+       Forward = Hero->GetActorForwardVector();
     }
+
+    const float CapsuleRadius = Hero->GetCapsuleComponent() ? Hero->GetCapsuleComponent()->GetScaledCapsuleRadius() : 40.f;
+    const FVector Start = Hero->GetActorLocation();
+    Hero->PerformMeleeStrike(Start, Start + Forward * (CapsuleRadius + StrikeRange), StrikeRadius, StrikeDamage);
+}
+
+void UZeroBase_LightMelee::OnMontageEnded(FGameplayTag EventTag, FGameplayEventData EventData)
+{
+    // A montage shorter than HitTime still hits.
+    Strike();
+    FinishAbility(false);
+}
+
+void UZeroBase_LightMelee::OnMontageCancelled(FGameplayTag EventTag, FGameplayEventData EventData)
+{
+    FinishAbility(true);
+}
+
+void UZeroBase_LightMelee::FinishAbility(bool bWasCancelled)
+{
+    if (!IsActive())
+    {
+       return;
+    }
+    const bool bReplicateEnd = CurrentActorInfo && CurrentActorInfo->IsNetAuthority();
+    EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicateEnd, bWasCancelled);
 }

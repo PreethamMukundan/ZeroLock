@@ -57,5 +57,5 @@ Main branch `main`; feature branches `feature/Hero/<Hero>`.
 - GAS: `Damage` meta attribute not reset on friendly hits; lifesteal before team check; melee mitigation precedence bug; `"ZeroLLock.Abilities"` typo (GAS.md).
 - Items: selling deducts souls instead of refunding; upgrade path broken (GAS.md).
 - Riposte can hang; Itani leaves client time dilation (Heroes.md).
-- Mover: slide landing buffer unreachable, slide has no ground tag/ledge check; `GetSyncedAimRotation` always returns actor rotation; melee/zipline sync state not reset (Movement.md).
+- Mover: slide landing buffer unreachable, slide has no ground tag/ledge check; `GetSyncedAimRotation` always returns actor rotation; zipline sync state not reset (Movement.md).
 - `Config/DefaultEngine.ini:43` malformed `GameViewportClientClassName` line (UI.md, GameFlow.md).

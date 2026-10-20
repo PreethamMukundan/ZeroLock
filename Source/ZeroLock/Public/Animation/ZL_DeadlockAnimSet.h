@@ -7,6 +7,7 @@
 #include "ZL_DeadlockAnimSet.generated.h"
 
 class UAnimSequence;
+class UAnimMontage;
 
 /** Eight-way locomotion cycle, clockwise from forward. A missing direction falls back to the nearest one that exists. */
 USTRUCT(BlueprintType)
@@ -149,6 +150,28 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Zipline")
 	TObjectPtr<UAnimSequence> ZiplineLoop;
+
+	// --- Melee ---
+	/** Heavy melee (the Mover "Melee" lunge mode): played once when the lunge starts, then HeavyMeleeLoop. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Melee")
+	TObjectPtr<UAnimSequence> HeavyMeleeStart;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Melee")
+	TObjectPtr<UAnimSequence> HeavyMeleeLoop;
+
+	/** Light melee montage (UZeroBase_LightMelee uses it when neither the ability nor the hero sets one). A notify that
+	 * sends Event.Melee.Hit to the owner times the hit; without one the ability uses its HitTime. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Melee")
+	TObjectPtr<UAnimMontage> LightMeleeMontage;
+
+	// --- Status ---
+	/** Optional intro played once when the stun starts, then StunLoop. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Status")
+	TObjectPtr<UAnimSequence> StunStart;
+
+	/** Full-body loop while the pawn has ZeroLock.Stun. No clip = no stun pose. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Status")
+	TObjectPtr<UAnimSequence> StunLoop;
 
 	// --- Aim offsets ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Aim")

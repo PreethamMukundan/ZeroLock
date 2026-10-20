@@ -3,6 +3,7 @@
 #include "Mover/ZeroMeleeMode.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
+#include "GameFramework/Pawn.h"
 #include "MoveLibrary/MovementUtils.h"
 #include "Mover/ZeroMovementData.h"
 
@@ -12,6 +13,7 @@ void FZeroMeleeSyncState::Interpolate(const FMoverDataStructBase& From, const FM
     const FZeroMeleeSyncState& ToState = static_cast<const FZeroMeleeSyncState&>(To);
     
     ElapsedTimeMs = FMath::Lerp(FromState.ElapsedTimeMs, ToState.ElapsedTimeMs, Pct);
+    StartLocation = ToState.StartLocation;
 
 }
 
@@ -35,6 +37,22 @@ bool FZeroMeleeSyncState::ShouldReconcile(const FMoverDataStructBase& AuthorityS
 
 UZeroMeleeMode::UZeroMeleeMode()
 {
+}
+
+void UZeroMeleeMode::Activate(const FMoverEventContext& Context, FName PrevModeName, const FMoverSimContext& SimContext,
+    const FMoverTickStartData& StartState, FMoverSyncState* OutSyncState, FMoverAuxStateContext* OutAuxState)
+{
+    Super::Activate(Context, PrevModeName, SimContext, StartState, OutSyncState, OutAuxState);
+
+    if (OutSyncState)
+    {
+        FZeroMeleeSyncState& MeleeState = OutSyncState->SyncStateCollection.FindOrAddMutableDataByType<FZeroMeleeSyncState>();
+        MeleeState.ElapsedTimeMs = 0.0f;
+        if (const FMoverDefaultSyncState* DefaultState = StartState.SyncState.SyncStateCollection.FindDataByType<FMoverDefaultSyncState>())
+        {
+            MeleeState.StartLocation = DefaultState->GetLocation_WorldSpace();
+        }
+    }
 }
 
 void UZeroMeleeMode::SimulationTick_Implementation(const FSimulationTickParams& Params, FMoverTickEndData& OutputState)
@@ -87,11 +105,31 @@ void UZeroMeleeMode::SimulationTick_Implementation(const FSimulationTickParams& 
     FCollisionQueryParams TraceParams;
     TraceParams.AddIgnoredActor(UpdatedComponent->GetOwner());
 
-    bool bHitEnemy = GetWorld()->SweepSingleByObjectType(EnemyHit,OldLocation,OldLocation + MoveDelta,UpdatedComponent->GetComponentQuat(),FCollisionObjectQueryParams(EnemyTraceChannel),CapShape,TraceParams);
+    // Look HitReach past this step, and stop HitReach short of the enemy (an enemy we already overlap stops us dead).
+    // Hero capsules are object type Hero and ignore each other (we pass through), while BP_Mover_Monkey sets
+    // EnemyTraceChannel to Pawn, so query both and only accept another pawn.
+    const FVector SweepDelta = MoveDelta + MeleeDir * HitReach;
+    FCollisionObjectQueryParams EnemyObjects(EnemyTraceChannel);
+    EnemyObjects.AddObjectTypesToQuery(ECC_GameTraceChannel1);
+    EnemyObjects.AddObjectTypesToQuery(ECC_Pawn);
+
+    TArray<FHitResult> EnemyHits;
+    GetWorld()->SweepMultiByObjectType(EnemyHits,OldLocation,OldLocation + SweepDelta,UpdatedComponent->GetComponentQuat(),EnemyObjects,CapShape,TraceParams);
+    bool bHitEnemy = false;
+    for (const FHitResult& Hit : EnemyHits)
+    {
+        if (Cast<APawn>(Hit.GetActor()))
+        {
+            EnemyHit = Hit;
+            bHitEnemy = true;
+            break;
+        }
+    }
 
     if (bHitEnemy)
     {
-        MoveDelta *= EnemyHit.Time;
+        const float DistanceToEnemy = EnemyHit.bStartPenetrating ? 0.0f : EnemyHit.Time * SweepDelta.Size();
+        MoveDelta = MeleeDir * FMath::Clamp(DistanceToEnemy - HitReach, 0.0f, MoveDelta.Size());
     }
 
 
@@ -104,9 +142,10 @@ void UZeroMeleeMode::SimulationTick_Implementation(const FSimulationTickParams& 
 
     FVector FinalVelocity = (UpdatedComponent->GetComponentLocation() - OldLocation) / DeltaSeconds;
 
+    bool bLungeEnded = false;
     if (bHitEnemy)
     {
-       
+
         if (!Params.TimeStep.bIsResimulating)
         {
             if (MeleeHitDelegate.IsBound())
@@ -114,14 +153,23 @@ void UZeroMeleeMode::SimulationTick_Implementation(const FSimulationTickParams& 
                 MeleeHitDelegate.Broadcast();
             }
         }
-        
+
         FinalVelocity = FVector::ZeroVector;
         OutputState.MovementEndState.NextModeName = DefaultModeNames::Falling;
+        bLungeEnded = true;
     }
     else if (OutputMeleeState.ElapsedTimeMs >= (MaxDuration * 1000.0f))
     {
         FinalVelocity =FVector::ZeroVector;
         OutputState.MovementEndState.NextModeName = DefaultModeNames::Walking;
+        bLungeEnded = true;
+    }
+
+    // The server never resimulates, so there this fires exactly once per lunge.
+    if (bLungeEnded && !Params.TimeStep.bIsResimulating)
+    {
+        const FVector LungeStart = StartingMeleeState ? StartingMeleeState->StartLocation : OldLocation;
+        OnMeleeLungeEnded.Broadcast(bHitEnemy ? EnemyHit.GetActor() : nullptr, LungeStart);
     }
     
 

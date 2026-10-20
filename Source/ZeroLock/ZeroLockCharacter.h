@@ -94,6 +94,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* EI_UIInfo;
+
+	/** Light melee (LightMeleeAbility, InputID LightMelee). Defaults to IA_LightMelee. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* EI_LightMelee;
 	
 public:
 	AZeroLockCharacter();
@@ -130,6 +134,24 @@ protected:
 
 	void Stunned(FGameplayTag GameplayTag, int NewCount);
 	void Parry(FGameplayTag GameplayTag, int NewCount);
+
+	/** From UZeroMeleeMode::OnMeleeLungeEnded (fired inside the Mover sim): on the server, runs MeleeStrike next tick. */
+	void HandleMeleeLungeEnded(AActor* LungeHitActor, const FVector& LungeStart);
+	/** Server: heavy melee, sweeps the lunge path (LungeStart to MeleeStrikeRange past the hero). */
+	void MeleeStrike(TWeakObjectPtr<AActor> LungeHitActor, FVector LungeStart);
+
+	void LightMeleePressed();
+	void LightMeleeReleased();
+	/** GetHeavyMeleeTriggerCount() when the light melee key went down. */
+	int32 LightMeleePressHeavyCount = 0;
+
+public:
+	/** Server: sphere sweep Start→End (Hero + Pawn object types) plus ExtraTarget. Enemies only (no self, dead or
+	 * teammates). If any of them is parrying (TAG_MELEE_PARRY) the hero gets ParriedStunEffect and nobody is hit;
+	 * otherwise each takes Damage as melee damage. Used by heavy melee (MeleeStrike) and UZeroBase_LightMelee. */
+	void PerformMeleeStrike(const FVector& Start, const FVector& End, float Radius, float Damage, AActor* ExtraTarget = nullptr);
+
+protected:
 
 	void HealthAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void AmmoAttributeChange(const FOnAttributeChangeData& OnAttributeChangeData);
@@ -239,6 +261,22 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS/Melee")
 	TSubclassOf<class UBaseGameplayAbility> ParryAbility;
+
+	/** Melee strike at the end of the Mover lunge (server): damage dealt to each enemy in front. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS/Melee|Strike")
+	float MeleeStrikeDamage = 90.f;
+
+	/** How far in front of the hero the strike reaches (from the capsule edge). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS/Melee|Strike")
+	float MeleeStrikeRange = 150.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS/Melee|Strike")
+	float MeleeStrikeRadius = 60.f;
+
+	/** Applied to the attacker when the strike lands on an enemy that is parrying (ZeroLock.Melee.Parry). Should grant
+	 * ZeroLock.Stun. Defaults to BPGE_Stun. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS/Melee|Strike")
+	TSubclassOf<UGameplayEffect> ParriedStunEffect;
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "GAS")
 	TArray<FGameplayAbilitySpecHandle> DefaultAbilitiesHandles;

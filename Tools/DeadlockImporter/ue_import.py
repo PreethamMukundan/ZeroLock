@@ -331,6 +331,16 @@ ANIM_SET_SLOTS = {
     "dash_right": ["dash_air_right", "primary_airdash_right"],
     "zipline_start": ["zipline_attached_start", "zipline_grab"],
     "zipline_loop": ["zipline_attached_loop", "zipline_loop", "zipline_latched_loop"],
+    # Played while the pawn has ZeroLock.Stun. Not every hero has a stunned clip; knockdown_medium_loop is the fallback.
+    # stun_start isn't filled: the intros don't match every loop (a knockdown intro into a standing stun). Set it by hand.
+    "stun_loop": ["standing_stunned", "crouching_stunned", "knockdown_medium_loop"],
+    # Heavy melee = the Mover "Melee" lunge: Deadlock's wind-up, then the dash loop.
+    "heavy_melee_start": ["melee_start"],
+    "heavy_melee_loop": ["melee_dash"],
+}
+# Anim set montage property -> montage names under <dest>/Montages/, first match wins.
+ANIM_SET_MONTAGES = {
+    "light_melee_montage": ["Melee/AM_{hero}_Melee_Quick1", "Melee/AM_{hero}_Melee_Quick2"],
 }
 DIRECTIONAL_SLOTS = {
     "run": ["weapon_run_{d}", "primary_run_{d}", "out_of_combat_run_{d}"],
@@ -378,6 +388,12 @@ def build_anim_set(m, dest):
         aset.set_editor_property(prop, cycle)
         if found < 8:
             missing.append(f"{prop} ({found}/8)")
+
+    for prop, names in ANIM_SET_MONTAGES.items():
+        montage = next((m for m in (load(f"{dest}/Montages/{n.format(hero=hero)}") for n in names) if m), None)
+        aset.set_editor_property(prop, montage)
+        if montage is None:
+            missing.append(prop)
 
     for prop, bases in AIM_SLOTS.items():
         aim = aset.get_editor_property(prop)
@@ -509,10 +525,11 @@ def import_hero(hero, no_anims=False, anims_only=False, anim_set_only=False, mon
 
     if not no_anims and m["animations"]:
         import_animations(m, dest, skm.get_editor_property("skeleton"))
-    if m["animations"] and hasattr(unreal, "ZL_DeadlockAnimSet"):
-        build_anim_set(m, dest)
+    # Montages first: the anim set references the light melee montage.
     if m["animations"]:
         build_montages(m, dest)
+    if m["animations"] and hasattr(unreal, "ZL_DeadlockAnimSet"):
+        build_anim_set(m, dest)
 
     eal.save_directory(dest, only_if_is_dirty=True, recursive=True)
     log(f"=== {m['display']} done")

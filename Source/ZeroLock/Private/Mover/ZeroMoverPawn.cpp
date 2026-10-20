@@ -252,6 +252,7 @@ void AZeroMoverPawn::OnDashPressed()
 void AZeroMoverPawn::OnHeavyMeleePressed()
 {
     bWantsToHeavyMelee = true;
+    ++HeavyMeleeTriggerCount;
 }
 
 void AZeroMoverPawn::OnZiplinePressed()

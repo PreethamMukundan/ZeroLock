@@ -3,6 +3,9 @@
 #include "Animation/ZL_DeadlockAnimInstance.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/ZL_DeadlockAnimSet.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
+#include "GAS/ZL_GameplayTags.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "Mover/ZeroMoverComponent.h"
 #include "Mover/ZeroMoverPawn.h"
@@ -172,6 +175,13 @@ void UZL_DeadlockAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	State.bDashing = bDashBurst || Mode == DashingModeName;
 	State.bZiplining = Mode == ZipliningModeName;
 	State.bWallJumping = Mode == WallJumpingModeName;
+	State.bHeavyMelee = Mode == MeleeModeName;
+
+	if (!OwnerASC.IsValid())
+	{
+		OwnerASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Pawn);
+	}
+	State.bStunned = OwnerASC.IsValid() && OwnerASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STUN);
 
 	const bool bInAir = !State.bOnGround && !State.bSliding && !State.bZiplining;
 	if (bInAir)

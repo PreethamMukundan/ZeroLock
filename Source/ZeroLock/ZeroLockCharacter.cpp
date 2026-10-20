@@ -23,7 +23,9 @@
 #include "Input/KeybindManagerSubsystem.h"
 #include "Items/Zero_Item_Inventory_Component.h"
 #include "Kismet/GameplayStatics.h"
+#include "Mover/ZeroMeleeMode.h"
 #include "Mover/ZeroMoverComponent.h"
+#include "UObject/ConstructorHelpers.h"
 #include "Net/UnrealNetwork.h"
 #include "UI/Damage/ZL_BaseDamageWidgetComponent.h"
 #include "UI/HUD/ZL_HUDClass.h"
@@ -56,6 +58,28 @@ AZeroLockCharacter::AZeroLockCharacter()
 	ParryComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ParryComponent"));
 	ParryComp->SetupAttachment(RootComponent);
 	ParryComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	static ConstructorHelpers::FClassFinder<UGameplayEffect> StunEffectClass(TEXT("/Game/ZERO/BP/BaseGameplayAbility/BPGE_Stun"));
+	if (StunEffectClass.Succeeded())
+	{
+		ParriedStunEffect = StunEffectClass.Class;
+	}
+	// The Mover heroes (BP_Mover_Monkey and its children) never set ParryAbility, so the parry key did nothing.
+	static ConstructorHelpers::FClassFinder<UBaseGameplayAbility> ParryAbilityClass(TEXT("/Game/ZERO/BP/BaseGameplayAbility/BPGA_Parry"));
+	if (ParryAbilityClass.Succeeded())
+	{
+		ParryAbility = ParryAbilityClass.Class;
+	}
+	static ConstructorHelpers::FClassFinder<UBaseGameplayAbility> LightMeleeAbilityClass(TEXT("/Game/ZERO/BP/BaseGameplayAbility/BP_LightMelee"));
+	if (LightMeleeAbilityClass.Succeeded())
+	{
+		LightMeleeAbility = LightMeleeAbilityClass.Class;
+	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> LightMeleeAction(TEXT("/Game/ThirdPerson/Input/Actions/IA_LightMelee"));
+	if (LightMeleeAction.Succeeded())
+	{
+		EI_LightMelee = LightMeleeAction.Object;
+	}
 
 	if (GetMesh()) 
 	{
@@ -115,6 +139,11 @@ void AZeroLockCharacter::BeginPlay()
 	if (UZeroMoverComponent* MoverComp = GetZeroMoverComponent())
 	{
 		MoverComp->OnStaminaChanged.AddUObject(this, &AZeroLockCharacter::MoverStaminaChanged);
+
+		if (UZeroMeleeMode* MeleeMode = Cast<UZeroMeleeMode>(MoverComp->FindMovementModeByName(MoverComp->MeleeModeName)))
+		{
+			MeleeMode->OnMeleeLungeEnded.AddUObject(this, &AZeroLockCharacter::HandleMeleeLungeEnded);
+		}
 	}
 
 	if (GetMesh())
@@ -236,7 +265,7 @@ void AZeroLockCharacter::GiveAbilities()
 		GrantAbilityOfClassX(UltimateAbility, EGASAbilityInputID::Ultimate, true);
 		GrantAbilityOfClassX(ReloadAbility, EGASAbilityInputID::Reload);
 		GrantAbilityOfClassX(HeavyMeleeAbility, EGASAbilityInputID::Melee);
-		GrantAbilityOfClassX(LightMeleeAbility, EGASAbilityInputID::None);
+		GrantAbilityOfClassX(LightMeleeAbility, EGASAbilityInputID::LightMelee);
 		GrantAbilityOfClassX(ParryAbility, EGASAbilityInputID::Parry);
 	}
 }
@@ -688,6 +717,12 @@ void AZeroLockCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 		EnhancedInputComponent->BindAction(EI_Parry, ETriggerEvent::Started, this, &AZeroLockCharacter::ParryPressed);
 
+		if (EI_LightMelee)
+		{
+			EnhancedInputComponent->BindAction(EI_LightMelee, ETriggerEvent::Started, this, &AZeroLockCharacter::LightMeleePressed);
+			EnhancedInputComponent->BindAction(EI_LightMelee, ETriggerEvent::Completed, this, &AZeroLockCharacter::LightMeleeReleased);
+		}
+
 		EnhancedInputComponent->BindAction(EI_Confirm, ETriggerEvent::Completed, AbilitySystemComp, &UAbilitySystemComponent::LocalInputConfirm);
 		EnhancedInputComponent->BindAction(EI_Cancel, ETriggerEvent::Completed, AbilitySystemComp, &UAbilitySystemComponent::LocalInputCancel);
 
@@ -735,6 +770,102 @@ void AZeroLockCharacter::Stunned(FGameplayTag GameplayTag, int NewCount)
 			StunChangedDelegate.Broadcast(false);
 		}
 	}
+}
+
+void AZeroLockCharacter::HandleMeleeLungeEnded(AActor* LungeHitActor, const FVector& LungeStart)
+{
+	if (!HasAuthority() || bIsDead) return;
+
+	// Called from inside the Mover simulation: don't change GAS state (stun tags, damage) mid-step.
+	GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateUObject(this, &AZeroLockCharacter::MeleeStrike, TWeakObjectPtr<AActor>(LungeHitActor), LungeStart));
+}
+
+void AZeroLockCharacter::MeleeStrike(TWeakObjectPtr<AActor> LungeHitActor, FVector LungeStart)
+{
+	if (!HasAuthority() || bIsDead || !AbilitySystemComp) return;
+
+	// Flat aim, like the lunge itself (UZeroMeleeMode uses the input's LookDir yaw).
+	FVector Forward = GetActorForwardVector();
+	Forward.Z = 0.f;
+	Forward = Forward.GetSafeNormal();
+
+	// From where the lunge began to MeleeStrikeRange past the hero: someone the lunge slid past (standing right next to
+	// you when you swung) is still on the path.
+	const float CapsuleRadius = GetCapsuleComponent() ? GetCapsuleComponent()->GetScaledCapsuleRadius() : 40.f;
+	const FVector Start = LungeStart.IsZero() ? GetActorLocation() : LungeStart;
+	const FVector End = GetActorLocation() + Forward * (CapsuleRadius + MeleeStrikeRange);
+
+	// What the lunge ran into always counts, even if it slid out of the sweep.
+	PerformMeleeStrike(Start, End, MeleeStrikeRadius, MeleeStrikeDamage, LungeHitActor.Get());
+}
+
+void AZeroLockCharacter::PerformMeleeStrike(const FVector& Start, const FVector& End, float Radius, float Damage, AActor* ExtraTarget)
+{
+	if (!HasAuthority() || bIsDead || !AbilitySystemComp) return;
+
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(MeleeStrike), false, this);
+	TArray<FHitResult> Hits;
+	// Hero capsules are object type Hero; meshes and other pawns may be Pawn.
+	FCollisionObjectQueryParams StrikeObjects(ECC_GameTraceChannel1);
+	StrikeObjects.AddObjectTypesToQuery(ECC_Pawn);
+	GetWorld()->SweepMultiByObjectType(Hits, Start, End, FQuat::Identity, StrikeObjects,
+		FCollisionShape::MakeSphere(Radius), Params);
+
+	TArray<AZeroLockCharacter*> Villans;
+	if (AZeroLockCharacter* ExtraVillan = Cast<AZeroLockCharacter>(ExtraTarget))
+	{
+		Villans.Add(ExtraVillan);
+	}
+	for (const FHitResult& Hit : Hits)
+	{
+		if (AZeroLockCharacter* Villan = Cast<AZeroLockCharacter>(Hit.GetActor()))
+		{
+			Villans.AddUnique(Villan);
+		}
+	}
+
+	const FGameplayTag ParryTag = ZerolockGameplayTagsForBinding::TAG_MELEE_PARRY;
+	TArray<AZeroLockCharacter*> Targets;
+	for (AZeroLockCharacter* Villan : Villans)
+	{
+		if (!Villan || Villan == this || Villan->bIsDead || IsOnSameTeam(Villan) || !Villan->GetMyAbilitySystemComp())
+		{
+			continue;
+		}
+
+		// Parried: the attacker is stunned and the whole strike is lost.
+		if (Villan->GetMyAbilitySystemComp()->HasMatchingGameplayTag(ParryTag))
+		{
+			if (ParriedStunEffect)
+			{
+				AbilitySystemComp->ApplyGameplayEffect(AbilitySystemComp, ParriedStunEffect, 1);
+			}
+			return;
+		}
+		Targets.Add(Villan);
+	}
+
+	for (AZeroLockCharacter* Villan : Targets)
+	{
+		AbilitySystemComp->ApplyMeleeDamage(Villan->GetMyAbilitySystemComp(), Damage);
+	}
+}
+
+void AZeroLockCharacter::LightMeleePressed()
+{
+	// Light and heavy melee share a key: a tap is light, a hold is heavy (IA_HeavyMelee's Hold trigger). Light fires on
+	// release, and only if the hold never triggered in between.
+	LightMeleePressHeavyCount = GetHeavyMeleeTriggerCount();
+}
+
+void AZeroLockCharacter::LightMeleeReleased()
+{
+	if (GetHeavyMeleeTriggerCount() != LightMeleePressHeavyCount)
+	{
+		return;
+	}
+	GetAbilitySystemComponent()->AbilityLocalInputPressed(static_cast<int32>(EGASAbilityInputID::LightMelee));
+	GetAbilitySystemComponent()->AbilityLocalInputReleased(static_cast<int32>(EGASAbilityInputID::LightMelee));
 }
 
 void AZeroLockCharacter::Parry(FGameplayTag GameplayTag, int NewCount)

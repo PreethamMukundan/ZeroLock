@@ -135,6 +135,14 @@ void FAnimNode_ZLDeadlockHero::CacheBones_AnyThread(const FAnimationCacheBonesCo
 
 EZLDeadlockPoseState FAnimNode_ZLDeadlockHero::ChooseState() const
 {
+	if (State.bStunned && (Set->StunLoop || Set->StunStart))
+	{
+		return EZLDeadlockPoseState::Stunned;
+	}
+	if (State.bHeavyMelee && (Set->HeavyMeleeLoop || Set->HeavyMeleeStart))
+	{
+		return EZLDeadlockPoseState::HeavyMelee;
+	}
 	if (State.bZiplining && (Set->ZiplineLoop || Set->ZiplineStart))
 	{
 		return EZLDeadlockPoseState::Zipline;
@@ -265,7 +273,7 @@ void FAnimNode_ZLDeadlockHero::Update_AnyThread(const FAnimationUpdateContext& C
 		TimeSinceAirborne = bAirborne ? 0.f : TimeSinceAirborne + DeltaTime;
 
 		// A dash plays its clip for DashHoldTime, then hands back to whatever state we're in by then.
-		if (bDashed && !State.bSliding && !State.bZiplining)
+		if (bDashed && !State.bSliding && !State.bZiplining && !State.bStunned && !State.bHeavyMelee)
 		{
 			if (UAnimSequence* DashClip = ChooseDashClip())
 			{
@@ -274,7 +282,7 @@ void FAnimNode_ZLDeadlockHero::Update_AnyThread(const FAnimationUpdateContext& C
 		}
 		const FLayer& TopLayer = Layers.Last();
 		const bool bHoldingDash = TopLayer.State == EZLDeadlockPoseState::Dash
-			&& (TopLayer.Time < Set->DashHoldTime || State.bDashing) && !bJumped;
+			&& (TopLayer.Time < Set->DashHoldTime || State.bDashing) && !bJumped && !State.bStunned && !State.bHeavyMelee;
 
 		const EZLDeadlockPoseState Desired = bHoldingDash ? EZLDeadlockPoseState::Dash : ChooseState();
 		const EZLDeadlockPoseState Current = TopLayer.State;
@@ -340,6 +348,14 @@ void FAnimNode_ZLDeadlockHero::Update_AnyThread(const FAnimationUpdateContext& C
 			}
 			break;
 		}
+
+		case EZLDeadlockPoseState::HeavyMelee:
+			// The lunge only lasts ~0.25 s: blend in as fast as a jump.
+			if (Current != Desired)
+			{
+				PushLayer(Desired, Set->JumpBlendTime);
+			}
+			break;
 
 		default:
 			if (Current != Desired)
@@ -518,6 +534,14 @@ void FAnimNode_ZLDeadlockHero::EvaluateLayer(const FLayer& Layer, FPoseContext& 
 
 	case EZLDeadlockPoseState::Zipline:
 		EvaluateIntoLoop(Output, Set->ZiplineStart, Set->ZiplineLoop, nullptr, 0.f, Layer.Time);
+		break;
+
+	case EZLDeadlockPoseState::Stunned:
+		EvaluateIntoLoop(Output, Set->StunStart, Set->StunLoop, nullptr, 0.f, Layer.Time);
+		break;
+
+	case EZLDeadlockPoseState::HeavyMelee:
+		EvaluateIntoLoop(Output, Set->HeavyMeleeStart, Set->HeavyMeleeLoop, nullptr, 0.f, Layer.Time);
 		break;
 	}
 }

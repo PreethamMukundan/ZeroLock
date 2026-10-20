@@ -7,7 +7,7 @@ Code: `Source/ZeroLock/{Public,Private}/<Hero>/`. Ability BPs: `Content/ZERO/Her
 |---|---|
 | **Pocket** | 4/4 done, newest and cleanest code (predicted projectiles, careful EndAbility). Pending code review. Placeholder suitcase mesh; Barrage projectile debug draw on by default. |
 | **Apollo** | 4/4 on Mover. Prediction rough edges, debug draws. |
-| **Lash** | 4/4. DeathSlam slam damage broken (regression); GroundStrike victim drag broken for remote players. |
+| **Lash** | 4/4. GroundStrike victim drag broken for remote players. |
 | **Drifter** | 4/4 on older patterns (legacy projectile, `SetActorLocation` teleport). WIP. |
 | **Xayah** (LoL kit) | 5 abilities + projectile, test-only prototype in Developers. |
 | **Seven** | Stun prototype only. **Doorman**: empty stubs. **MonkeyBoi**: `UZL_Ruyibang` stub. |
@@ -36,9 +36,9 @@ Code: `Source/ZeroLock/{Public,Private}/<Hero>/`. Ability BPs: `Content/ZERO/Her
 | Ability | Base | What it does |
 |---|---|---|
 | `UZL_Lash_GroundStrike` | `UBaseGameplayAbility` | Slam toward aimed ground point (radius 600 + height×0.5, max 3000) at `MovementSpeed` 3000 via `Reach_MoverMoveTo`; drags enemies in a 250 sphere; server cone damage = base + distance×mult; L2+ KnockUp. |
-| `UZL_Lash_DeathSlam` (ult) | `UBase_GA_TargetActors` | Hold: `AZL_GATargetActor_CylinderCharge` locks enemies in a camera cylinder (`LockOnThreshold` 1.5, r200 × 600; auto-confirm 2 s) → `SendVictimMoveEvent(PullTo)` to Lash → `UZL_Task_WaitSlamLocation` (high-ping fix: client reports slam point via `ServerReportSlamLocation`) → PullTo slam point → end. |
+| `UZL_Lash_DeathSlam` (ult) | `UBase_GA_TargetActors` | Hold: `AZL_GATargetActor_CylinderCharge` locks enemies in a camera cylinder (`LockOnThreshold` 1.5, r200 × 600; auto-confirm 2 s) → `SendVictimMoveEvent(PullTo)` to Lash → `UZL_Task_WaitSlamLocation` (high-ping fix: client reports slam point via `ServerReportSlamLocation`) → PullTo slam point → after `PullTime` the server applies `SlamDamage` (spirit) + `AfterSlamEffect` to every locked victim (`TargetSlamFinish`; a cancel deals nothing) → end. `LockOnEffect` (optional) is applied at lock-on and removed in EndAbility. Only the server replicates the slam end: its timer starts later (waits for the client's slam point), so a client EndAbility would cancel it before the damage. |
 | `UZL_Lash_Flog` | `UZL_BasePlayAnimation_AndDo` | Whip cone (500, 45°) from camera: `FlogEffect` + spirit damage; heals damage × 0.6 per enemy. |
-| `UZL_Lash_Grapple` | `UBaseGameplayAbility` | Camera cone; if a character is found, commit and launch toward it (`GrappleLaunchStrength` 1200 over 0.2 s) + self GE. No hit = no cost. |
+| `UZL_Lash_Grapple` | `UBaseGameplayAbility` | Cone along `GetHeroAimDirection()`; if a character is found, commit and launch toward it (`GrappleLaunchStrength` 1200 over 0.2 s) + self GE. No hit = no cost. Charged: 2 charges, `TimeBetweenCharges` 3, recharge = `C_Lash` `Grapple_CoolDown`, Slot 2. |
 
 ## Pocket (`Pocket/`)
 | Ability | Base | What it does |
@@ -63,7 +63,7 @@ Code: `Source/ZeroLock/{Public,Private}/<Hero>/`. Ability BPs: `Content/ZERO/Her
 `UZL_GA_Seven_Stun` (`UBase_GA_TargetActors`: start effect, then stun after `StunDelay`). `UZL_Doorman_CallBell` + `AZL_Projectile_Doorman_CallBell`: empty.
 
 ## Known issues
-- **DeathSlam never deals slam damage / AfterSlamEffect**: `CurrentActiveEffectHandles` is never filled since commit `6155d0d` (`ZL_Lash_DeathSlam.cpp:215-234` dead); pull only happens if `LockOnEffect` is set (`:132`). Stop/Release events have no TargetData, so they no-op (GAS.md).
+- DeathSlam Stop/Release victim events have no TargetData, so they no-op (GAS.md).
 - **Riposte can hang**: dash timeout (`OnTimeExpired`) has no listener (`ZL_Apollo_Riposte.cpp:182-213`) → ability never ends, MovementLock blocks all abilities.
 - FlawlessAdvance recast timer not cancelled on recast (`:242-258`) → can end mid-charge.
 - ItaniLoSahn: client never resets `CustomTimeDilation` (`:160`, `:241`); not restored on cancel; client target data sent but never consumed.

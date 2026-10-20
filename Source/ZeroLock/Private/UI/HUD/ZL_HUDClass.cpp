@@ -11,6 +11,7 @@
 #include "TimerManager.h"
 #include "CharacterSelector/ZL_CharacterSelector_Actor.h"
 #include "Gamemode/Zero_BaseGameState.h"
+#include "Zero_BasePlayerController.h"
 #include "Engine/LocalPlayer.h"
 #include "UI/ZL_BaseUILayout.h"
 #include "UI/ZL_UI_Tags.h"
@@ -45,9 +46,27 @@ void AZL_HUDClass::BeginPlay()
 		}
 
 		SetupHeroSelectInput();
+		GetWorldTimerManager().SetTimer(InitialHeroPickTimer, this, &AZL_HUDClass::UpdateInitialHeroPick, 0.2f, true, 0.f);
 	}
 
 	PushHUD();
+}
+
+void AZL_HUDClass::UpdateInitialHeroPick()
+{
+	AZero_BasePlayerController* PC = Cast<AZero_BasePlayerController>(GetOwningPlayerController());
+	const AGameStateBase* BaseGS = GetWorld()->GetGameState();
+	const AZero_BaseGameState* GS = Cast<AZero_BaseGameState>(BaseGS);
+	if (!PC || PC->GetPawn() || (BaseGS && !GS) || (GS && !GS->bPickHeroOnJoin))
+	{
+		GetWorldTimerManager().ClearTimer(InitialHeroPickTimer);
+		return;
+	}
+	if (!GS) return; // client: game state not replicated yet
+
+	bWaitingForHeroPick = true;
+	if (IsHeroSelectOpen() || PC->HasPendingHeroRequest()) return;
+	OpenHeroSelect();
 }
 
 void AZL_HUDClass::SetupHeroSelectInput()
@@ -89,9 +108,10 @@ void AZL_HUDClass::OpenHeroSelect()
 	APlayerController* PC = GetOwningPlayerController();
 	if (!PC || !HeroSelectWidgetClass || !IsValid(RootLayer) || IsHeroSelectOpen()) return;
 
-	// Only game modes with bAllowHeroSwap (replicated through the game state).
+	// Only game modes with bAllowHeroSwap (replicated through the game state), or the join pick while there's no pawn yet.
 	const AZero_BaseGameState* GS = GetWorld()->GetGameState<AZero_BaseGameState>();
-	if (!GS || !GS->bAllowHeroSwap) return;
+	const bool bInitialPick = GS && GS->bPickHeroOnJoin && !PC->GetPawn();
+	if (!GS || (!GS->bAllowHeroSwap && !bInitialPick)) return;
 
 	if (HeroSelectPreviewClass && !HeroSelectPreview)
 	{
@@ -163,9 +183,10 @@ void AZL_HUDClass::HandleHeroReady(APawn* Hero)
 	HUDPawn = Hero;
 	bHUDHadPawn = true;
 
-	// First pawn: the HUD pushed in BeginPlay is already for it.
-	if (bHadPawn)
+	// First pawn: the HUD pushed in BeginPlay is already for it, unless it was pushed pawnless while picking a hero.
+	if (bHadPawn || bWaitingForHeroPick)
 	{
+		bWaitingForHeroPick = false;
 		RebuildGameHUD(0);
 	}
 }

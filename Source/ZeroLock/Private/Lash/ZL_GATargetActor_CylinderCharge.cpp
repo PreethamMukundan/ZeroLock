@@ -6,6 +6,7 @@
 #include "Abilities/GameplayAbility.h"
 #include "Camera/CameraComponent.h"
 #include "Engine/OverlapResult.h"
+#include "GAS/BaseGameplayAbility.h"
 #include "ZeroLock/ZeroLockCharacter.h"
 
 AZL_GATargetActor_CylinderCharge::AZL_GATargetActor_CylinderCharge()
@@ -27,8 +28,18 @@ FVector AZL_GATargetActor_CylinderCharge::GetCylinderCenter() const
 	AZeroLockCharacter* Avatar = Cast<AZeroLockCharacter>(OwningAbility->GetAvatarActorFromActorInfo());
 	if (!Avatar) return GetActorLocation();
 
-	FVector Forward = Avatar->GetFollowCamera()->GetForwardVector();
-	return Avatar->GetActorLocation() + (Forward * (CylinderHeight * 0.5f));
+	return Avatar->GetActorLocation() + (GetAimDirection() * (CylinderHeight * 0.5f));
+}
+
+FVector AZL_GATargetActor_CylinderCharge::GetAimDirection() const
+{
+	// Same aim on client and server (the follow camera doesn't turn on the server for remote players).
+	if (const UBaseGameplayAbility* Ability = Cast<UBaseGameplayAbility>(OwningAbility))
+	{
+		return Ability->GetHeroAimDirection();
+	}
+	const AActor* Avatar = OwningAbility ? OwningAbility->GetAvatarActorFromActorInfo() : nullptr;
+	return Avatar ? Avatar->GetActorForwardVector() : FVector::ForwardVector;
 }
 
 void AZL_GATargetActor_CylinderCharge::Tick(float DeltaSeconds)
@@ -54,7 +65,7 @@ void AZL_GATargetActor_CylinderCharge::UpdateTargetingData(float DeltaSeconds)
 	
 	FCollisionShape Capsule = FCollisionShape::MakeCapsule(CylinderRadius, CylinderHeight * 0.5f);
 	
-	FQuat Rotation = Avatar->GetFollowCamera()->GetForwardVector().ToOrientationQuat();
+	FQuat Rotation = GetAimDirection().ToOrientationQuat();
 	DrawDebugCapsule(GetWorld(), GetCylinderCenter(), CylinderHeight * 0.5f, CylinderRadius, Rotation, FColor::Green, false, -1, 0, 2.f);
 
 	GetWorld()->OverlapMultiByChannel(Overlaps, GetCylinderCenter(), Rotation, ECC_Pawn, Capsule, Params);

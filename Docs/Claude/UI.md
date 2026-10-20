@@ -40,8 +40,9 @@ VM property pattern: `UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)`
 
 ### `UZL_AbilityUIManagerComponent`
 - BeginPlay: creates 4 slots (Secondary, Ability1, Ability2, Ultimate) keyed by input tags `ZerolockGameplayTagsForBinding::TAG_INPUT_SECONDRY/ABILITY_1/ABILITY_2/ULTIMATE`, then `BindToLocalHero()` (once; also called from `AZeroLockCharacter::NotifyHUDHeroReady` for pawns possessed after BeginPlay, e.g. hero swap). Locally controlled: binds ASC `OnAbilityUpgraded`, `OnNewAbilityAdded`, `OnActiveGameplayEffectAddedDelegateToSelf`, then replays existing specs.
-- `OnAbilityAdded`: slot found by spec `DynamicSpecSourceTags`; fills icon, name, descriptions (base + L1–3), charges (`AbilityCharges_N`/`MaxCharges_N` by `EGameplayAbilitySlot`), cooldown tags, `StackTag`.
-- Cooldowns: 0.033 s looping `RefreshCooldowns` timer while any cooldown tag is active.
+- `OnAbilityAdded`: slot found by spec `DynamicSpecSourceTags`; fills icon, name, descriptions (base + L1–3), charges (`AbilityCharges_N`/`MaxCharges_N` by `EGameplayAbilitySlot`, plus the slot's recharge tag), cooldown tags, `StackTag`. Re-runs for the same spec (rebroadcasts), so each delegate binding removes this component's old one first.
+- Cooldowns: 0.033 s looping `RefreshCooldowns` timer while any cooldown or recharge tag is active. Recharge time → `UZL_VM_AbilityIcon::UpdateRecharge` (`RechargePercent`, `bIsRecharging`); with 0 charges the cooldown fields (`CooldownPercent/Text`, `bIsOnCooldown`) show the next-charge timer instead of the lockout.
+- `UZL_HUD_AbilityIcon` follows the VM's `AbilityCharges/MaxAbilityCharges/bHasCharges` field notifications: charged abilities get stamina-style pips in BindWidgetOptional `ChargePipBox` (`WBP_AbilityIcon`, under the icon): one per max charge, full ones `ChargeFullColor`, the recharging one filling with `RechargePercent` in `ChargeRechargingColor` (also `ChargePipStyle/Size/Spacing`). Without `ChargePipBox` it falls back to the old `ChargeBar` material (`CurrentStep`, `NumSteps`, collapsed in the WBP now) + `AbilityChargesText`. Pip code is shared with the stamina bar: `ZLPipBar::Refresh` (`UI/HUD/ZL_PipBar.h`).
 - Upgrades: click HUD icon → `IncrementAbilityLevel` → `Server_UpgradeAbility(Class, Level)` → server sets `Spec.Level`, `MarkAbilitySpecDirty`.
 - Ability timers: `BaseGameplayAbility` calls `AddProgressBarVM` / `SetProgressionLevel` / `RemoveProgressBarVM`.
 
@@ -78,7 +79,7 @@ VM property pattern: `UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)`
 ## Known issues
 - `ZL_AbilityUIManagerComponent.cpp:43,84` deref `Find`/`FindKey` results unchecked (crash on missing slot). `:123-125`, `:288` missing null checks.
 - **Server trusts client ability upgrades**: `Server_UpgradeAbility_Validate` returns true; no level cap or skill-point check server-side (`:70-74`, cap only client-side `:38`).
-- `UZL_VM_AbilityIcon::GetChargePercent` (`ZL_VM_AbilityIcon.h:108`) integer division and /0; `UZL_VM_Attributes::GetHealthPercentage` (`ZL_VM_Attributes.h:28`) /0 before attributes arrive.
+- `UZL_VM_Attributes::GetHealthPercentage` (`ZL_VM_Attributes.h:28`) /0 before attributes arrive.
 - `Zero_BaseGameState.cpp:164-168` writes `UZL_VM_PlayerInfo` fields directly (no FieldNotify), Assists never set, and `UZL_PlayerInfoBox` snapshots once → team-bar K/D/A likely doesn't update live.
 - Widgets grabbing `GetPlayerPawn(0)` once at init (stat panels, inventory, shop) never rebind on their own (`AZL_HUDClass::HandleHeroReady` recreates the Game-layer HUD with a fresh instance when a new local pawn is ready, see GameFlow.md hero swap; the shop on `UI.Layer.Itemshop` is not rebuilt); ASC delegates never removed; `UZL_ItemShop_Base::ItemPressed:171` crashes without a pawn.
 - `AZL_HUDClass::BeginPlay` pushes the HUD immediately; if the controller has no pawn yet (seen on the first PIE after editor start), `bHUDHadPawn` stays false, `HandleHeroReady` treats the hero as the first pawn and doesn't rebuild, so the HUD's resolvers (`ZL_VM_Attributes`, `ZL_VM_AbilitiesContainer`, `ZL_VM_ProgressionStack`) log "Resolver returned an invalid value" and stay unbound.

@@ -18,11 +18,12 @@ void UZL_Lash_Flog::OnAnimationPointTrigger()
 	if (!Hero)
 	{
 		EndAbility(GetCurrentAbilitySpecHandle(),GetCurrentActorInfo(),GetCurrentActivationInfo(),true,true);
+		return;
 	}
 	CommitAbility(GetCurrentAbilitySpecHandle(),GetCurrentActorInfo(),GetCurrentActivationInfo());
 	TArray<FOverlapResult> OverlapResults;
 	FVector Origin = Hero->GetPawnViewLocation();
-	FVector Direction = Hero->GetFollowCamera()->GetForwardVector();
+	FVector Direction = GetHeroAimDirection();
 	TArray<FHitResult> HitResults;
 	TArray<AActor*> ActorsToIgnore;
 	TArray<AZeroLockCharacter*> OutVillans;

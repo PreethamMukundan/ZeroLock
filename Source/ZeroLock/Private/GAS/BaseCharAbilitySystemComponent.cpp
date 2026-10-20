@@ -6,6 +6,8 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GameFramework/Pawn.h"
 #include "GAS/BaseGameplayAbility.h"
+#include "GAS/ZL_GameplayTags.h"
+#include "GAS/ZL_GE_BaseCooldown.h"
 #include "GAS/Tasks/ZL_Task_WaitSlamLocation.h"
 #include "ZeroLock/ZeroLock.h"
 
@@ -381,4 +383,71 @@ bool UBaseCharAbilitySystemComponent::TryConsumeClientReplicatedTargetData(FGame
 		return bConsumed;
 	}
 	return false;
+}
+
+
+void UBaseCharAbilitySystemComponent::ConsumeAbilityCharge(UBaseGameplayAbility* Ability, const FGameplayAttribute& ChargeAttr,
+	const FGameplayAttribute& MaxChargeAttr, FGameplayTag RechargeTag)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !Ability || !ChargeAttr.IsValid() || !RechargeTag.IsValid()) return;
+
+	ApplyModToAttribute(ChargeAttr, EGameplayModOp::Additive, -1.0f);
+
+	FZLChargeRecharge& Recharge = ChargeRecharges.FindOrAdd(RechargeTag);
+	Recharge.Ability = Ability;
+	Recharge.ChargeAttr = ChargeAttr;
+	Recharge.MaxChargeAttr = MaxChargeAttr;
+
+	// Already recharging: the running timer picks this charge up when it finishes.
+	if (!GetActiveGameplayEffect(Recharge.Handle))
+	{
+		StartChargeRecharge(RechargeTag);
+	}
+}
+
+void UBaseCharAbilitySystemComponent::StartChargeRecharge(FGameplayTag RechargeTag)
+{
+	FZLChargeRecharge* Recharge = ChargeRecharges.Find(RechargeTag);
+	UBaseGameplayAbility* Ability = Recharge ? Recharge->Ability.Get() : nullptr;
+	if (!Ability) return;
+
+	// Read each time, so cooldown reduction and ability level changes apply to the next charge.
+	const float Duration = Ability->GetCoolDownTime();
+	if (Duration <= 0.f)
+	{
+		// A 0 duration GE is instant and would never expire: just refill.
+		SetNumericAttributeBase(Recharge->ChargeAttr, GetNumericAttribute(Recharge->MaxChargeAttr));
+		return;
+	}
+
+	FGameplayEffectContextHandle Context = MakeEffectContext();
+	Context.AddSourceObject(GetAvatarActor());
+	FGameplayEffectSpecHandle Spec = MakeOutgoingSpec(UZL_GE_BaseCooldown::StaticClass(), Ability->GetAbilityLevel(), Context);
+	if (!Spec.IsValid()) return;
+
+	Spec.Data->SetSetByCallerMagnitude(ZerolockGameplayTagsForBinding::TAG_SETBYCALLER_COOLDOWN_DURATION, Duration);
+	Spec.Data->DynamicGrantedTags.AddTag(RechargeTag);
+	Recharge->Handle = ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+
+	if (FOnActiveGameplayEffectRemoved_Info* OnRemoved = OnGameplayEffectRemoved_InfoDelegate(Recharge->Handle))
+	{
+		OnRemoved->AddUObject(this, &ThisClass::OnChargeRechargeRemoved, RechargeTag);
+	}
+}
+
+void UBaseCharAbilitySystemComponent::OnChargeRechargeRemoved(const FGameplayEffectRemovalInfo& RemovalInfo, FGameplayTag RechargeTag)
+{
+	FZLChargeRecharge* Recharge = ChargeRecharges.Find(RechargeTag);
+	if (!Recharge) return;
+	Recharge->Handle = FActiveGameplayEffectHandle();
+
+	// Removed by something else (cleanup, a cleanse): no charge, and no new timer.
+	if (RemovalInfo.bPrematureRemoval) return;
+
+	ApplyModToAttribute(Recharge->ChargeAttr, EGameplayModOp::Additive, 1.0f);
+
+	if (GetNumericAttribute(Recharge->ChargeAttr) < GetNumericAttribute(Recharge->MaxChargeAttr))
+	{
+		StartChargeRecharge(RechargeTag);
+	}
 }

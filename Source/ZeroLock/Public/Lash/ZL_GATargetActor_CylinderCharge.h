@@ -39,5 +39,6 @@ protected:	UPROPERTY()
 
 
 	FVector GetCylinderCenter() const;
-	
+	FVector GetAimDirection() const;
+
 };

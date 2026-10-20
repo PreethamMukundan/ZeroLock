@@ -26,7 +26,8 @@ void AZero_BasePlayerController::ServerSwapHero_Implementation(TSubclassOf<AZero
 
 	AZero_BaseGameModeBase* GM = GetWorld()->GetAuthGameMode<AZero_BaseGameModeBase>();
 	if (!GM) return;
-	if (!GM->bAllowHeroSwap)
+	// The first pick with bPickHeroOnJoin spawns the player, so it's allowed even when swapping isn't.
+	if (!GM->bAllowHeroSwap && !GM->IsWaitingForHeroPick(this))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[PC] ServerSwapHero: %s, game mode %s doesn't allow hero swap"), *GetName(), *GM->GetClass()->GetName());
 		return;
@@ -52,6 +53,19 @@ void AZero_BasePlayerController::ServerSwapHero_Implementation(TSubclassOf<AZero
 	}
 
 	GM->SwapHero(this, HeroClass);
+}
+
+void AZero_BasePlayerController::RequestHero(TSubclassOf<AZeroLockCharacter> HeroClass)
+{
+	if (!HeroClass) return;
+	LastHeroRequestTime = GetWorld()->GetTimeSeconds();
+	ServerSwapHero(HeroClass);
+}
+
+bool AZero_BasePlayerController::HasPendingHeroRequest() const
+{
+	// The pawn takes a moment to replicate after a pick; after the timeout assume the server rejected it.
+	return LastHeroRequestTime >= 0.f && GetWorld()->GetTimeSeconds() - LastHeroRequestTime < HeroRequestTimeout;
 }
 
 void AZero_BasePlayerController::ServerSetStartLocation_Implementation(FVector loc)

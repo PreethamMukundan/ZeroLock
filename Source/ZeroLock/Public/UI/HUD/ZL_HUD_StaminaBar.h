@@ -47,7 +47,6 @@ protected:
 	float PipSpacing = 4.0f;
 
 private:
-	void RebuildPips(int32 Count);
 	void Refresh(float Stamina, float MaxStamina);
 
 	UPROPERTY(Transient)

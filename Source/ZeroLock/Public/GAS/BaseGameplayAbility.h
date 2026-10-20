@@ -118,17 +118,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ZeroLock|Charges")
 	bool bIsChargedAbility = false;
 
+	/** Charged abilities spend a charge per use instead of the cost GE. Each charge recharges in CooldownDuration (with
+	 * cooldown reduction), one at a time; TimeBetweenCharges is the short cooldown after each use. Needs a unique Slot. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ZeroLock|Charges", meta = (EditCondition = "bIsChargedAbility"))
 	float MaxChargesConfig = 3.0f;
 
+	/** Cooldown after each use while charges remain (0 = none). Was ChargeRechargeDuration (CoreRedirect). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ZeroLock|Charges", meta = (EditCondition = "bIsChargedAbility"))
-	float ChargeRechargeDuration = 5.0f;
+	float TimeBetweenCharges = 0.5f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ZeroLock|Charges", meta = (EditCondition = "bIsChargedAbility"))
-	TSubclassOf<UGameplayEffect> ChargeRechargeGEClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ZeroLock|Charges", meta = (EditCondition = "bIsChargedAbility"))
-	FGameplayTag RechargeDurationTag;
+	/** The tag granted by this ability's recharge timer (per Slot). */
+	FGameplayTag GetChargeRechargeTag() const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ZeroLock")
 	class UZL_AbilityUIManagerComponent* MyAbilityManagerComp;
@@ -166,6 +166,11 @@ public:
 	virtual void ApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
 
 	
+	/** Where the hero is aiming, the same on client and server: the control rotation when locally controlled, otherwise
+	 * (server, remote player) the LookDir of the last Mover input cmd. Use this instead of the follow camera, which the
+	 * server doesn't turn for remote players, so server-side traces would go the wrong way. */
+	FVector GetHeroAimDirection() const;
+
 	static void SendVictimMoveEvent(AZeroLockCharacter* Hero, AZeroLockCharacter* Victim,const TCHAR* TagName, float Magnitude, const FVector* Location = nullptr);
 protected:
 	

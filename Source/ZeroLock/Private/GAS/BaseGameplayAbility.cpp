@@ -10,6 +10,9 @@
 #include "GAS/BaseCharAttributeSet.h"
 #include "GAS/ZL_GameplayTags.h"
 #include "GAS/ZL_GE_BaseCooldown.h"
+#include "Mover/ZeroMoverComponent.h"
+#include "Mover/ZeroMoverPawn.h"
+#include "Mover/ZeroMovementData.h"
 #include "UI/MVVM/ZL_VM_Attributes.h"
 #include "UI/MVVM/Abilities/ZL_AbilityUIManagerComponent.h"
 #include "UI/MVVM/Abilities/ZL_VM_AbilityTimerProgressBar.h"
@@ -105,14 +108,17 @@ void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle
 	UGameplayEffect* CooldownGE = GetCooldownGameplayEffect();
 	if (CooldownGE)
 	{
-		
+		// Charged abilities: CooldownDuration is the per-charge recharge (UBaseCharAbilitySystemComponent::ConsumeAbilityCharge);
+		// the cooldown GE is only the short lockout between uses. Skip it at 0, since a 0 duration GE is instant and the
+		// client's predicted copy would never expire.
+		float CooldownTimeToUse = bIsChargedAbility ? TimeBetweenCharges : GetCoolDownTime();
+		if (bIsChargedAbility && CooldownTimeToUse <= 0.f)
+		{
+			return;
+		}
+
 		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(CooldownGE->GetClass(), GetAbilityLevel());
 		SpecHandle.Data.Get()->DynamicGrantedTags.AppendTags(CooldownTags);
-		float CooldownTimeToUse =GetCoolDownTime();
-		if (bIsChargedAbility)
-		{
-			CooldownTimeToUse = ChargeRechargeDuration;
-		}
 		SpecHandle.Data.Get()->SetSetByCallerMagnitude(ZerolockGameplayTagsForBinding::TAG_SETBYCALLER_COOLDOWN_DURATION, CooldownTimeToUse);
 		FActiveGameplayEffectHandle GEHandle=ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
 		if (GEHandle.IsValid())
@@ -448,7 +454,8 @@ void UBaseGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorI
 {
 	Super::OnGiveAbility(ActorInfo, Spec);
 	
-	if (bIsChargedAbility && GetCurrentActivationInfo().ActivationMode== EGameplayAbilityActivationMode::Authority)
+	// Server only: the client's attributes come from replication (CurrentActivationInfo defaults to Authority, so it can't be used here).
+	if (bIsChargedAbility && ActorInfo && ActorInfo->IsNetAuthority())
 	{
 		UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
 		FGameplayAttribute ChargeAttr = GetChargeAttribute();
@@ -489,23 +496,49 @@ void UBaseGameplayAbility::ApplyCost(const FGameplayAbilitySpecHandle Handle,
 		return;
 	}
 
+	// Server only; the client sees the charge go when the attribute replicates (TimeBetweenCharges covers that gap).
 	if (HasAuthority(&ActivationInfo))
 	{
-		UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
-		if (ASC)
+		if (UBaseCharAbilitySystemComponent* ASC = Cast<UBaseCharAbilitySystemComponent>(ActorInfo->AbilitySystemComponent.Get()))
 		{
-			ASC->ApplyModToAttribute(GetChargeAttribute(), EGameplayModOp::Additive, -1.0f);
+			ASC->ConsumeAbilityCharge(const_cast<UBaseGameplayAbility*>(this), GetChargeAttribute(), GetMaxChargeAttribute(), GetChargeRechargeTag());
+		}
+	}
+}
 
-			if (ChargeRechargeGEClass)
+FVector UBaseGameplayAbility::GetHeroAimDirection() const
+{
+	const APawn* Pawn = Cast<APawn>(GetAvatarActorFromActorInfo());
+	if (!Pawn)
+	{
+		return FVector::ForwardVector;
+	}
+	if (Pawn->IsLocallyControlled() && Pawn->GetController())
+	{
+		return Pawn->GetControlRotation().Vector();
+	}
+	if (const AZeroMoverPawn* MoverPawn = Cast<AZeroMoverPawn>(Pawn))
+	{
+		if (const UZeroMoverComponent* Mover = MoverPawn->GetZeroMoverComponent())
+		{
+			if (const FZeroMovementInputs* Inputs = Mover->GetLastInputCmd().InputCollection.FindDataByType<FZeroMovementInputs>())
 			{
-				FGameplayEffectSpecHandle RechargeSpec = MakeOutgoingGameplayEffectSpec(ChargeRechargeGEClass, GetAbilityLevel());
-				if (RechargeSpec.IsValid())
-				{
-					RechargeSpec.Data.Get()->SetSetByCallerMagnitude(RechargeDurationTag, GetCoolDownTime());
-					ASC->ApplyGameplayEffectSpecToSelf(*RechargeSpec.Data.Get());
-				}
+				return Inputs->LookDir.Vector();
 			}
 		}
+	}
+	return Pawn->GetBaseAimRotation().Vector();
+}
+
+FGameplayTag UBaseGameplayAbility::GetChargeRechargeTag() const
+{
+	switch (Slot)
+	{
+	case EGameplayAbilitySlot::AbilitySlot1: return ZerolockGameplayTagsForBinding::TAG_CHARGE_RECHARGE_SLOT1;
+	case EGameplayAbilitySlot::AbilitySlot2: return ZerolockGameplayTagsForBinding::TAG_CHARGE_RECHARGE_SLOT2;
+	case EGameplayAbilitySlot::AbilitySlot3: return ZerolockGameplayTagsForBinding::TAG_CHARGE_RECHARGE_SLOT3;
+	case EGameplayAbilitySlot::UltimateSlot: return ZerolockGameplayTagsForBinding::TAG_CHARGE_RECHARGE_ULTIMATE;
+	default: return FGameplayTag();
 	}
 }
 

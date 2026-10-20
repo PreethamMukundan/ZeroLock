@@ -7,6 +7,7 @@
 #include "BaseCharAbilitySystemComponent.generated.h"
 
 class UZL_Task_WaitSlamLocation;
+class UBaseGameplayAbility;
 /**
  * 
  */
@@ -112,4 +113,22 @@ public:
 	/** Consumes cached TargetData from client (only TargetData) and returns whether any data was actually consumed. */
 	bool TryConsumeClientReplicatedTargetData(FGameplayAbilitySpecHandle AbilityHandle, FPredictionKey AbilityOriginalPredictionKey);
 
+	/** Server: spends one charge of a charged ability and starts its recharge if none is running. Charges come back one
+	 * at a time: each recharge is a UZL_GE_BaseCooldown granting RechargeTag (so the owning client's UI can read its
+	 * time), and when it expires it adds a charge and starts the next one until the ability is full. */
+	void ConsumeAbilityCharge(UBaseGameplayAbility* Ability, const FGameplayAttribute& ChargeAttr, const FGameplayAttribute& MaxChargeAttr, FGameplayTag RechargeTag);
+
+protected:
+	struct FZLChargeRecharge
+	{
+		TWeakObjectPtr<UBaseGameplayAbility> Ability;
+		FGameplayAttribute ChargeAttr;
+		FGameplayAttribute MaxChargeAttr;
+		FActiveGameplayEffectHandle Handle;
+	};
+	/** Server only, keyed by recharge tag (one per ability slot). */
+	TMap<FGameplayTag, FZLChargeRecharge> ChargeRecharges;
+
+	void StartChargeRecharge(FGameplayTag RechargeTag);
+	void OnChargeRechargeRemoved(const FGameplayEffectRemovalInfo& RemovalInfo, FGameplayTag RechargeTag);
 };

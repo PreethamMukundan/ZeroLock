@@ -26,4 +26,6 @@
 - `UAnimGraphNode_ZLDeadlockHero`: anim graph node (Animation.md).
 
 ## Tools/
+- `Tools/TestEOS_TwoPlayers.bat`: two `-game` instances on `L_CharacterMovementBasics` with `-CustomConfig=EOS`, logged in through the EOS Dev Auth Tool (`PORT` 8080, credentials `CRED1`/`CRED2` = `Dev1` / `Dev2`, set at the top of the bat; tool at `E:\Repo\EOS-SDK-...\SDK\Tools\EOS_DevAuthTool-win32-x64-*`). See GameFlow.md "EOS / online".
+- `Tools/TestEOS_TwoPlayers_Packaged.bat`: same, for the packaged `Saved\Packaged\Windows\ZeroLock.exe` (per-instance logs `Host.log` / `Join.log`). Staging doesn't pack `Config/Custom/EOS`, so the bat copies that ini loose into the packaged `ZeroLock\Config\Custom\EOS\`, which then holds the EOS credentials: never ship that folder.
 - `Tools/DeadlockImporter/`: Deadlock hero importer (README inside). `deadlock_import.bat <hero>` exports via Source2Viewer-CLI + headless Blender to `Saved/DeadlockImporter/<Hero>/`; `py ".../ue_import.py" <Hero>` in the editor console imports into `/Game/Developers/rpm86/Deadlock/<Hero>/`. Tool paths in `config.json` (Deadlock install, Source2Viewer-CLI, Blender).

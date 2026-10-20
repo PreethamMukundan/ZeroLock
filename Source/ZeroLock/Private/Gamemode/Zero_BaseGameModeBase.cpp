@@ -5,7 +5,6 @@
 
 #include "Zero_BasePlayerController.h"
 #include "Zero_BasePlayerState.h"
-#include "EOS/ZL_EOS_SubSystem.h"
 #include "Gamemode/Zero_BaseGameState.h"
 #include "Gamemode/Zero_BasePlayerStart.h"
 #include "GAS/BaseCharAttributeSet.h"
@@ -26,16 +25,6 @@ void AZero_BaseGameModeBase::BeginPlay()
 {
     Super::BeginPlay();
     ZLOG_COLOR_TIME("Gamemode Begin play", FColor::Red,10);
-#if !WITH_EDITOR
-        if (UZL_EOS_SubSystem* EOS = GetGameInstance()->GetSubsystem<UZL_EOS_SubSystem>())
-        {
-            ZLOG_COLOR_TIME("Calling Update", FColor::Red,10);
-            EOS->Login();
-        }
-
-    
-   
-#endif
     AZero_BaseGameState* GS = GetGameState<AZero_BaseGameState>();
     if (!GS) return;
 
@@ -253,6 +242,48 @@ void AZero_BaseGameModeBase::InitGameState()
     if (AZero_BaseGameState* GS = GetGameState<AZero_BaseGameState>())
     {
         GS->bAllowHeroSwap = bAllowHeroSwap;
+        GS->bPickHeroOnJoin = bPickHeroOnJoin;
+    }
+}
+
+bool AZero_BaseGameModeBase::IsWaitingForHeroPick(const AController* Player) const
+{
+    const AZero_BasePlayerController* PC = Cast<AZero_BasePlayerController>(Player);
+    return bPickHeroOnJoin && PC && !PC->GetPawn() && !PC->SelectedHeroClass;
+}
+
+bool AZero_BaseGameModeBase::PlayerCanRestart_Implementation(APlayerController* Player)
+{
+    // No pawn until the hero is picked (SwapHero restarts them).
+    if (IsWaitingForHeroPick(Player)) return false;
+    return Super::PlayerCanRestart_Implementation(Player);
+}
+
+void AZero_BaseGameModeBase::GenericPlayerInitialization(AController* C)
+{
+    // Runs for PostLogin and seamless travel; a controller kept across travel would otherwise skip the pick with its old hero.
+    if (bPickHeroOnJoin)
+    {
+        if (AZero_BasePlayerController* PC = Cast<AZero_BasePlayerController>(C))
+        {
+            PC->SelectedHeroClass = nullptr;
+        }
+    }
+    Super::GenericPlayerInitialization(C);
+}
+
+void AZero_BaseGameModeBase::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
+{
+    Super::HandleStartingNewPlayer_Implementation(NewPlayer);
+
+    // Waiting for the hero pick: look out from a team start meanwhile. Player starts are map actors, so clients can resolve them;
+    // possessing the picked hero switches the view target to it (AutoManageActiveCameraTarget).
+    if (IsWaitingForHeroPick(NewPlayer))
+    {
+        if (AActor* Start = FindPlayerStart(NewPlayer))
+        {
+            NewPlayer->ClientSetViewTarget(Start);
+        }
     }
 }
 
@@ -260,7 +291,16 @@ void AZero_BaseGameModeBase::SwapHero(AZero_BasePlayerController* PC, TSubclassO
 {
     if (!PC || !HeroClass) return;
 
+    const bool bInitialPick = IsWaitingForHeroPick(PC);
     PC->SelectedHeroClass = HeroClass;
+
+    if (bInitialPick)
+    {
+        // Normal spawn at a team start; SpawnDefaultPawnFor uses SelectedHeroClass.
+        RestartPlayer(PC);
+        UE_LOG(LogTemp, Log, TEXT("[GM] SwapHero: %s picked %s"), *PC->GetName(), *GetNameSafe(HeroClass));
+        return;
+    }
 
     APawn* OldPawn = PC->GetPawn();
     if (!OldPawn || OldPawn->GetClass() == HeroClass) return;

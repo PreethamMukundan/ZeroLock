@@ -38,6 +38,16 @@ public:
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Heroes")
 	void ServerSwapHero(TSubclassOf<AZeroLockCharacter> HeroClass);
 
+	/** Local: ServerSwapHero + remember the request, so the HUD doesn't reopen the join hero pick while the pawn is on its way. */
+	UFUNCTION(BlueprintCallable, Category = "Heroes")
+	void RequestHero(TSubclassOf<AZeroLockCharacter> HeroClass);
+
+	/** A RequestHero was sent less than HeroRequestTimeout seconds ago. */
+	bool HasPendingHeroRequest() const;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Heroes")
+	float HeroRequestTimeout = 3.f;
+
 	UFUNCTION(Server, Reliable)
 	void ServerSetStartLocation(FVector loc);
 
@@ -104,5 +114,7 @@ private:
 
 	/** Internal counter for projectile IDs. Starts at 1 because 0 is reversed for non-predicted projectiles. */
 	uint32 FakeProjectileIdCounter=1;
+
+	float LastHeroRequestTime = -1.f;
 	
 };

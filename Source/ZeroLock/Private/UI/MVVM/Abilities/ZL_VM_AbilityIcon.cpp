@@ -12,7 +12,17 @@ void UZL_VM_AbilityIcon::SetAbilityCharges(int32 Charges)
 	if (UE_MVVM_SET_PROPERTY_VALUE(AbilityCharges, Charges))
 	{
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetChargePercent);
+		RefreshCooldownDisplay();
 	}
+}
+
+void UZL_VM_AbilityIcon::UpdateRecharge(float Remaining, float Duration)
+{
+	RechargeRemaining = Remaining;
+	RechargeDuration = Duration;
+	UE_MVVM_SET_PROPERTY_VALUE(RechargePercent, (Duration > 0.f) ? 1.f - Remaining / Duration : 0.f);
+	UE_MVVM_SET_PROPERTY_VALUE(bIsRecharging, Remaining > 0.f);
+	RefreshCooldownDisplay();
 }
 
 void UZL_VM_AbilityIcon::SetMaxAbilityCharges(int32 Charges)
@@ -25,7 +35,10 @@ void UZL_VM_AbilityIcon::SetMaxAbilityCharges(int32 Charges)
 
 void UZL_VM_AbilityIcon::SetbHasCharges(bool mbHasCharges)
 {
-	UE_MVVM_SET_PROPERTY_VALUE(bHasCharges, mbHasCharges);
+	if (UE_MVVM_SET_PROPERTY_VALUE(bHasCharges, mbHasCharges))
+	{
+		RefreshCooldownDisplay();
+	}
 }
 
 void UZL_VM_AbilityIcon::SetAbilityDescription(FText mAbilityDescription)
@@ -87,12 +100,28 @@ void UZL_VM_AbilityIcon::SetIconTexture(UTexture2D* NewIcon)
 
 void UZL_VM_AbilityIcon::UpdateCooldown(float Remaining, float Duration)
 {
-		float NewPercent = (Duration > 0.f) ? (Remaining / Duration) : 0.f;
-		UE_MVVM_SET_PROPERTY_VALUE(CooldownPercent, 1-NewPercent);
-		UE_MVVM_SET_PROPERTY_VALUE(bIsOnCooldown, Remaining > 0.f);
-		
-		int32 Seconds = FMath::CeilToInt(Remaining);
-		UE_MVVM_SET_PROPERTY_VALUE(CooldownText, Seconds > 0 ? FText::AsNumber(Seconds) : FText::GetEmpty());
+	CooldownRemaining = Remaining;
+	CooldownDuration = Duration;
+	RefreshCooldownDisplay();
+}
+
+void UZL_VM_AbilityIcon::RefreshCooldownDisplay()
+{
+	// Out of charges: the icon is unusable until the next charge, so show that timer (or the lockout, if longer).
+	float Remaining = CooldownRemaining;
+	float Duration = CooldownDuration;
+	if (bHasCharges && AbilityCharges <= 0 && RechargeRemaining > Remaining)
+	{
+		Remaining = RechargeRemaining;
+		Duration = RechargeDuration;
+	}
+
+	float NewPercent = (Duration > 0.f) ? (Remaining / Duration) : 0.f;
+	UE_MVVM_SET_PROPERTY_VALUE(CooldownPercent, 1-NewPercent);
+	UE_MVVM_SET_PROPERTY_VALUE(bIsOnCooldown, Remaining > 0.f);
+
+	int32 Seconds = FMath::CeilToInt(Remaining);
+	UE_MVVM_SET_PROPERTY_VALUE(CooldownText, Seconds > 0 ? FText::AsNumber(Seconds) : FText::GetEmpty());
 }
 
 void UZL_VM_AbilityIcon::SetbHasStacks(bool bstacks)

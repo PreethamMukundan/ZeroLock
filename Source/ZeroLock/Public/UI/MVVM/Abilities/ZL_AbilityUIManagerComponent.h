@@ -82,6 +82,8 @@ protected:
 private:
 
 	TMap<FGameplayTag, UZL_VM_AbilityIcon*> TagToSlotMap;
+	/** Charged abilities' recharge tags (UBaseGameplayAbility::GetChargeRechargeTag) → slot. */
+	TMap<FGameplayTag, UZL_VM_AbilityIcon*> RechargeTagToSlotMap;
 	FTimerHandle CooldownTimerHandle;
 
 public:

@@ -62,3 +62,6 @@ Thumbs.db.meta
 
 # Mac
 *.DS_Store
+
+# EOS client credentials (loaded with -CustomConfig=EOS). Never commit: the repo is public.
+Config/Custom/EOS/DefaultEngine.ini

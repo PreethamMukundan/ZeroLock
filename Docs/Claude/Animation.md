@@ -17,7 +17,7 @@ AZeroMoverPawn ──DeadlockAnimSet──► DA_<Hero>_AnimSet (UZL_DeadlockAni
 | `Source/ZeroLock/Public/Animation/ZL_DeadlockAnimSet.h/.cpp` | Per-hero data asset. Clip slots, `FZLDirectionalAnims` (8-way, N=0 clockwise, `GetWithFallback` searches ±4), `FZLAimAnims` (Center/Up/Down), tuning. |
 | `Source/ZeroLock/Public/Animation/ZL_DeadlockAnimInstance.h/.cpp` | ABP parent class. Game thread. Mover → `State`. Never touches bones. |
 | `Source/ZeroLock/Public/Animation/AnimNode_ZLDeadlockHero.h/.cpp` | Runtime node (~680 lines). Whole pose. |
-| `Source/ZeroEditorModule/.../AnimGraphNode_ZLDeadlockHero.h/.cpp` | Editor wrapper ("Deadlock Hero", category ZeroLock). Needs AnimGraph, AnimGraphRuntime, BlueprintGraph in `ZeroEditorModule.Build.cs`. |
+| `Source/ZeroLockUncooked/.../AnimGraphNode_ZLDeadlockHero.h/.cpp` | Graph node ("Deadlock Hero", category ZeroLock) in the **UncookedOnly** module `ZeroLockUncooked` (AnimGraph, AnimGraphRuntime, BlueprintGraph). It must not live in an Editor module: uncooked `UnrealEditor.exe -game` runs don't load Editor modules but do recompile anim blueprints on load (KismetCompiler), so the ABP compiled without its only node and every hero had no animation. CoreRedirect from `/Script/ZeroEditorModule.AnimGraphNode_ZLDeadlockHero` in `DefaultEngine.ini`. |
 | `UZeroMoverComponent::DashCount / LastDashDirection` | Bumped in `HandleDashInputs` (skipped while resimulating) so the anim can see dashes, which are layered moves, not a mode. |
 | `AZeroMoverPawn::DeadlockAnimSet` | Per-pawn anim set (Class Defaults). |
 

@@ -47,7 +47,21 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Heroes")
 	bool bHeroSwapRequiresPad = false;
 
-	/** Replace PC's pawn with a fresh HeroClass pawn at the same spot. Without a pawn it only records the selection. */
+	/**
+	 * Players arriving in this mode (login or travel) get no pawn until they pick a hero: the HUD opens the hero select,
+	 * the camera sits at a team start, and the first pick (ServerSwapHero, allowed even without bAllowHeroSwap) spawns them.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Heroes")
+	bool bPickHeroOnJoin = false;
+
+	/** bPickHeroOnJoin and this player has no pawn and no hero picked yet. */
+	bool IsWaitingForHeroPick(const AController* Player) const;
+
+	virtual bool PlayerCanRestart_Implementation(APlayerController* Player) override;
+	virtual void GenericPlayerInitialization(AController* C) override;
+	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
+
+	/** Replace PC's pawn with a fresh HeroClass pawn at the same spot. Without a pawn it records the selection, and spawns the player if bPickHeroOnJoin. */
 	void SwapHero(class AZero_BasePlayerController* PC, TSubclassOf<AZeroLockCharacter> HeroClass);
 
 private:

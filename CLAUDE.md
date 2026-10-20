@@ -11,7 +11,7 @@ Main branch `main`; feature branches `feature/Hero/<Hero>`.
 | `Docs/Claude/GAS.md` | ASC setup, attribute set, damage/heal pipeline, base ability classes, tasks, tags, items/shop, new-ability recipe |
 | `Docs/Claude/Heroes.md` | Every hero ability (Apollo, Lash, Pocket, Drifter, Xayah, Seven, Doorman), status, patterns to copy |
 | `Docs/Claude/Weapons.md` | Primary fire, predicted projectiles (`AProjectile`, spawn task), prediction tuning |
-| `Docs/Claude/GameFlow.md` | Game mode/state, teams, death/respawn, hero select, EOS lobbies/P2P |
+| `Docs/Claude/GameFlow.md` | Game mode/state, teams, death/respawn, hero select, online (CommonUser sessions, EOS config split, console commands) |
 | `Docs/Claude/UI.md` | CommonUI layers, MVVM viewmodels/resolvers, HUD, shop, menus |
 | `Docs/Claude/Animation.md` | `ABP_DeadlockHero` C++ anim node/instance/anim set, Deadlock importer |
 | `Docs/Claude/Content.md` | Content folder map, editor module, `Tools/` |
@@ -23,8 +23,8 @@ Main branch `main`; feature branches `feature/Hero/<Hero>`.
 - **Weapons**: no weapon actor. Primary fire = GAS ability spawning client-predicted projectiles (`UZL_Task_SpawnPredictedProjectile`, `AProjectile`).
 - **Movement from abilities**: Mover tasks / `RequestSafe*` latches (predicted through input). Move other players only with `SendVictimMoveEvent`.
 - **UI**: CommonUI layer stacks (`UI.Layer.Game/Menu/Itemshop/PopUp`) + MVVM.
-- **Online**: EOS lobbies, P2P (`P2PMODE=1`), listen server; login only in packaged builds.
-- Modules: `ZeroLock` (runtime), `ZeroEditorModule` (editor). Plugins: Mover, ChaosMover, MoverExamples, GameplayAbilities, CommonUI, MVVM, EOS, ModelContextProtocol (Unreal MCP).
+- **Online**: Lyra-style CommonUser (`UZL_SessionSubsystem`, console `ZL.Online.*`), listen server. Null OSS by default; EOS lobbies over P2P only with `-CustomConfig=EOS` (`Config/Custom/EOS/`, target `ZeroLockEOS`).
+- Modules: `ZeroLock` (runtime), `ZeroEditorModule` (editor UI/tools), `ZeroLockUncooked` (UncookedOnly: anim graph nodes and anything else a Blueprint graph needs in uncooked `-game` runs). Plugins: Mover, ChaosMover, MoverExamples, GameplayAbilities, CommonUI, CommonUser (project plugin, from Lyra), MVVM, EOS, ModelContextProtocol (Unreal MCP).
 
 ## Conventions
 - Prefixes: `ZL_` for newer gameplay/UI classes (`UZL_<Hero>_<Ability>`, `UZL_VM_*`), `Zero_` for framework bases (`AZero_BasePlayerController`), `Zero<Name>Mode/Transition` for Mover classes. Code calls self `Hero` and enemies `Villan`.
@@ -38,7 +38,7 @@ Main branch `main`; feature branches `feature/Hero/<Hero>`.
 
 ## Rules
 - **Valve/Deadlock assets** (`Content/Developers/rpm86/Deadlock/`, imported by `Tools/DeadlockImporter`) are for local prototyping only. Never ship them, never move them out of Developers, never reference them from shipping content, keep them out of shared branches.
-- **Secrets**: `Config/DefaultEngine.ini` contains EOS client credentials. Never copy them into docs, commits messages, logs or chat.
+- **Secrets**: `Config/Custom/EOS/DefaultEngine.ini` contains EOS client credentials. It is gitignored (the GitHub repo is public); share it privately. Never copy them into docs, commits, commit messages, logs or chat.
 - Don't commit or push unless asked.
 - **Keep these docs current**: when you change a system, update its `Docs/Claude/*.md` (facts, tuning numbers, known issues) in the same change. Remove issues you fix.
 
@@ -46,6 +46,9 @@ Main branch `main`; feature branches `feature/Hero/<Hero>`.
 - Build editor target (editor must be **closed**, or Live Coding locks the DLL; Live Coding can't apply new UPROPERTYs/headers):
   `"Z:\epicgames\UE_5.8\Engine\Build\BatchFiles\Build.bat" ZeroLockEditor Win64 Development "-Project=E:\Repo\ZeroLock\ZeroLock\ZeroLock.uproject" -WaitMutex`
   A full rebuild takes ~15 min; incremental is much faster.
+- Package (Development, editor closed: BuildCookRun also rebuilds the editor target and fails while Live Coding is active):
+  `"Z:\epicgames\UE_5.8\Engine\Build\BatchFiles\RunUAT.bat" BuildCookRun -project="E:\Repo\ZeroLock\ZeroLock\ZeroLock.uproject" -noP4 -platform=Win64 -clientconfig=Development -target=ZeroLock -build -cook -stage -pak -archive -archivedirectory="E:\Repo\ZeroLock\ZeroLock\Saved\Packaged" -map=/MoverExamples/Maps/L_CharacterMovementBasics+/Game/ThirdPerson/Maps/ThirdPersonMap+/Game/ZERO/Levels/Lvl_MainMenu`
+  Both target files must keep the engine's build settings (`BuildSettingsVersion.V7`, `Unreal5_8` include order); the game target lists only `ZeroLock`. Game builds have no C++ exceptions (`try`/`catch` → C4530). Check game-only compile errors fast with `Build.bat ZeroLock Win64 Development ...`. A package contains the Deadlock assets: local testing only. Staging doesn't pack `Config/Custom/EOS` (`Tools/TestEOS_TwoPlayers_Packaged.bat` copies it loose). If the cook hangs at shutdown after "Cooked packages N Packages Remain 0" (XGE shader controller), kill `UnrealEditor-Cmd` and rerun with `-skipbuild -skipcook -stage -pak -archive`.
 - Unreal MCP (`mcp__unreal-mcp__*`): use `list_toolsets` / `describe_toolset`, then `call_tool` with `toolset_name`. Useful: `ObjectTools.get_properties` on BP CDO subobjects (e.g. `/Game/ZERO/monkeyBoi/BP_Mover_Monkey.Default__BP_Mover_Monkey_C:MoverComponent`), `EditorAppToolset.OpenEditorForAsset` + `CaptureEditorImage` for screenshots. Some describe outputs are huge; grep the saved file.
 - Editor console Python: `py "<path>.py" args`.
 
@@ -53,6 +56,6 @@ Main branch `main`; feature branches `feature/Hero/<Hero>`.
 - Security/trust: server trusts client projectile spawn transform and fire rate; `ServerHandleDeath` callable by any client; `Server_UpgradeAbility` unvalidated; latched Mover moves unvalidated (Weapons.md, GameFlow.md, UI.md, Movement.md).
 - GAS: `Damage` meta attribute not reset on friendly hits; lifesteal before team check; melee mitigation precedence bug; `"ZeroLLock.Abilities"` typo (GAS.md).
 - Items: selling deducts souls instead of refunding; upgrade path broken (GAS.md).
-- Lash DeathSlam slam damage broken; Riposte can hang; Itani leaves client time dilation (Heroes.md).
+- Riposte can hang; Itani leaves client time dilation (Heroes.md).
 - Mover: slide landing buffer unreachable, slide has no ground tag/ledge check; `GetSyncedAimRotation` always returns actor rotation; melee/zipline sync state not reset (Movement.md).
 - `Config/DefaultEngine.ini:43` malformed `GameViewportClientClassName` line (UI.md, GameFlow.md).

@@ -22,11 +22,14 @@ void UZL_Lash_Grapple::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	if (!Hero)
 	{
 		EndAbility(GetCurrentAbilitySpecHandle(),GetCurrentActorInfo(),GetCurrentActivationInfo(),true,true);
+		return;
 	}
-	
+
 	TArray<FOverlapResult> OverlapResults;
 	FVector Origin = Hero->GetPawnViewLocation();
-	FVector Direction = Hero->GetFollowCamera()->GetForwardVector();
+	// Not the follow camera: on the server it doesn't face where a remote client aims, so the server's cone missed, never
+	// committed (no charge spent) and the client's predicted cooldown was rolled back.
+	FVector Direction = GetHeroAimDirection();
 	TArray<FHitResult> HitResults;
 	TArray<AActor*> ActorsToIgnore;
 	TArray<AZeroLockCharacter*> OutVillans;

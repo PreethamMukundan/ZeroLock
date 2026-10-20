@@ -20,10 +20,12 @@ void UZL_BaseProjectileThrowAbility::FireProjectile()
 		if (ProjectileClass)
 		{
 				
-			FVector Location = Hero->GetActorLocation() + Hero->GetFollowCamera()->GetForwardVector().GetSafeNormal()* 100.0f;
+			// Aim and trace from the eyes, not the follow camera: the server doesn't turn a remote player's camera.
+			const FVector AimDir = GetHeroAimDirection();
+			FVector Location = Hero->GetActorLocation() + AimDir * 100.0f;
 			FRotator Rotation = Hero->GetActorRotation();
-			FVector CamTraceStartLocation = Hero->GetFollowCamera()->GetComponentLocation();
-			FVector CamTraceEndLocation = CamTraceStartLocation + Hero->GetFollowCamera()->GetForwardVector() * 10000.0f;
+			FVector CamTraceStartLocation = Hero->GetPawnViewLocation();
+			FVector CamTraceEndLocation = CamTraceStartLocation + AimDir * 10000.0f;
 			FHitResult Hit;
 			FCollisionQueryParams QueryParams;
 			QueryParams.AddIgnoredActor(Hero);

@@ -27,6 +27,10 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Heroes")
 	bool bAllowHeroSwap = false;
 
+	/** Copied from AZero_BaseGameModeBase::bPickHeroOnJoin. Clients open the hero select on arrival while they have no pawn. */
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Heroes")
+	bool bPickHeroOnJoin = false;
+
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	int32 TeamRedScore = 0;
 

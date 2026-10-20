@@ -129,22 +129,33 @@ void UZL_Lash_DeathSlam::AbilityConfirmedAction(const FGameplayAbilityTargetData
     ZLOG(FString::Printf(TEXT("Ability Confirmed! Locked on %d targets."), OutActors.Num()));
     AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
 
-    if (LockOnEffect)
+    if (Hero && HasAuthority(&CurrentActivationInfo))
     {
-       FGameplayEffectContextHandle Context = GetAbilitySystemComponentFromActorInfo()->MakeEffectContext();
-       FGameplayEffectSpecHandle Spec = GetAbilitySystemComponentFromActorInfo()->MakeOutgoingSpec(LockOnEffect, 1.f, Context);
+       UAbilitySystemComponent* HeroASC = GetAbilitySystemComponentFromActorInfo();
+       FVector TargetPullLocation = Hero->GetActorLocation() + FVector(0, 0, -45);
 
-       FVector TargetPullLocation = Hero ? (Hero->GetActorLocation() + FVector(0, 0, -45)) : FVector::ZeroVector;
-
-       if (HasAuthority(&CurrentActivationInfo))
+       for (TWeakObjectPtr<AActor> Target : OutActors)
        {
-           for (TWeakObjectPtr<AActor> Target : OutActors)
-           {
-              if (AZeroLockCharacter* Victim = Cast<AZeroLockCharacter>(Target.Get()))
-              {
-                 SendVictimMoveEvent(Hero, Victim, TEXT("Zerolock.Movement.PullTo"), PullTime, &TargetPullLocation);
-              }
-           }
+          AZeroLockCharacter* Victim = Cast<AZeroLockCharacter>(Target.Get());
+          if (!Victim)
+          {
+             continue;
+          }
+
+          // Kept so EndAbility can remove it; the slam damage itself is applied in TargetSlamFinish.
+          UAbilitySystemComponent* VictimASC = Victim->GetAbilitySystemComponent();
+          if (LockOnEffect && HeroASC && VictimASC)
+          {
+             FGameplayEffectContextHandle Context = HeroASC->MakeEffectContext();
+             Context.AddSourceObject(Hero);
+             FGameplayEffectSpecHandle Spec = HeroASC->MakeOutgoingSpec(LockOnEffect, GetAbilityLevel(), Context);
+             if (Spec.IsValid())
+             {
+                CurrentActiveEffectHandles.Add(HeroASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), VictimASC));
+             }
+          }
+
+          SendVictimMoveEvent(Hero, Victim, TEXT("Zerolock.Movement.PullTo"), PullTime, &TargetPullLocation);
        }
     }
 
@@ -177,7 +188,32 @@ void UZL_Lash_DeathSlam::TargetPullFinish()
 
 void UZL_Lash_DeathSlam::TargetSlamFinish()
 {
-    EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), true, false);
+    // Victims have been pulled into the slam point: hit them now. Only a slam that lands deals damage (not a cancel).
+    AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
+    if (Hero && HasAuthority(&CurrentActivationInfo))
+    {
+       const float Damage = SlamDamage.GetValueAtLevel(GetAbilityLevel());
+       for (TWeakObjectPtr<AActor> Target : OutActors)
+       {
+          AZeroLockCharacter* Victim = Cast<AZeroLockCharacter>(Target.Get());
+          UAbilitySystemComponent* VictimASC = Victim ? Victim->GetAbilitySystemComponent() : nullptr;
+          if (!VictimASC)
+          {
+             continue;
+          }
+
+          Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(VictimASC, Damage);
+          if (AfterSlamEffect)
+          {
+             Hero->GetMyAbilitySystemComp()->ApplyGameplayEffect(VictimASC, AfterSlamEffect, GetAbilityLevel());
+          }
+       }
+    }
+
+    // The server's slam timer starts later than the client's (it waits for ServerReportSlamLocation). A replicated
+    // EndAbility from the client would cancel the server instance before it got here, so only the server replicates.
+    const bool bReplicateEnd = CurrentActorInfo && CurrentActorInfo->IsNetAuthority();
+    EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), bReplicateEnd, false);
 }
 
 void UZL_Lash_DeathSlam::SlamLocationReceived(const FVector& ExactSlamLocation)
@@ -212,26 +248,18 @@ void UZL_Lash_DeathSlam::EndAbility(const FGameplayAbilitySpecHandle Handle, con
       BaseASC->CachedSlamLocations.Remove(CurrentActivationInfo.GetActivationPredictionKey());
       BaseASC->UnregisterPendingSlamTask(CurrentActivationInfo.GetActivationPredictionKey());
    }
+    // Remove the LockOnEffect from every victim, whether the slam landed or was cancelled.
     for (FActiveGameplayEffectHandle& mHandle : CurrentActiveEffectHandles)
     {
        if (mHandle.IsValid())
        {
-          UAbilitySystemComponent* TargetASC = mHandle.GetOwningAbilitySystemComponent();
-          if (TargetASC)
+          if (UAbilitySystemComponent* TargetASC = mHandle.GetOwningAbilitySystemComponent())
           {
              TargetASC->RemoveActiveGameplayEffect(mHandle);
-             
-             if (Hero && HasAuthority(&CurrentActivationInfo))
-             {
-                Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(TargetASC, SlamDamage.GetValueAtLevel(GetAbilityLevel()));
-                if (AfterSlamEffect)
-                {
-                   Hero->GetMyAbilitySystemComp()->ApplyGameplayEffect(TargetASC, AfterSlamEffect, GetAbilityLevel());
-                }
-             }
           }
        }
     }
+    CurrentActiveEffectHandles.Reset();
 
     if (Hero && Hero->GetZeroMoverComponent())
     {

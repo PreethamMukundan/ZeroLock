@@ -338,33 +338,15 @@ void AZL_EOS_PlayerController::HandleReadTitleFileCompleted(bool bWasSuccessfull
         TArray<uint8> FileContents; // We need an array to output the serialized title data storage file data.  
         if (TitleFile->GetFileContents(FileName, FileContents))
         {
-            // Deserialize file and write to logs
-            char* FileData;
-            try
-            {
-                FileData = new char[FileContents.Num()];
-            }
-            catch (std::bad_alloc)
-            {
-                UE_LOG(LogTemp, Error, TEXT("Unable to allocate memory for title storage data")); 
-                
-                // Clear our handle and reset the delegate. 
-                TitleFile->ClearOnReadFileCompleteDelegate_Handle(ReadTitleFileDelegateHandle);
-                ReadTitleFileDelegateHandle.Reset();
-                return; 
-            }
-            
+            // The file data isn't null-terminated, so convert with an explicit length (no raw buffer; game builds have no C++ exceptions).
+            const FUTF8ToTCHAR Converted(reinterpret_cast<const ANSICHAR*>(FileContents.GetData()), FileContents.Num());
+            const FString FileDataAsFString(Converted.Length(), Converted.Get());
+
             // Check file contents and hardcode log outputs to prevent log injection
-            std::memcpy(FileData, FileContents.GetData(), FileContents.Num());
-            FString FileDataAsFString = ANSI_TO_TCHAR(FileData); 
             if (FileDataAsFString.Equals("Game data"))
             {
                 UE_LOG(LogTemp, Log, TEXT("File contents are: Game data"));
             }
-
-            // Clean up memory
-            delete FileData;
-            FileData = nullptr; 
         }
         else
         {

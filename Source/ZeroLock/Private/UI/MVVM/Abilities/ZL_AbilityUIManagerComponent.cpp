@@ -187,48 +187,56 @@ void UZL_AbilityUIManagerComponent::OnAbilityAdded(FGameplayAbilitySpec& Spec)
 		TargetSlot->SetAbilityLevel2Description(FText::FromString(Ability->AbilityDescription2));
 		TargetSlot->SetAbilityLevel3Description(FText::FromString(Ability->AbilityDescription3));
 		TargetSlot->SetAbilityName(FText::FromString(Ability->AbilityName));
+		AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetOwner());
+		UAbilitySystemComponent* ASC = Hero ? Hero->GetAbilitySystemComponent() : nullptr;
+		if (!ASC) return;
+
+		// OnAbilityAdded runs again for the same spec (OnRep_ActivateAbilities rebroadcasts every spec), so each binding
+		// below drops this component's old one first.
 		TargetSlot->SetbHasCharges(false);
 		if (Ability->bIsChargedAbility)
 		{
-			AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetOwner());
-			if (Hero && Hero->GetAbilitySystemComponent())
+			const FGameplayAttribute ChargeAttr = GetChargeAttributeForSlot(Ability->Slot);
+			const FGameplayAttribute MaxChargeAttr = GetMaxChargeAttributeForSlot(Ability->Slot);
+			if (ChargeAttr.IsValid() && MaxChargeAttr.IsValid())
 			{
-				FGameplayAttribute ChargeAttr = GetChargeAttributeForSlot(Ability->Slot);
-             
-				if (ChargeAttr.IsValid())
-				{
-					TargetSlot->SetbHasCharges(true);
+				// Max first, so the charge count never shows against a stale max.
+				TargetSlot->SetMaxAbilityCharges(FMath::RoundToInt(ASC->GetNumericAttribute(MaxChargeAttr)));
+				TargetSlot->SetAbilityCharges(FMath::RoundToInt(ASC->GetNumericAttribute(ChargeAttr)));
+				TargetSlot->SetbHasCharges(true);
 
-					float CurrentVal = Hero->GetAbilitySystemComponent()->GetNumericAttribute(ChargeAttr);
-					TargetSlot->SetAbilityCharges((int32)CurrentVal);
-					
-					Hero->GetAbilitySystemComponent()->GetGameplayAttributeValueChangeDelegate(ChargeAttr).AddUObject(this, &ThisClass::OnChargeAttributeChanged, TargetSlot);
-				}
-				ChargeAttr = GetMaxChargeAttributeForSlot(Ability->Slot);
-				if (ChargeAttr.IsValid())
+				FOnGameplayAttributeValueChange& ChargeDelegate = ASC->GetGameplayAttributeValueChangeDelegate(ChargeAttr);
+				ChargeDelegate.RemoveAll(this);
+				ChargeDelegate.AddUObject(this, &ThisClass::OnChargeAttributeChanged, TargetSlot);
+
+				FOnGameplayAttributeValueChange& MaxDelegate = ASC->GetGameplayAttributeValueChangeDelegate(MaxChargeAttr);
+				MaxDelegate.RemoveAll(this);
+				MaxDelegate.AddUObject(this, &ThisClass::OnMaxChargeAttributeChanged, TargetSlot);
+
+				const FGameplayTag RechargeTag = Ability->GetChargeRechargeTag();
+				if (RechargeTag.IsValid())
 				{
-					float CurrentVal = Hero->GetAbilitySystemComponent()->GetNumericAttribute(ChargeAttr);
-					TargetSlot->SetMaxAbilityCharges((int32)CurrentVal);
-					
-					Hero->GetAbilitySystemComponent()->GetGameplayAttributeValueChangeDelegate(ChargeAttr).AddUObject(this, &ThisClass::OnMaxChargeAttributeChanged, TargetSlot);
-				
+					RechargeTagToSlotMap.Add(RechargeTag, TargetSlot);
+					FOnGameplayEffectTagCountChanged& TagDelegate = ASC->RegisterGameplayTagEvent(RechargeTag, EGameplayTagEventType::NewOrRemoved);
+					TagDelegate.RemoveAll(this);
+					TagDelegate.AddUObject(this, &ThisClass::OnCooldownTagChanged);
+					// A recharge may already be running (UI rebuilt mid-match).
+					OnCooldownTagChanged(RechargeTag, ASC->GetTagCount(RechargeTag));
 				}
 			}
 		}
-		
+
 		const FGameplayTagContainer* CooldownTags = Ability->GetCooldownTags();
 		if (CooldownTags)
 		{
 			for (FGameplayTag Tag : *CooldownTags)
 			{
 				TagToSlotMap.Add(Tag, TargetSlot);
-				Cast<AZeroLockCharacter>(GetOwner())->GetAbilitySystemComponent()
-					->RegisterGameplayTagEvent(Tag, EGameplayTagEventType::NewOrRemoved)
-					.AddUObject(this, &ThisClass::OnCooldownTagChanged);
+				FOnGameplayEffectTagCountChanged& TagDelegate = ASC->RegisterGameplayTagEvent(Tag, EGameplayTagEventType::NewOrRemoved);
+				TagDelegate.RemoveAll(this);
+				TagDelegate.AddUObject(this, &ThisClass::OnCooldownTagChanged);
 			}
 		}
-		AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetOwner());
-		if (!Hero) return;
 		FGameplayTag StackTag = Ability->StackTag; 
 		if (StackTag.IsValid())
 		{
@@ -315,6 +323,23 @@ void UZL_AbilityUIManagerComponent::RefreshCooldowns()
 		}
 	}
 
+	for (auto& Element : RechargeTagToSlotMap)
+	{
+		float Remaining = 0.f, Duration = 0.f;
+		if (ASC->GetTagCount(Element.Key) > 0)
+		{
+			bAnyActive = true;
+			const FGameplayEffectQuery Query = FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(Element.Key));
+			TArray<TPair<float, float>> Times = ASC->GetActiveEffectsTimeRemainingAndDuration(Query);
+			if (Times.Num() > 0)
+			{
+				Remaining = Times[0].Key;
+				Duration = Times[0].Value;
+			}
+		}
+		Element.Value->UpdateRecharge(Remaining, Duration);
+	}
+
 	if (!bAnyActive)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(CooldownTimerHandle);
@@ -350,13 +375,19 @@ void UZL_AbilityUIManagerComponent::RemoveProgressBarVM(UZL_VM_AbilityTimerProgr
 void UZL_AbilityUIManagerComponent::OnChargeAttributeChanged(const FOnAttributeChangeData& Data,
                                                              UZL_VM_AbilityIcon* SlotVM)
 {
-	SlotVM->SetAbilityCharges((int32)Data.NewValue);
+	if (SlotVM)
+	{
+		SlotVM->SetAbilityCharges(FMath::RoundToInt(Data.NewValue));
+	}
 }
 
 void UZL_AbilityUIManagerComponent::OnMaxChargeAttributeChanged(const FOnAttributeChangeData& Data,
 	UZL_VM_AbilityIcon* SlotVM)
 {
-	SlotVM->SetMaxAbilityCharges((int32)Data.NewValue);
+	if (SlotVM)
+	{
+		SlotVM->SetMaxAbilityCharges(FMath::RoundToInt(Data.NewValue));
+	}
 }
 
 FGameplayAttribute UZL_AbilityUIManagerComponent::GetChargeAttributeForSlot(EGameplayAbilitySlot Slot) const

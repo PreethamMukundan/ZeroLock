@@ -16,6 +16,6 @@ public class ZeroLockEditorTarget : TargetRules
 
 	private void RegisterModulesCreatedByRider()
 	{
-		ExtraModuleNames.AddRange(new string[] { "ZeroEditorModule" });
+		ExtraModuleNames.AddRange(new string[] { "ZeroEditorModule", "ZeroLockUncooked" });
 	}
 }

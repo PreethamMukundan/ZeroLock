@@ -64,6 +64,16 @@ public:
 	UPROPERTY(BlueprintReadOnly, FieldNotify,Setter,Getter, Category = "UI")
 	bool bHasCharges;
 
+	/** Charged abilities: progress of the charge being recharged (0 → 1), 0 when full. */
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "UI")
+	float RechargePercent = 0.f;
+
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "UI")
+	bool bIsRecharging = false;
+
+	/** Next-charge timer (from UZL_AbilityUIManagerComponent::RefreshCooldowns). With no charges left, the cooldown fields show it. */
+	void UpdateRecharge(float Remaining, float Duration);
+
 	void SetAbilityCharges(int32 Charges);
 	void SetMaxAbilityCharges(int32 Charges);
 	void SetbHasCharges(bool mbHasCharges);
@@ -105,8 +115,17 @@ public:
 	
 	
 	UFUNCTION(BlueprintPure,FieldNotify)
-	float GetChargePercent()const { return AbilityCharges/MaxAbilityCharges;}
+	float GetChargePercent()const { return MaxAbilityCharges > 0 ? float(AbilityCharges) / float(MaxAbilityCharges) : 0.f; }
 
 	UPROPERTY(BlueprintAssignable)
 	FAbilityLevelChanged OnAbilityLevelChanged;
+
+private:
+	/** Last cooldown and recharge times; RefreshCooldownDisplay picks which one the cooldown fields show. */
+	float CooldownRemaining = 0.f;
+	float CooldownDuration = 0.f;
+	float RechargeRemaining = 0.f;
+	float RechargeDuration = 0.f;
+
+	void RefreshCooldownDisplay();
 };

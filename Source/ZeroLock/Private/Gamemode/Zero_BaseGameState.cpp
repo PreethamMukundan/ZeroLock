@@ -190,6 +190,7 @@ void AZero_BaseGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AZero_BaseGameState, bAllowHeroSwap);
+	DOREPLIFETIME(AZero_BaseGameState, bPickHeroOnJoin);
 	DOREPLIFETIME(AZero_BaseGameState, TeamRedScore);
 	DOREPLIFETIME(AZero_BaseGameState, TeamBlueScore);
 	DOREPLIFETIME(AZero_BaseGameState, TeamRedArray);

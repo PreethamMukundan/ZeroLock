@@ -78,6 +78,12 @@ protected:
 	TWeakObjectPtr<APawn> HUDPawn;
 	bool bHUDHadPawn = false;
 
+	/** Polls until there's a pawn: with AZero_BaseGameState::bPickHeroOnJoin, keeps the hero select open (reopens it if closed). */
+	void UpdateInitialHeroPick();
+	FTimerHandle InitialHeroPickTimer;
+	/** The join hero pick was shown, so the Game-layer HUD pushed in BeginPlay has no pawn and must be rebuilt for the first one. */
+	bool bWaitingForHeroPick = false;
+
 	void SetupHeroSelectInput();
 	void HandleHeroSelectDeactivated();
 

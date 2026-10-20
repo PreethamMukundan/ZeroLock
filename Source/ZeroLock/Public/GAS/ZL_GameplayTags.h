@@ -31,6 +31,13 @@ namespace ZerolockGameplayTagsForBinding
 	/** SetByCaller tag for a cooldown GE's duration (UBaseGameplayAbility::ApplyCooldown sets it, UZL_GE_BaseCooldown reads it). */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SETBYCALLER_COOLDOWN_DURATION)
 
+	/** Granted by the recharge timer of a charged ability in that EGameplayAbilitySlot (UBaseCharAbilitySystemComponent::ConsumeAbilityCharge);
+	 * the HUD reads the next charge's time from it. */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_CHARGE_RECHARGE_SLOT1)
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_CHARGE_RECHARGE_SLOT2)
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_CHARGE_RECHARGE_SLOT3)
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_CHARGE_RECHARGE_ULTIMATE)
+
 	/** Asset tag for damage that can bring the target down to 1 health but never kill it (see UBaseCharAttributeSet::PostGameplayEffectExecute). */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_DAMAGE_NONLETHAL)
 

@@ -157,7 +157,7 @@ void UZL_HeroSelectionScreen::HandleOnSelectionChanged(UObject* Item)
 
 	if (AZero_BasePlayerController* PC = GetOwningPlayer<AZero_BasePlayerController>())
 	{
-		PC->ServerSwapHero(Data->CharacterClass);
+		PC->RequestHero(Data->CharacterClass);
 	}
 	DeactivateWidget();
 }

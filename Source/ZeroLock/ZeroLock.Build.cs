@@ -23,16 +23,13 @@ public class ZeroLock : ModuleRules
 			"UMG",
 			"CommonUI",
 			"OnlineSubsystem",
-			"OnlineSubsystemEOS",
 			"OnlineSubsystemUtils",
-			"SocketSubsystemEOS",
+			"CommonUser",
 			"HTTP",
 			"OpenSSL",
 			"Json",
 			"ModelViewViewModel",
 			"SlateMVVM", "Niagara", "Niagara"
 		});
-		
-		PrivateDefinitions.Add("P2PMODE=1");
 	}
 }

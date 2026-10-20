@@ -59,6 +59,15 @@ void UZL_BasePlayAnimation_AndDo::EndAbility(const FGameplayAbilitySpecHandle Ha
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
+	// The predicting client reaches the anim notify / timers before the server. Replicating its end cancels the server's
+	// instance before the server gets to the same point, where the damage and effects are applied, so these abilities only
+	// worked when the host cast them. The server ends its own instance and replicates that down instead.
+	// Real cancels still reach the server: CancelAbility replicates on its own and calls EndAbility without replication.
+	if (bReplicateEndAbility && ActorInfo && !ActorInfo->IsNetAuthority())
+	{
+		bReplicateEndAbility = false;
+	}
+
 	if (UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get())
 	{
 		ASC->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("ZeroLock.Abilities.MovementLock")));

@@ -29,7 +29,7 @@ void UZL_Apollo_DisengagingSigil::OnAnimationPointTrigger()
     }
     
     FVector Start = Hero->GetActorLocation();
-    FVector End = Start + (Hero->GetFollowCamera()->GetForwardVector() * 200.0f);
+    FVector End = Start + (GetHeroAimDirection() * 200.0f);
     FQuat Rotation = Hero->GetActorQuat();
     FCollisionShape Capsule = FCollisionShape::MakeCapsule(EffectRadius, 100.f);
     

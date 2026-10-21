@@ -19,6 +19,7 @@
 
 UZL_Lash_GroundStrike::UZL_Lash_GroundStrike()
 {
+	bIsMovementAbility = true;
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 

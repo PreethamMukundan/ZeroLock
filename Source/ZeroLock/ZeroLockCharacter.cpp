@@ -608,6 +608,31 @@ void AZeroLockCharacter::ServerHandleDeath_Implementation(APlayerController* PC)
 	}
 }
 
+void AZeroLockCharacter::ServerForceTeleport(const FVector& Target, const FRotator& ControlRotation)
+{
+	if (!HasAuthority()) return;
+
+	// The server validates the client's teleport input against this; the client RPC moves the pawn through its own input.
+	if (UZeroMoverComponent* MoverComp = GetZeroMoverComponent())
+	{
+		MoverComp->AuthorizeLongTeleport(Target);
+	}
+	ClientForceTeleport(Target, ControlRotation);
+}
+
+void AZeroLockCharacter::ClientForceTeleport_Implementation(FVector Target, FRotator ControlRotation)
+{
+	if (UZeroMoverComponent* MoverComp = GetZeroMoverComponent())
+	{
+		MoverComp->AuthorizeLongTeleport(Target);
+		MoverComp->RequestSafeTeleport(Target);
+	}
+	if (AController* PC = GetController())
+	{
+		PC->SetControlRotation(ControlRotation);
+	}
+}
+
 void AZeroLockCharacter::OnRep_AbilityUIData()
 {
 	for (FMyAbilityMap unit : AbilitiesArray)

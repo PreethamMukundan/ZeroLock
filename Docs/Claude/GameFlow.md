@@ -8,7 +8,7 @@ Paths under `Source/ZeroLock/` unless stated.
 - `PostLogin` → `AssignTeam` (smaller team, Red wins ties) → `PS->SetTeamID`, `GS->AddPSToTeamArray`.
 - `ChoosePlayerStart` (`:93`): random `AZero_BasePlayerStart` with matching `TeamID`; writes `Character->StartLocation`, `PC->ServerSetStartLocation`.
 - `SpawnDefaultPawnFor` (`:142`): `PC->SelectedHeroClass` or `DefaultHeroClass`.
-- Death: `AZeroLockCharacter::HandleDeath` (`ZeroLockCharacter.cpp:513`) → server RPC `ServerHandleDeath(PC)` → `GM->HandlePlayerDeath` (`:161`): victim death, kill to `DeadPawn->LastHitCharacter` + `GS->AddKill(team)`, assists from `AssistListCharacters` (`AssistWindow` 5 declared, unused), `DeadPawn->Death()`, **3 s hard-coded** respawn timer → `RespawnPlayer` → `ResetCharacter()` on the **same pawn** (never destroyed/respawned).
+- Death: `AZeroLockCharacter::HandleDeath` → server RPC `ServerHandleDeath(PC)` → `GM->HandlePlayerDeath`: first `DeadPawn->OnServerPreDeath` (native multicast, server; Doorman's hotel sends its guest back to the map here), then victim death, kill to `DeadPawn->LastHitCharacter` + `GS->AddKill(team)`, assists from `AssistListCharacters` (`AssistWindow` 5 declared, unused), `DeadPawn->Death()`, **3 s hard-coded** respawn timer → `RespawnPlayer` → `ResetCharacter()` on the **same pawn** (never destroyed/respawned).
 - No win condition, score limit or match end; `Killed()` empty.
 - `GlobalDefaultGameMode` in `DefaultEngine.ini` is the template `ZeroLockGameMode` (only `InitGlobalData`, BP_ThirdPersonCharacter). The real GM is set per map.
 

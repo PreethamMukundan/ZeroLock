@@ -42,6 +42,15 @@ bool UBaseGameplayAbility::CanActivateAbility(const FGameplayAbilitySpecHandle H
 		}
 		return false;
 	}
+	if (bIsMovementAbility && ActorInfo && ActorInfo->AbilitySystemComponent.IsValid()
+		&& ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_MOVEMENT_ABILITIES_BLOCKED))
+	{
+		if (OptionalRelevantTags)
+		{
+			OptionalRelevantTags->AddTag(ZerolockGameplayTagsForBinding::TAG_STATUS_MOVEMENT_ABILITIES_BLOCKED);
+		}
+		return false;
+	}
 	return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
 }
 

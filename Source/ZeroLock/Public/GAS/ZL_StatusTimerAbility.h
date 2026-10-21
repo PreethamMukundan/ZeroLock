@@ -26,6 +26,9 @@ public:
 	/** Server only. Shows StatusTag on TargetASC's owner for Duration seconds. */
 	static void SendStatusTimer(AActor* Instigator, UAbilitySystemComponent* TargetASC, FGameplayTag StatusTag, float Duration);
 
+	/** Server only. Removes StatusTag's bar from TargetASC's owner before its time is up (e.g. the status ended early). */
+	static void ClearStatusTimer(AActor* Instigator, UAbilitySystemComponent* TargetASC, FGameplayTag StatusTag);
+
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
 protected:

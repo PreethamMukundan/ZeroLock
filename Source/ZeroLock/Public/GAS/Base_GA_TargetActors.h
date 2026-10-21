@@ -31,6 +31,8 @@ public:
 
 	virtual void AbilityConfirmedAction(const FGameplayAbilityTargetDataHandle& Data);
 	virtual void AbilityCancelledAction(const FGameplayAbilityTargetDataHandle& Data);
+	/** Runs on confirm before the commit (client and server): false cancels for free (e.g. the server rejects the target). */
+	virtual bool CanConfirmTarget(const FGameplayAbilityTargetDataHandle& Data) { return true; }
 	/** Called after the target actor is spawned and set up, before targeting starts. */
 	virtual void OnTargetActorSpawned(class AGameplayAbilityTargetActor_Trace* TargetActor) {}
 

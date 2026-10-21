@@ -27,5 +27,7 @@ namespace ZerolockGameplayTagsForBinding
 	UE_DEFINE_GAMEPLAY_TAG(TAG_EVENT_MELEE_HIT, "Event.Melee.Hit");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_AFFLICTED, "Zerolock.Status.Afflicted");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_HEAL_BLOCKED, "Zerolock.Status.HealBlocked");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_HOTEL_GUEST, "Zerolock.Status.HotelGuest");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_MOVEMENT_ABILITIES_BLOCKED, "Zerolock.Status.MovementAbilitiesBlocked");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_EVENT_STATUS_TIMER, "Zerolock.Event.StatusTimer");
 }

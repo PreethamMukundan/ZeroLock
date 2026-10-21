@@ -26,6 +26,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStunChanged,bool,IsStunned);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDamageRecievedDelegate,float,currentHealth);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAddAbilityIconDelegate,UBaseGameplayAbility*,AbilitytoAdd,EGASAbilityInputID,slotToAddIn);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHeroGameplayEventDelegate, const FGameplayEventData&, EventData);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnZeroPreDeath, class AZeroLockCharacter* /*DeadHero*/);
 
 USTRUCT()
 struct FMyAbilityMap
@@ -301,7 +302,20 @@ public:
 	void HandleDeath();
 	UFUNCTION(Server, Reliable)
 	void ServerHandleDeath(APlayerController* PC);
-	
+
+	/** Server: fired by AZero_BaseGameModeBase::HandlePlayerDeath before kill credit, Death() and the respawn timer
+	 * (e.g. Doorman's hotel takes its guest out first). */
+	FOnZeroPreDeath OnServerPreDeath;
+
+	/**
+	 * Server: teleports this hero to Target through its own movement input (predicted, any distance: the target is
+	 * authorized on the server and the owning client) and points the controller at ControlRotation.
+	 */
+	void ServerForceTeleport(const FVector& Target, const FRotator& ControlRotation);
+
+	UFUNCTION(Client, Reliable)
+	void ClientForceTeleport(FVector Target, FRotator ControlRotation);
+
 	UPROPERTY(BlueprintReadOnly,Replicated,Category = "Assist")
 	AZeroLockCharacter* LastHitCharacter;
 

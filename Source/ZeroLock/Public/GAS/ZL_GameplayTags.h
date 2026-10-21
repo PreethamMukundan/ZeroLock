@@ -47,6 +47,13 @@ namespace ZerolockGameplayTagsForBinding
 	/** UCalc_Healing heals nothing while the target has this tag. */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_HEAL_BLOCKED)
 
+	/** Granted while the owner is a guest in Doorman's hotel (UZL_Doorman_HotelGuestEffect). Also the HUD status bar's tag ("HotelGuest"). */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_HOTEL_GUEST)
+
+	/** Abilities with UBaseGameplayAbility::bIsMovementAbility can't activate while the owner has this tag (Mover dash/jump still work).
+	 * Not under ZeroLock.Abilities on purpose: that branch blocks every ability. */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_MOVEMENT_ABILITIES_BLOCKED)
+
 	/** Stunned: AZeroLockCharacter::Stunned cancels abilities and disables input; ABP_DeadlockHero plays StunLoop. */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STUN)
 

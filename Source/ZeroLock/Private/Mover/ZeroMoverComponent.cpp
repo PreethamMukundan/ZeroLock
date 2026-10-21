@@ -350,8 +350,9 @@ void UZeroMoverComponent::HandleTeleportInput(const FZeroMovementInputs& ZeroInp
         return;
     }
 
-    // The target comes from the client's input, so reject anything out of range.
-    if (FVector::DistSquared(GetSimStartLocation(), ZeroInputs.TeleportTarget) <= FMath::Square(MaxTeleportDistance))
+    // The target comes from the client's input, so reject anything out of range unless the server authorized that exact target.
+    if (FVector::DistSquared(GetSimStartLocation(), ZeroInputs.TeleportTarget) <= FMath::Square(MaxTeleportDistance)
+        || IsAuthorizedLongTeleport(ZeroInputs.TeleportTarget))
     {
         TSharedPtr<FTeleportEffect> Teleport;
         if (ZeroInputs.bTeleportSetsVelocity)
@@ -507,6 +508,22 @@ void UZeroMoverComponent::RequestSafeTeleportWithVelocity(const FVector& Target,
     LatchedTeleportTarget = Target;
     bLatchedTeleportSetsVelocity = true;
     LatchedTeleportVelocity = Velocity;
+}
+
+void UZeroMoverComponent::AuthorizeLongTeleport(const FVector& Target, float ValidFor)
+{
+    if (const UWorld* World = GetWorld())
+    {
+        AuthorizedTeleportTarget = Target;
+        AuthorizedTeleportExpireTime = World->GetTimeSeconds() + ValidFor;
+    }
+}
+
+bool UZeroMoverComponent::IsAuthorizedLongTeleport(const FVector& Target) const
+{
+    const UWorld* World = GetWorld();
+    return World && World->GetTimeSeconds() <= AuthorizedTeleportExpireTime
+        && FVector::DistSquared(Target, AuthorizedTeleportTarget) <= FMath::Square(AuthorizedTeleportTolerance);
 }
 
 bool UZeroMoverComponent::ShouldIgnoreServerLatch() const

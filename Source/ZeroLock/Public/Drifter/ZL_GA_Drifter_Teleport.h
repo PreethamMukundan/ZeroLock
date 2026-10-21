@@ -15,7 +15,8 @@ class ZEROLOCK_API UZL_GA_Drifter_Teleport : public UZL_BaseProjectileThrowAbili
 	GENERATED_BODY()
 
 public:
-	
+	UZL_GA_Drifter_Teleport();
+
 	virtual void OnEventRecived(FGameplayEventData Payload) override;
 
 	class UAbilityTask_WaitInputPress* InputPTask;

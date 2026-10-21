@@ -132,6 +132,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Teleport")
 	float MaxTeleportDistance = 10000.0f;
 
+	/**
+	 * Lets a teleport to Target go further than MaxTeleportDistance for ValidFor seconds (e.g. into Doorman's hotel).
+	 * Call it on the server (it validates the client's input) and on the owning client (prediction) before RequestSafeTeleport.
+	 */
+	void AuthorizeLongTeleport(const FVector& Target, float ValidFor = 3.0f);
+
+	/** A teleport input within this distance of the authorized target counts as that teleport. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Teleport")
+	float AuthorizedTeleportTolerance = 100.0f;
+
 	/** Mode the pawn is held in while rooted. Must ignore move input (e.g. a ZeroFloatMode without bPreserveMomentum). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Rooted")
 	FName RootedModeName = FName("Locked");
@@ -156,6 +166,12 @@ protected:
 	void HandleRooted(const FMoverTimeStep& TimeStep, const FName& CurrentMode);
 
 	void HandleTeleportInput(const FZeroMovementInputs& ZeroInputs);
+
+	bool IsAuthorizedLongTeleport(const FVector& Target) const;
+
+	FVector AuthorizedTeleportTarget = FVector::ZeroVector;
+	/** World time the authorized long teleport stops being accepted; 0 = none. */
+	double AuthorizedTeleportExpireTime = 0.0;
 
 	bool HandleWallBounceCheck(const FZeroMovementInputs& ZeroInputs,const FName& CurrentMode);
 

@@ -16,7 +16,8 @@
       <Build Project="false" />
     </Project>
   </Folder>
-  <Folder Name="/Games/">
+  <Folder Name="/Games/" />
+  <Folder Name="/Games/ZeroLock/">
     <Project Path="Intermediate/ProjectFiles/ZeroLock.vcxproj" Id="43303e39-1a77-3db8-8acb-1506cea291ee">
       <BuildType Solution="DebugGame Editor|Win64" Project="DebugGame_Editor" />
       <BuildType Solution="DebugGame Editor|Win64-arm64" Project="Win64_arm64_DebugGame_Editor" />
@@ -31,6 +32,19 @@
       <BuildType Solution="Shipping|Win64-arm64" Project="Win64_arm64_Shipping" />
       <BuildType Solution="Shipping|Win64-arm64ec" Project="Win64_arm64ec_Shipping" />
       <Platform Project="x64" />
+    </Project>
+    <Project Path="Intermediate/ProjectFiles/ZeroLockEOS.vcxproj" Id="0d02c52e-4fe1-32c1-927d-c9e55abce177">
+      <BuildType Solution="DebugGame Editor|*" Project="Invalid" />
+      <BuildType Solution="DebugGame|Win64-arm64" Project="Win64_arm64_DebugGame" />
+      <BuildType Solution="DebugGame|Win64-arm64ec" Project="Win64_arm64ec_DebugGame" />
+      <BuildType Solution="Development Editor|*" Project="Invalid" />
+      <BuildType Solution="Development|Win64-arm64" Project="Win64_arm64_Development" />
+      <BuildType Solution="Development|Win64-arm64ec" Project="Win64_arm64ec_Development" />
+      <BuildType Solution="Shipping|Win64-arm64" Project="Win64_arm64_Shipping" />
+      <BuildType Solution="Shipping|Win64-arm64ec" Project="Win64_arm64ec_Shipping" />
+      <Platform Project="x64" />
+      <Build Solution="DebugGame Editor|*" Project="false" />
+      <Build Solution="Development Editor|*" Project="false" />
     </Project>
   </Folder>
   <Folder Name="/Programs/">

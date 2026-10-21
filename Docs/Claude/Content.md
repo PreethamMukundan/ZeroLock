@@ -13,7 +13,7 @@
   - `UI/BP/...`: widget BPs (`Widgets/WBP_BaseUILayout`, `BP_BAseHUD`, `WBP_PlayerHUD`, `CharacterSelector/`, `DamageNumber/`, `Input/`, `OverHead/`, `Widgets/ItemShop`, `MainMenu`, `Abilities`, `StatBoxs`; `UI/BP/Weapon` holds fire-ability BPs, misplaced). `UI/CommonStyles`, `UI/CommonUI/Inputs`, `UI/Images`, `UI/Materials`.
 - `Developers/rpm86/`: personal sandbox (test GEs, editor utility widgets `EUW_*`, `EOSTEST`, `GAS_TEST`).
   - **`Developers/rpm86/Deadlock/{Apollo,Lash,Pocket,_Shared}`: imported Valve Deadlock assets. Local prototyping only. Never ship, never reference from shipping content, keep out of shared branches.**
-  - `BP_Deadlock_Lash` / `BP_Deadlock_Apollo` / `BP_Deadlock_Pocket` / `TheDoorman/BP_Deadlock_TheDoorman`: Mover pawns using `ABP_DeadlockHero`. Doorman imports as `TheDoorman` (asset names come from the display name); it was duplicated from Pocket and still has Pocket's ultimate (Doorman abilities: Heroes.md). Its anim set has no hard_land, wall_jump or run_aim clip.
+  - `BP_Deadlock_Lash` / `BP_Deadlock_Apollo` / `BP_Deadlock_Pocket` / `TheDoorman/BP_Deadlock_TheDoorman`: Mover pawns using `ABP_DeadlockHero`. Doorman imports as `TheDoorman` (asset names come from the display name); it was duplicated from Pocket; all four slots now have Doorman abilities (Heroes.md). Its anim set has no hard_land, wall_jump or run_aim clip.
 - `Developers/Levi`: another dev's sandbox.
 - Marketplace/template: `ParagonSparrow`, `ParagonSunWukong`, `ParagonTwinblast`, `Characters/Mannequin*`, `StarterContent`, `ThirdPerson`, `LevelPrototyping`, `UIMaterialLab`, `Blueprints` (template leftovers).
 - `AbilityIcons/`, `Data/{Images,Items,ShopImages}`, `Scripts/response.json` (item API dump for the image downloader).

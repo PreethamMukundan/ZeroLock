@@ -161,6 +161,12 @@ void AZero_BaseGameModeBase::HandlePlayerDeath(AZeroLockCharacter* DeadPawn, ACo
         // Still attempt to respawn the controller
     }
 
+    // Before anything else (e.g. Doorman's hotel sends its guest back to the map).
+    if (DeadPawn)
+    {
+        DeadPawn->OnServerPreDeath.Broadcast(DeadPawn);
+    }
+
     // Update deaths on server
     AZero_BasePlayerState* DeadPS = DeadController->GetPlayerState<AZero_BasePlayerState>();
     if (DeadPS)

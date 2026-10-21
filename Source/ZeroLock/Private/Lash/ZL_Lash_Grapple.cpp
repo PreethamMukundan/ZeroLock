@@ -12,6 +12,7 @@
 
 UZL_Lash_Grapple::UZL_Lash_Grapple()
 {
+	bIsMovementAbility = true;
 }
 
 void UZL_Lash_Grapple::ActivateAbility(const FGameplayAbilitySpecHandle Handle,

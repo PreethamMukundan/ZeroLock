@@ -62,6 +62,7 @@ AZL_Doorman_Door::AZL_Doorman_Door()
 	FrameLeft = CreateFramePiece(TEXT("FrameLeft"), CubeMesh.Object);
 	FrameRight = CreateFramePiece(TEXT("FrameRight"), CubeMesh.Object);
 	FrameTop = CreateFramePiece(TEXT("FrameTop"), CubeMesh.Object);
+	FrameButtom = CreateFramePiece(TEXT("FrameBottom"), CubeMesh.Object);
 
 	PortalCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("PortalCapture"));
 	PortalCapture->SetupAttachment(SceneRoot);
@@ -125,11 +126,14 @@ void AZL_Doorman_Door::OnConstruction(const FTransform& Transform)
 	FrameRight->SetRelativeScale3D(JambScale / 100.0f);
 	FrameTop->SetRelativeLocation(FVector(FrameDepth * 0.5f, 0.0f, HalfH + FrameThickness * 0.5f));
 	FrameTop->SetRelativeScale3D(FVector(FrameDepth, DoorWidth, FrameThickness) / 100.0f);
+	FrameButtom->SetRelativeLocation(FVector(FrameDepth * 0.5f, 0.0f, -(HalfH + FrameThickness * 0.5f)));
+	FrameButtom->SetRelativeScale3D(FVector(FrameDepth, DoorWidth, FrameThickness) / 100.0f);
 	if (FrameMaterial)
 	{
 		FrameLeft->SetMaterial(0, FrameMaterial);
 		FrameRight->SetMaterial(0, FrameMaterial);
 		FrameTop->SetMaterial(0, FrameMaterial);
+		FrameButtom->SetMaterial(0, FrameMaterial);
 	}
 
 	// Plane local X (after the pitch) runs along the door height, local Y along its width.

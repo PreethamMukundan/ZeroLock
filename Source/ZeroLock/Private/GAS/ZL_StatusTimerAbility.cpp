@@ -40,6 +40,22 @@ void UZL_StatusTimerAbility::SendStatusTimer(AActor* Instigator, UAbilitySystemC
 	TargetASC->HandleGameplayEvent(ZerolockGameplayTagsForBinding::TAG_EVENT_STATUS_TIMER, &Payload);
 }
 
+void UZL_StatusTimerAbility::ClearStatusTimer(AActor* Instigator, UAbilitySystemComponent* TargetASC, FGameplayTag StatusTag)
+{
+	if (!TargetASC || !StatusTag.IsValid())
+	{
+		return;
+	}
+
+	// A negative duration only ends the bars already showing this status.
+	FGameplayEventData Payload;
+	Payload.Instigator = Instigator;
+	Payload.Target = TargetASC->GetAvatarActor();
+	Payload.EventMagnitude = -1.0f;
+	Payload.InstigatorTags.AddTag(StatusTag);
+	TargetASC->HandleGameplayEvent(ZerolockGameplayTagsForBinding::TAG_EVENT_STATUS_TIMER, &Payload);
+}
+
 void UZL_StatusTimerAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
                                              const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
@@ -47,6 +63,10 @@ void UZL_StatusTimerAbility::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 	StatusTag = TriggerEventData ? TriggerEventData->InstigatorTags.First() : FGameplayTag();
 	if (Duration <= 0.0f || !StatusTag.IsValid())
 	{
+		if (Duration < 0.0f && StatusTag.IsValid())
+		{
+			EndOtherTimersForStatus();
+		}
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}

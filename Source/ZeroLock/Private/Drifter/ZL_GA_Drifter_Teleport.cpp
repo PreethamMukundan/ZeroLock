@@ -13,6 +13,11 @@
 
 
 
+UZL_GA_Drifter_Teleport::UZL_GA_Drifter_Teleport()
+{
+	bIsMovementAbility = true;
+}
+
 void UZL_GA_Drifter_Teleport::OnEventRecived(FGameplayEventData Payload)
 {
 	//Super::OnEventRecived(Payload);

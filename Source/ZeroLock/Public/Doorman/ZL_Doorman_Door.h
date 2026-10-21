@@ -84,6 +84,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Door|Frame")
 	TObjectPtr<UStaticMeshComponent> FrameTop;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Door|Frame")
+	TObjectPtr<UStaticMeshComponent> FrameButtom;
 
 	UPROPERTY(ReplicatedUsing = OnRep_LinkedDoor, BlueprintReadOnly, Category = "Door")
 	TObjectPtr<AZL_Doorman_Door> LinkedDoor;

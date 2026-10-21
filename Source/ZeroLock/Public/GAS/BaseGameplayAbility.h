@@ -89,6 +89,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ZeroLock|Ability")
 	EGameplayAbilitySlot Slot;
 
+	/** Moves the hero (grapple, lunge, teleport...): can't activate while the owner has Zerolock.Status.MovementAbilitiesBlocked (e.g. Doorman's hotel). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ZeroLock|Ability")
+	bool bIsMovementAbility = false;
+
 	UFUNCTION()
 	void SetInputID(EGASAbilityInputID in);
 

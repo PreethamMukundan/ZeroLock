@@ -1,6 +1,6 @@
 {
   "deadlock_dir": "E:/SteamInstallFile/steamapps/common/Deadlock",
-  "source2viewer_cli": "E:/Tools/cli-windows-x64/Source2Viewer-CLI.exe",
+  "source2viewer_cli": "E:/Tools/cli-windows-x64_20.1/Source2Viewer-CLI.exe",
   "blender": "E:/SteamInstallFile/steamapps/common/Blender/blender.exe",
   "output_dir": "E:/Repo/ZeroLock/ZeroLock/Saved/DeadlockImporter",
   "ue_dest_root": "/Game/Developers/rpm86/Deadlock",

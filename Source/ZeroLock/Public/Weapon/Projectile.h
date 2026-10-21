@@ -434,7 +434,18 @@ public:
 	 * Triggers detonation. */
 	UFUNCTION()
 	virtual void OnStop(const FHitResult& Hit);
-	
+
+public:
+	/** Another projectile's hitbox overlapped this projectile (only possible if this one has a component the hitbox
+	 * overlaps, e.g. the Hero object type). Return true to let OtherProjectile detonate on this one. Runs on every
+	 * machine that simulates both projectiles. Default: projectiles pass through each other. */
+	virtual bool HandleHitByProjectile(AProjectile* OtherProjectile) { return false; }
+
+	/** Primary-fire projectile (applies weapon damage on a direct hit). */
+	bool IsWeaponProjectile() const { return bApplyWeaponDamage; }
+
+protected:
+
 	/** Disable killbox destruction for projectiles. All projectiles have a finite lifespan, so they never run the risk
 	 * of lingering forever. We don't want the world destroying a projectile without us wanting it gone. */
 	virtual void FellOutOfWorld(const class UDamageType& dmgType) override;

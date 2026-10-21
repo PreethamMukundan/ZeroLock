@@ -77,6 +77,13 @@ struct FZeroMovementInputs : public FMoverDataStructBase
 	UPROPERTY(BlueprintReadWrite, Category="Zero")
 	FVector TeleportTarget = FVector::ZeroVector;
 
+	// Teleport also replaces the velocity (portals redirect momentum).
+	UPROPERTY(BlueprintReadWrite, Category="Zero")
+	bool bTeleportSetsVelocity = false;
+
+	UPROPERTY(BlueprintReadWrite, Category="Zero")
+	FVector TeleportVelocity = FVector::ZeroVector;
+
 	// Sampled from the owner's ZeroLock.Movement.Rooted tag when the input is produced, so client and server root on the same frame.
 	UPROPERTY(BlueprintReadWrite, Category="Zero")
 	bool bIsRooted = false;
@@ -113,6 +120,8 @@ struct FZeroMovementInputs : public FMoverDataStructBase
     	Ar << bWantsRelease;
     	Ar << bHasTeleport;
     	Ar << TeleportTarget;
+    	Ar << bTeleportSetsVelocity;
+    	Ar << TeleportVelocity;
     	Ar << bIsRooted;
 
     	Map->SerializeObject(Ar, AActor::StaticClass(), (UObject*&)DynamicTargetActor);

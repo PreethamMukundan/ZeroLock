@@ -31,7 +31,9 @@ public:
 
 	virtual void AbilityConfirmedAction(const FGameplayAbilityTargetDataHandle& Data);
 	virtual void AbilityCancelledAction(const FGameplayAbilityTargetDataHandle& Data);
-	
+	/** Called after the target actor is spawned and set up, before targeting starts. */
+	virtual void OnTargetActorSpawned(class AGameplayAbilityTargetActor_Trace* TargetActor) {}
+
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Ability")
 	TSubclassOf<AGameplayAbilityTargetActor> Targetclass;

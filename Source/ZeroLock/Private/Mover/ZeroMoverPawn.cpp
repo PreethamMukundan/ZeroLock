@@ -100,7 +100,20 @@ void AZeroMoverPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 void AZeroMoverPawn::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult)
 {
    FCharacterDefaultInputs& DefaultInputs = InputCmdResult.InputCollection.FindOrAddMutableDataByType<FCharacterDefaultInputs>();
-    
+
+    /* Stunned (also while carried by Doorman's Luggage Cart): none of the player's own movement. Latched forced moves
+     * (pulls, teleports) below still go through. Dropping the cached input also keeps keys released during the stun
+     * from sticking (Stunned's DisableInput eats the release). */
+    if (MoverComponent && MoverComponent->IsStunned())
+    {
+        CachedMoveInput = FVector2D::ZeroVector;
+        bLocalJumpPressed = false;
+        bCachedWantsToCrouch = false;
+        bWantsToDashLatch = false;
+        bWantsToHeavyMelee = false;
+        bWantsToZipline = false;
+    }
+
     DefaultInputs.bIsJumpJustPressed = (!bWasJumpPressedLastFrame && bLocalJumpPressed);
     DefaultInputs.bIsJumpPressed = bLocalJumpPressed;
     bWasJumpPressedLastFrame = bLocalJumpPressed;
@@ -206,11 +219,15 @@ void AZeroMoverPawn::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmd
     {
         ZeroInputs.bHasTeleport = true;
         ZeroInputs.TeleportTarget = MoverComponent->LatchedTeleportTarget;
+        ZeroInputs.bTeleportSetsVelocity = MoverComponent->bLatchedTeleportSetsVelocity;
+        ZeroInputs.TeleportVelocity = MoverComponent->LatchedTeleportVelocity;
         MoverComponent->bLatchedTeleport = false;
+        MoverComponent->bLatchedTeleportSetsVelocity = false;
     }
     else
     {
         ZeroInputs.bHasTeleport = false;
+        ZeroInputs.bTeleportSetsVelocity = false;
     }
     
     bWantsToDashLatch = false;

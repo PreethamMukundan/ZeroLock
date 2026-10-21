@@ -115,6 +115,8 @@ public:
 	void RequestSafeStop();
 	void RequestSafeRelease();
 	void RequestSafeTeleport(const FVector& Target);
+	/** Teleport that also sets the velocity (e.g. leaving a portal). */
+	void RequestSafeTeleportWithVelocity(const FVector& Target, const FVector& Velocity);
 
 	bool bLatchedPullMove = false;
 	FVector LatchedPullTarget = FVector::ZeroVector;
@@ -123,6 +125,8 @@ public:
 	bool bLatchedRelease = false;
 	bool bLatchedTeleport = false;
 	FVector LatchedTeleportTarget = FVector::ZeroVector;
+	bool bLatchedTeleportSetsVelocity = false;
+	FVector LatchedTeleportVelocity = FVector::ZeroVector;
 
 	/** Teleports further than this from the current location are rejected (client-sent target sanity check). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Teleport")
@@ -141,6 +145,9 @@ public:
 	 * the simulation uses FZeroMovementInputs::bIsRooted so client and server root on the same frame.
 	 */
 	bool IsRooted() const;
+
+	/** True while the owner has the ZeroLock.Stun tag: ProduceInput drops the player's own move inputs (latched forced moves still apply). */
+	bool IsStunned() const;
 
 	/** True while the current sim step re-runs a frame after a correction. Use it to skip cosmetics. */
 	bool IsResimulatingStep() const { return bStepIsResimulating; }

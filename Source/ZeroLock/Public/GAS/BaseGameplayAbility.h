@@ -36,6 +36,10 @@ class ZEROLOCK_API UBaseGameplayAbility : public UGameplayAbility
 public:
 	UBaseGameplayAbility();
 
+	/** Stunned heroes (ZeroLock.Stun) can't activate abilities. Event-triggered ones (e.g. the PullTo victim reaction) still run. */
+	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr,
+		const FGameplayTagContainer* TargetTags = nullptr, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
+
 	void SetSlot(EGameplayAbilitySlot slot);
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Ability")

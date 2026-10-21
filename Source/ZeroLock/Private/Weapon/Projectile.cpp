@@ -23,6 +23,7 @@
 #include "Components/MeshComponent.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "ZeroLock/ZeroLockCharacter.h"
+#include "Weapon/ZL_ProjectileMovementComponent.h"
 #include "Engine/Engine.h"
 #include "Sound/SoundBase.h"
 #include "ZeroLock/ZeroLock.h"
@@ -56,7 +57,8 @@ AProjectile::AProjectile(const FObjectInitializer& ObjectInitializer)
 	TrailComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	// Set up our projectile movement.
-	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
+	// Our subclass lets projectiles pass through portals (Doorman's Doorway).
+	ProjectileMovement = CreateDefaultSubobject<UZL_ProjectileMovementComponent>(TEXT("ProjectileMovement"));
 	ProjectileMovement->SetUpdatedComponent(CollisionComp);
 	ProjectileMovement->bForceSubStepping = true; // Mitigates issues when fast-forwarding the projectile, especially when detonating on spawn.
 	ProjectileMovement->MaxSimulationTimeStep = 0.0166;
@@ -219,11 +221,18 @@ void AProjectile::BeginPlay()
 
 	
 		// Link to the associated fake projectile.
-		if (ensureAlwaysMsgf(ZeroPlayerController->FakeProjectiles.Contains(ProjectileId), TEXT("Client-side authoritative projectile (%s) failed to find corresponding fake projectile with ID (%i)."), *GetNameSafe(this), ProjectileId))
+		/* The fake can already be gone: it detonated and was destroyed before we replicated (it unregisters itself in
+		 * Destroyed). Then there's nothing to link; ShouldAuthProjDetonateOnOwner replays the detonation with us. */
+		AProjectile* FakeProjectile = ZeroPlayerController->FakeProjectiles.FindRef(ProjectileId);
+		if (IsValid(FakeProjectile))
 		{
-			LinkFakeProjectile(ZeroPlayerController->FakeProjectiles[ProjectileId]);
-			ZeroPlayerController->FakeProjectiles.Remove(ProjectileId);
+			LinkFakeProjectile(FakeProjectile);
 		}
+		else
+		{
+			UE_LOG(LogTemp, Verbose, TEXT("Client-side authoritative projectile (%s) has no fake projectile with ID (%i) (already destroyed)."), *GetNameSafe(this), ProjectileId);
+		}
+		ZeroPlayerController->FakeProjectiles.Remove(ProjectileId);
 	}
 
 	/* On simulated proxies without a fake projectile (i.e. non-owning simulated proxies), projectiles will appear a
@@ -382,6 +391,15 @@ void AProjectile::Destroyed()
 		LinkedFakeProjectile->Destroy();
 	}
 
+	// An unlinked fake projectile is still registered on its PC; unregister it so the authoritative one doesn't link to it.
+	if (bIsFakeProjectile && !LinkedAuthProjectile && ZeroPlayerController.IsValid())
+	{
+		if (const uint32* Key = ZeroPlayerController->FakeProjectiles.FindKey(this))
+		{
+			ZeroPlayerController->FakeProjectiles.Remove(*Key);
+		}
+	}
+
 	GetWorldTimerManager().ClearAllTimersForObject(this);
 
 	Super::Destroyed();
@@ -490,6 +508,14 @@ void AProjectile::CorrectionLerpTick(float DeltaTime)
 {
 	if (LinkedFakeProjectile && !LinkedFakeProjectile->bDetonated && !LinkedFakeProjectile->IsPendingKillPending() && ProjectileMovement)
 	{
+		// One copy went through a portal (Doorman's Doorway) and the other hasn't yet: don't drag it across the map.
+		const UZL_ProjectileMovementComponent* AuthMovement = Cast<UZL_ProjectileMovementComponent>(ProjectileMovement);
+		const UZL_ProjectileMovementComponent* FakeMovement = Cast<UZL_ProjectileMovementComponent>(LinkedFakeProjectile->ProjectileMovement);
+		if (AuthMovement && FakeMovement && AuthMovement->GetPortalTraversals() != FakeMovement->GetPortalTraversals())
+		{
+			return;
+		}
+
 		if (DeltaTime > UE_SMALL_NUMBER)
 		{
 			FVector Current = LinkedFakeProjectile->GetActorLocation();
@@ -568,6 +594,15 @@ void AProjectile::OnHitboxOverlapBegin(UPrimitiveComponent* OverlappedComponent,
 	if (OtherActor == Owningpawn)
 	{
 		return;
+	}
+
+	// Projectiles only detonate on other projectiles that accept the hit (e.g. Doorman's Call Bell shot by its owner).
+	if (AProjectile* OtherProjectile = Cast<AProjectile>(OtherActor))
+	{
+		if (!OtherProjectile->HandleHitByProjectile(this))
+		{
+			return;
+		}
 	}
 
 	if (!bInOverlap)

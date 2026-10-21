@@ -19,6 +19,7 @@
 #include "GAS/BaseCharAttributeSet.h"
 #include "GAS/ZL_GameplayTags.h"
 #include "Mover/ZeroDashMove.h"
+#include "Mover/ZeroInstantMovementEffects.h"
 #include "Mover/ZeroMovementData.h"
 #include "Mover/ZeroMoverPawn.h"
 
@@ -316,6 +317,12 @@ bool UZeroMoverComponent::IsRooted() const
     return ASC && ASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_MOVEMENT_ROOTED);
 }
 
+bool UZeroMoverComponent::IsStunned() const
+{
+    const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+    return ASC && ASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STUN);
+}
+
 void UZeroMoverComponent::HandleRooted(const FMoverTimeStep& TimeStep, const FName& CurrentMode)
 {
     bPendingRooted = true;
@@ -346,7 +353,17 @@ void UZeroMoverComponent::HandleTeleportInput(const FZeroMovementInputs& ZeroInp
     // The target comes from the client's input, so reject anything out of range.
     if (FVector::DistSquared(GetSimStartLocation(), ZeroInputs.TeleportTarget) <= FMath::Square(MaxTeleportDistance))
     {
-        TSharedPtr<FTeleportEffect> Teleport = MakeShared<FTeleportEffect>();
+        TSharedPtr<FTeleportEffect> Teleport;
+        if (ZeroInputs.bTeleportSetsVelocity)
+        {
+            TSharedPtr<FZeroTeleportWithVelocityEffect> PortalTeleport = MakeShared<FZeroTeleportWithVelocityEffect>();
+            PortalTeleport->Velocity = ZeroInputs.TeleportVelocity;
+            Teleport = PortalTeleport;
+        }
+        else
+        {
+            Teleport = MakeShared<FTeleportEffect>();
+        }
         Teleport->TargetLocation = ZeroInputs.TeleportTarget;
         Teleport->bUseActorRotation = true;
         QueueInstantMovementEffect(Teleport);
@@ -480,6 +497,16 @@ void UZeroMoverComponent::RequestSafeTeleport(const FVector& Target)
     if (ShouldIgnoreServerLatch()) return;
     bLatchedTeleport = true;
     LatchedTeleportTarget = Target;
+    bLatchedTeleportSetsVelocity = false;
+}
+
+void UZeroMoverComponent::RequestSafeTeleportWithVelocity(const FVector& Target, const FVector& Velocity)
+{
+    if (ShouldIgnoreServerLatch()) return;
+    bLatchedTeleport = true;
+    LatchedTeleportTarget = Target;
+    bLatchedTeleportSetsVelocity = true;
+    LatchedTeleportVelocity = Velocity;
 }
 
 bool UZeroMoverComponent::ShouldIgnoreServerLatch() const

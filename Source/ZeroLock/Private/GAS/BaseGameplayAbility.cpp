@@ -30,6 +30,21 @@ UBaseGameplayAbility::UBaseGameplayAbility()
 	SetAssetTags(TagContainer);
 }
 
+bool UBaseGameplayAbility::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
+{
+	if (AbilityTriggers.IsEmpty() && ActorInfo && ActorInfo->AbilitySystemComponent.IsValid()
+		&& ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STUN))
+	{
+		if (OptionalRelevantTags)
+		{
+			OptionalRelevantTags->AddTag(ZerolockGameplayTagsForBinding::TAG_STUN);
+		}
+		return false;
+	}
+	return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
+}
+
 void UBaseGameplayAbility::SetSlot(EGameplayAbilitySlot slot)
 {
 	Slot = slot;

@@ -72,7 +72,9 @@ void UBase_GA_TargetActors::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	FGameplayTargetDataFilterHandle FilterHandle(TargetFilter);
 	
 	TargetActor->Filter = FilterHandle;
-	
+
+	OnTargetActorSpawned(TargetActor);
+
 	TargetActor->StartTargeting(this);
 
 	TargetActor->ReticleClass = ReticleClassX;

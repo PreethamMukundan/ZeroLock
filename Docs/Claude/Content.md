@@ -8,7 +8,7 @@
   - `Core`: `BP_ZeroGameInstance`, `ZeroBaseGameMode`, `BP_BaseZiplineActor`, `AN_TriggerEventNotify`.
   - `monkeyBoi/`: `BP_Mover_Monkey` (reference Mover pawn: modes + transitions configured here), abilities, montages. `Moveer/`: `BP_ZeromoverPawn`, Mover test game mode and movement settings.
   - `Bow_Bitch`, `GuNGuy`: older per-hero folders. `DeadlockChar/Pocket`: Pocket built from the Deadlock import.
-  - `HeroAbilities/{ApolloTest,DrifterTest,LashTesst,PocketTest}/<Ability>/BP_<Hero>_<Ability>`: hero ability BPs.
+  - `HeroAbilities/{ApolloTest,DoormanTest,DrifterTest,LashTesst,PocketTest}/<Ability>/BP_<Hero>_<Ability>`: hero ability BPs. Each hero folder also holds its curve table `C_<Hero>` (ability values per level) and, for the four Deadlock heroes, `GE_<Hero>_DefaultStats` (the hero BP's `DefaultGameplayEffect`; copies of `Developers/rpm86/GAS_TEST/GE_Defaulttest`, made 2026-10-22).
   - `Levels`: `CharacterSelector.umap`, `Lvl_MainMenu.umap`. `MATS`: materials.
   - `UI/BP/...`: widget BPs (`Widgets/WBP_BaseUILayout`, `BP_BAseHUD`, `WBP_PlayerHUD`, `CharacterSelector/`, `DamageNumber/`, `Input/`, `OverHead/`, `Widgets/ItemShop`, `MainMenu`, `Abilities`, `StatBoxs`; `UI/BP/Weapon` holds fire-ability BPs, misplaced). `UI/CommonStyles`, `UI/CommonUI/Inputs`, `UI/Images`, `UI/Materials`.
 - `Developers/rpm86/`: personal sandbox (test GEs, editor utility widgets `EUW_*`, `EOSTEST`, `GAS_TEST`).
@@ -20,7 +20,35 @@
 - `__ExternalActors__`, `__ExternalObjects__`: one-file-per-actor data.
 
 ## Editor module (`Source/ZeroEditorModule`)
-- `FZeroEditorModuleModule`: adds a "ZeroLock" menu to the Level Editor with "BaseAbilityList" (logs every `UBaseGameplayAbility` subclass + properties). `CreatePropertyTool` is a no-op; the menu extender isn't removed on shutdown; `LogZeroEditor` declared but not defined.
+- `FZeroEditorModuleModule`: adds a "ZeroLock" menu to the Level Editor with "Hero Workbench" (opens the nomad tab `ZeroLockHeroWorkbench`) and "BaseAbilityList" (logs every `UBaseGameplayAbility` subclass + properties). Shutdown unregisters the tab and removes the menu extender.
+- **Hero Workbench** (`Private/HeroWorkbench/`):
+  - `SZL_HeroWorkbench` (Slate). Left: heroes from the game instance's `CharacterDataTable` (`DT_HeroList`, table order; fallback path `/Game/ZERO/UI/BP/CharacterSelector/DT_HeroList`), with search, Rescan, and "Show heroes not in the hero list" (every other `AZeroLockCharacter` Blueprint under /Game). Each row shows the icon and error/warning counts.
+  - Right, pages for the selected hero:
+    - **Overview**: data asset details and the hero's checks.
+    - **Abilities**: one row per ability property on the hero class, found by reflection (`TSubclassOf<UGameplayAbility>` properties, then array elements such as `DefaultAbilities`, so new slots show up automatically). Shows cooldown, tags and issues; a slot-assignment panel; details of the selected ability's class defaults.
+    - **Mesh & Anim**: the `MeshComponent` template, the anim set, and the melee montages.
+    - **Weapon**: summary, primary fire ability (Weapon/Cooldown/Costs categories), projectile, and projectile movement speeds.
+    - **Base Stats**: `DefaultGameplayEffect` modifiers at level 1, plus their editor. The Value column is editable in place for plain scalable-float modifiers (writes the effect CDO, then re-runs the checks); curve-table, attribute-based, custom-calculation and SetByCaller magnitudes stay read-only text. Says which other heroes share the effect; "Make a copy for this hero" / "...for every hero sharing it" duplicate it to `<hero ability folder>/GE_<Hero>_DefaultStats` (or reuse that asset) and assign it (`ZLHeroAudit::CopyDefaultEffectForHero`).
+    - **Curve Table**: the hero's table (the one most of its ability `FScalableFloat`s use, else `C_<Hero>` in its folder). "Create C_<Hero>"; "Move constant values into the table" (`LinkHeroValuesToTable`: every non-zero constant `FScalableFloat` on the hero's own abilities, those under `/Game/ZERO/HeroAbilities/`, gets row `<Ability>_<Property>` (`CooldownDuration` → `_Cooldown`) keyed 0-3 with its current value and becomes Value 1 × that row; existing rows are linked, not overwritten); add/delete rows; a grid with levels 0-3 editable in place; and every ability value with its source (constant, row, another hero's table, or a missing row). The "hero folder" is the `HeroAbilities/<X>` folder most of the hero's abilities live in.
+    - **Project Audit**.
+  - Details panels edit the class defaults (CDO) directly: the edit marks the package dirty and calls `PostEditChangeBlueprintActors`. "Save..." opens the usual save-dirty dialog.
+  - `ZL_HeroAudit` (`ZLHeroAudit::`) holds the data gathering and checks, mostly by property name through reflection, so protected members and BP variables work.
+  - Hero checks:
+    - Data asset: icon, description, display mesh/anim, `CharacterClass`.
+    - Empty required slots (primary, secondary, ability 1/2, ultimate, reload); the same ability in two slots.
+    - Mesh: no mesh or anim class; a Deadlock ABP without an anim set; melee montages or anim-set clips on a skeleton incompatible with the mesh (the Pocket-plays-Lash's-melee bug); empty anim-set clips (info); display mesh differs from the hero mesh (info).
+    - Weapon: not a `UZL_GA_WeaponFire`; no `ProjectileClass`; a projectile that deals no damage.
+    - No `DefaultGameplayEffect`; a `Current<X>` modifier starting above `Max<X>` (all four heroes: `CurrentAmmo` 50 vs `MaxAmmo` 30).
+  - Ability checks:
+    - Active slots: no icon, name or description; cooldown 0.
+    - `CooldownDuration` without `CooldownTags`; charged ability with `TimeBetweenCharges` 0; the ultimate slot whose `Slot` isn't `UltimateSlot`.
+    - Any editable bool with "Debug" in its name left on; `bDrawDebug` on its projectile.
+    - An `FScalableFloat` pointing at a curve table row that doesn't exist (error: the value is 0).
+  - The project audit covers the heroes the list shows (unlisted test characters only with that checkbox on). It also reports `/Game/ZERO/HeroAbilities/` Blueprints no hero uses (info), and shipping content (outside `/Game/Developers/`) with asset-registry dependencies on `Developers/rpm86/Deadlock` (error) or other Developers assets (warning).
+  - "Export CSV" writes `Saved/ZeroLockAudit/{AbilityAudit,HeroSlots,Issues}.csv`. `AbilityAudit.csv` has one row per ability Blueprint: users, slot, cooldown, tags, charges, movement flag, net policy, icon, issues, and "Tunables" (the editable numbers, bools and enums declared below `UBaseGameplayAbility`).
+  - Console versions (`ZL_WorkbenchCommands.cpp`, scriptable from the Cmd box or the MCP): `ZL.Workbench.CopyDefaultEffect <Hero|all>`, `ZL.Workbench.CurveTable <Hero> [link]` (heroes by display or short name; logs the rows). They mark assets dirty; save afterwards.
+  - Driving the workbench through the MCP Slate inspector: Click selects list rows and segments, but an SButton needs Click then `PressKey Enter`, and after that click later mouse-ups can stop registering until the editor restarts. Use the console commands for scripted work.
+  - The module can't include `Zero_BaseGameInstance.h` (it pulls in `OnlineSubsystem.h`), so the table is read by property name.
 - `UEUW_AbilityPropertyEditor` (Editor Utility Widget): lists BP ability classes with a details view of their CDO filtered to the "Icon" category (hard-coded, `EUW_AbilityPropertyEditor.cpp:32`).
 - `AEditorTestActor`: test actor dumping abilities on BeginPlay. Dead code.
 - `UAnimGraphNode_ZLDeadlockHero`: anim graph node (Animation.md).

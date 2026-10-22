@@ -1,8 +1,13 @@
 ﻿#include "ZeroEditorModule.h"
 #include "LevelEditor.h"
+#include "Framework/Docking/TabManager.h"
 #include "GAS/BaseGameplayAbility.h"
+#include "HeroWorkbench/SZL_HeroWorkbench.h"
+#include "Widgets/Docking/SDockTab.h"
 
 #define LOCTEXT_NAMESPACE "FZeroEditorModuleModule"
+
+DEFINE_LOG_CATEGORY(LogZeroEditor);
 
 void FZeroEditorModuleModule::StartupModule()
 {
@@ -10,7 +15,7 @@ void FZeroEditorModuleModule::StartupModule()
     FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
 
     //MEnu Extender - add menus to the bar
-    const TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
+    MenuExtender = MakeShareable(new FExtender());
 
     //add menu bar to it
     MenuExtender->AddMenuBarExtension("Help",
@@ -22,19 +27,33 @@ void FZeroEditorModuleModule::StartupModule()
 	//adding it in
 	LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
 
-	CreatePropertyTool();
-    
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(SZL_HeroWorkbench::TabName, FOnSpawnTab::CreateLambda([](const FSpawnTabArgs&)
+		{
+			return SNew(SDockTab)
+				.TabRole(ETabRole::NomadTab)
+				[
+					SNew(SZL_HeroWorkbench)
+				];
+		}))
+		.SetDisplayName(LOCTEXT("HeroWorkbenchTab", "Hero Workbench"))
+		.SetTooltipText(LOCTEXT("HeroWorkbenchTabTip", "Heroes, their abilities, mesh, weapon and stats, and the project audit"))
+		.SetMenuType(ETabSpawnerMenuType::Hidden);
 }
 
 void FZeroEditorModuleModule::AddMenu(FMenuBarBuilder& MenuBarBuilder)
 {
 	MenuBarBuilder.AddPullDownMenu(FText::FromString("ZeroLock"),
-		FText::FromString("Custom ability menu abilities"),
+		FText::FromString("ZeroLock tools"),
 		FNewMenuDelegate::CreateRaw(this,&FZeroEditorModuleModule::FillMenu));
 }
 
 void FZeroEditorModuleModule::FillMenu(FMenuBuilder& MenuBuilder)
 {
+	MenuBuilder.AddMenuEntry(LOCTEXT("HeroWorkbench", "Hero Workbench"),
+		LOCTEXT("HeroWorkbenchTip", "Browse and edit every hero (abilities, mesh, weapon, base stats) and run the project audit"),
+		FSlateIcon(),
+		FUIAction(FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(SZL_HeroWorkbench::TabName); })));
+
 	MenuBuilder.AddMenuEntry(FText::FromString("BaseAbilityList"),
 		FText::FromString("Base Ability List"),
 		FSlateIcon(),
@@ -54,7 +73,7 @@ void FZeroEditorModuleModule::PrintAllAbilities()
 				foundClasses.Add(Class);
 			}
 		}
-    
+
 		for (UClass* Class : foundClasses)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Found Class: %s"), *Class->GetName());
@@ -62,33 +81,29 @@ void FZeroEditorModuleModule::PrintAllAbilities()
 			for (TFieldIterator<FProperty> PropertyIt(Class); PropertyIt; ++PropertyIt)
 			{
 				FProperty* Property = *PropertyIt;
-        
+
 				FString PropertyName = Property->GetName();
 				FString PropertyTypeName = Property->GetClass()->GetName();
-        
+
 				UE_LOG(LogTemp, Log, TEXT("Property: %s, Type: %s"), *PropertyName, *PropertyTypeName);
-            
-				// Get more detailed information
-				//UE_LOG(LogTemp, Log, TEXT("  - CPP Type: %s"), *Property->GetCPPType());
-				//UE_LOG(LogTemp, Log, TEXT("  - Size: %d bytes"), Property->GetSize());
-				//UE_LOG(LogTemp, Log, TEXT("  - Offset: %d"), Property->GetOffset_ForInternal());
-				//UE_LOG(LogTemp, Log, TEXT("  - Array Dim: %d"), Property->ArrayDim);
 			}
 		}
 
 }
 
-void FZeroEditorModuleModule::CreatePropertyTool()
-{
-	TArray<UObject*> Abilities;
-	GetObjectsWithOuter(UBaseGameplayAbility::StaticClass(), Abilities, true);
-}
-
 void FZeroEditorModuleModule::ShutdownModule()
 {
-    
+	if (FSlateApplication::IsInitialized())
+	{
+		FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SZL_HeroWorkbench::TabName);
+	}
+	if (MenuExtender.IsValid() && FModuleManager::Get().IsModuleLoaded("LevelEditor"))
+	{
+		FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor").GetMenuExtensibilityManager()->RemoveExtender(MenuExtender);
+	}
+	MenuExtender.Reset();
 }
 
 #undef LOCTEXT_NAMESPACE
-    
+
 IMPLEMENT_MODULE(FZeroEditorModuleModule, ZeroEditorModule)

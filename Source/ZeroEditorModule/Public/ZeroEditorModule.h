@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
+class FExtender;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogZeroEditor, All, All);
 class FZeroEditorModuleModule : public IModuleInterface
@@ -16,6 +17,6 @@ public:
     void FillMenu(FMenuBuilder& MenuBuilder);
     void PrintAllAbilities();
 
-    void CreatePropertyTool();
-    
+private:
+    TSharedPtr<FExtender> MenuExtender;
 };

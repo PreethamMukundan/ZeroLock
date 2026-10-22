@@ -5,7 +5,7 @@ Paths under `Source/ZeroLock/`. Hero-specific abilities: see Heroes.md.
 ## Architecture
 - **ASC lives on the pawn.** `AZeroLockCharacter : AZeroMoverPawn, IAbilitySystemInterface` creates `UBaseCharAbilitySystemComponent "AbilitySystemComp"` (replicated, **Mixed**), `UBaseCharAttributeSet "AttributeSet"`, `UZero_Item_Inventory_Component "ItemInventory"` (`ZeroLockCharacter.cpp:46-52`). Owner = Avatar = pawn. `AZero_BasePlayerState` only holds TeamID/K/D/A.
 - `InitAbilityActorInfo(this,this)` in `PossessedBy` (server), `OnRep_PlayerState` (client), `ResetCharacter`.
-- Server init order (`PossessedBy`): InitAbilityActorInfo → `CreateVM_Att` → `InitializeAttributes()` (`:163`: applies BP `DefaultGameplayEffect` at L1; tag listeners `ZeroLock.Stun`→`Stunned`, `ZeroLock.Abilities.MovementLock`→`MovementLocked` (empty), `ZeroLock.Melee.Parry`→`Parry`; attribute delegates for health/speed/ammo) → `GiveAbilities()` (`:207`) → `InitializeFloatingStatusBar`.
+- Server init order (`PossessedBy`): InitAbilityActorInfo → `CreateVM_Att` → `InitializeAttributes()` (`:163`: applies BP `DefaultGameplayEffect` at L1 (per hero: `HeroAbilities/<Hero>/GE_<Hero>_DefaultStats`, Content.md); tag listeners `ZeroLock.Stun`→`Stunned`, `ZeroLock.Abilities.MovementLock`→`MovementLocked` (empty), `ZeroLock.Melee.Parry`→`Parry`; attribute delegates for health/speed/ammo) → `GiveAbilities()` (`:207`) → `InitializeFloatingStatusBar`.
 - **Granting** (server, `GiveAbilities`): per-slot `TSubclassOf` properties on the character BP (`ZeroLockCharacter.h:206-233`), no hero data asset.
   - `DefaultAbilities[]` at L1 (passives, `UZL_StatusTimerAbility`, which every hero needs).
   - `PrimaryFireAbility` at L1.

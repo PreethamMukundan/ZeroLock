@@ -23,9 +23,18 @@ public class ZeroEditorModule : ModuleRules
                 "SlateCore",
                 "ZeroLock",
                 "GameplayAbilities",
+                "GameplayTags",
                 "Blutility",
                 "UMG",
                 "UMGEditor",
+                "UnrealEd",
+                "LevelEditor",
+                "PropertyEditor",
+                "AssetRegistry",
+                "EngineSettings",
+                "InputCore",
+                "AssetTools",
+                "Kismet",
             }
         );
     }

@@ -64,6 +64,13 @@ public:
 	/** Readable names used in the data: class name without BP_ / Deadlock_ prefixes and the _C suffix. */
 	static FString CleanClassName(const UClass* Class);
 
+	/**
+	 * Where events are sent: "Cloud" (IngestUrl/IngestKey from Telemetry.ini), "Local" (wrangler dev, LocalUrl/LocalKey)
+	 * or "File" (Saved/Telemetry only). The local .jsonl is written in every mode. Console: ZL.Telemetry.Target.
+	 */
+	void SetTarget(const FString& NewTarget);
+	const FString& GetTarget() const { return IngestTarget; }
+
 	// --- Config: [/Script/ZeroLock.ZL_TelemetrySubsystem] in DefaultGame.ini; IngestUrl/IngestKey from Telemetry.ini (gitignored) ---
 
 	UPROPERTY(Config)
@@ -76,6 +83,13 @@ public:
 	/** Sent as "Authorization: Bearer <key>". Ships inside the game, so it only allows writing events. */
 	UPROPERTY(Config)
 	FString IngestKey;
+
+	/** API used by the "Local" target (wrangler dev). Overridable in Telemetry.ini as LocalUrl / LocalKey. */
+	UPROPERTY(Config)
+	FString LocalUrl = TEXT("http://127.0.0.1:8787");
+
+	UPROPERTY(Config)
+	FString LocalKey = TEXT("dev-ingest-key");
 
 	UPROPERTY(Config)
 	bool bWriteLocalFile = true;
@@ -114,6 +128,8 @@ private:
 	};
 
 	void LoadLocalOverrides();
+	/** Sets IngestUrl/IngestKey from IngestTarget (Cloud values come from CloudUrl/CloudKey). */
+	void ApplyTarget();
 	bool Tick(float DeltaTime);
 	void SamplePerf();
 	void SamplePositions();
@@ -136,6 +152,12 @@ private:
 	static FString TeamName(const APlayerState* PS);
 
 	FTSTicker::FDelegateHandle TickerHandle;
+
+	FString IngestTarget;
+	FString CloudUrl;
+	FString CloudKey;
+	/** Bumped on every target switch so late failures of the old target aren't retried against the new one. */
+	int32 TargetGeneration = 0;
 
 	/** Random id per game launch: groups one machine's perf samples. */
 	FString SessionId;

@@ -13,6 +13,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Gamemode/Zero_BaseGameState.h"
 #include "HAL/FileManager.h"
+#include "HAL/IConsoleManager.h"
 #include "HttpModule.h"
 #include "Interfaces/IHttpResponse.h"
 #include "Items/Zero_Item_data.h"
@@ -70,7 +71,7 @@ void UZL_TelemetrySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	}
 
 	TickerHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UZL_TelemetrySubsystem::Tick));
-	UE_LOG(LogZLTelemetry, Log, TEXT("Telemetry on. API: %s, local file: %s"),
+	UE_LOG(LogZLTelemetry, Log, TEXT("Telemetry on. Target %s, API: %s, local file: %s"), *IngestTarget,
 		IngestUrl.IsEmpty() ? TEXT("(none)") : *IngestUrl, bWriteLocalFile ? *LocalFilePath : TEXT("(off)"));
 }
 
@@ -99,23 +100,126 @@ void UZL_TelemetrySubsystem::LoadLocalOverrides()
 		File.Read(Path);
 		File.GetString(TEXT("Telemetry"), TEXT("IngestUrl"), IngestUrl);
 		File.GetString(TEXT("Telemetry"), TEXT("IngestKey"), IngestKey);
+		File.GetString(TEXT("Telemetry"), TEXT("LocalUrl"), LocalUrl);
+		File.GetString(TEXT("Telemetry"), TEXT("LocalKey"), LocalKey);
+		File.GetString(TEXT("Telemetry"), TEXT("Target"), IngestTarget);
 		File.GetBool(TEXT("Telemetry"), TEXT("bEnabled"), bEnabled);
 		break;
 	}
 
-	FParse::Value(FCommandLine::Get(), TEXT("TelemetryUrl="), IngestUrl);
-	FParse::Value(FCommandLine::Get(), TEXT("TelemetryKey="), IngestKey);
+	CloudUrl = IngestUrl;
+	CloudKey = IngestKey;
+
+	// Target: the last ZL.Telemetry.Target choice on this machine, else Telemetry.ini, else Local in the editor
+	// (playtests stay off the live data) and Cloud in packaged builds (friends' builds report online).
+	GConfig->GetString(TEXT("ZL.Telemetry"), TEXT("Target"), IngestTarget, GGameUserSettingsIni);
+	if (IngestTarget.IsEmpty())
+	{
+		IngestTarget = GIsEditor ? TEXT("Local") : TEXT("Cloud");
+	}
+
+	if (FParse::Value(FCommandLine::Get(), TEXT("TelemetryUrl="), CloudUrl))
+	{
+		IngestTarget = TEXT("Cloud");
+	}
+	FParse::Value(FCommandLine::Get(), TEXT("TelemetryKey="), CloudKey);
+	FParse::Value(FCommandLine::Get(), TEXT("TelemetryTarget="), IngestTarget);
 	if (FParse::Param(FCommandLine::Get(), TEXT("NoTelemetry")))
 	{
 		bEnabled = false;
 	}
 
+	ApplyTarget();
+}
+
+void UZL_TelemetrySubsystem::ApplyTarget()
+{
+	if (IngestTarget.Equals(TEXT("Local"), ESearchCase::IgnoreCase))
+	{
+		IngestTarget = TEXT("Local");
+		IngestUrl = LocalUrl;
+		IngestKey = LocalKey;
+	}
+	else if (IngestTarget.Equals(TEXT("File"), ESearchCase::IgnoreCase))
+	{
+		IngestTarget = TEXT("File");
+		IngestUrl.Reset();
+		IngestKey.Reset();
+	}
+	else
+	{
+		IngestTarget = TEXT("Cloud");
+		IngestUrl = CloudUrl;
+		IngestKey = CloudKey;
+	}
+
 	// Unquoted ini values are cut at "//", which leaves just "http:". The value must be quoted in Telemetry.ini.
 	if (!IngestUrl.IsEmpty() && !((IngestUrl.StartsWith(TEXT("http://")) || IngestUrl.StartsWith(TEXT("https://"))) && IngestUrl.Len() > 8))
 	{
-		UE_LOG(LogZLTelemetry, Error, TEXT("IngestUrl '%s' is not a full http(s) URL; quote it in Telemetry.ini: IngestUrl=\"https://...\". Local file only."), *IngestUrl);
+		UE_LOG(LogZLTelemetry, Error, TEXT("%s URL '%s' is not a full http(s) URL; quote it in Telemetry.ini: IngestUrl=\"https://...\". Local file only."), *IngestTarget, *IngestUrl);
 		IngestUrl.Reset();
 	}
+}
+
+void UZL_TelemetrySubsystem::SetTarget(const FString& NewTarget)
+{
+	// Buffered events belong to the old target: send them there first. Failed sends of the old target are dropped
+	// (they are already in the local file).
+	Flush();
+	RetryEvents.Reset();
+	bLoggedHttpFailure = false;
+	TargetGeneration++;
+
+	IngestTarget = NewTarget;
+	ApplyTarget();
+	UE_LOG(LogZLTelemetry, Display, TEXT("Telemetry target: %s (API: %s)"), *IngestTarget, IngestUrl.IsEmpty() ? TEXT("none, local file only") : *IngestUrl);
+}
+
+namespace
+{
+	FAutoConsoleCommand TelemetryTargetCommand(
+		TEXT("ZL.Telemetry.Target"),
+		TEXT("ZL.Telemetry.Target [Local|Cloud|File]: where telemetry is sent. Local = wrangler dev (http://127.0.0.1:8787), ")
+		TEXT("Cloud = the live API in Telemetry.ini, File = Saved/Telemetry only. Saved per machine. No argument prints the current target."),
+		FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>& Args)
+		{
+			if (Args.IsEmpty())
+			{
+				FString Saved;
+				GConfig->GetString(TEXT("ZL.Telemetry"), TEXT("Target"), Saved, GGameUserSettingsIni);
+				UE_LOG(LogZLTelemetry, Display, TEXT("Saved telemetry target: %s"), Saved.IsEmpty() ? TEXT("(default: Local in editor, Cloud packaged)") : *Saved);
+				for (const FWorldContext& Context : GEngine->GetWorldContexts())
+				{
+					if (const UZL_TelemetrySubsystem* Telemetry = Context.OwningGameInstance ? Context.OwningGameInstance->GetSubsystem<UZL_TelemetrySubsystem>() : nullptr)
+					{
+						UE_LOG(LogZLTelemetry, Display, TEXT("%s: %s"), *Context.OwningGameInstance->GetName(), *Telemetry->GetTarget());
+					}
+				}
+				return;
+			}
+
+			const FString& NewTarget = Args[0];
+			if (!NewTarget.Equals(TEXT("Local"), ESearchCase::IgnoreCase) && !NewTarget.Equals(TEXT("Cloud"), ESearchCase::IgnoreCase)
+				&& !NewTarget.Equals(TEXT("File"), ESearchCase::IgnoreCase))
+			{
+				UE_LOG(LogZLTelemetry, Warning, TEXT("ZL.Telemetry.Target: expected Local, Cloud or File, got '%s'"), *NewTarget);
+				return;
+			}
+
+			// Remembered for the next launch / PIE session, and applied to every running game instance (all PIE windows).
+			GConfig->SetString(TEXT("ZL.Telemetry"), TEXT("Target"), *NewTarget, GGameUserSettingsIni);
+			GConfig->Flush(false, GGameUserSettingsIni);
+			int32 NumApplied = 0;
+			for (const FWorldContext& Context : GEngine->GetWorldContexts())
+			{
+				if (UZL_TelemetrySubsystem* Telemetry = Context.OwningGameInstance ? Context.OwningGameInstance->GetSubsystem<UZL_TelemetrySubsystem>() : nullptr)
+				{
+					Telemetry->SetTarget(NewTarget);
+					NumApplied++;
+				}
+			}
+			UE_LOG(LogZLTelemetry, Display, TEXT("ZL.Telemetry.Target %s saved (%d running game instance(s) switched)"), *NewTarget, NumApplied);
+		}));
 }
 
 bool UZL_TelemetrySubsystem::Tick(float DeltaTime)
@@ -491,9 +595,10 @@ void UZL_TelemetrySubsystem::SendBatch(TArray<TSharedPtr<FJsonObject>>&& Batch)
 	Request->SetTimeout(15.f);
 
 	// Runs on the game thread when the server answers (or the request fails). The lambda keeps the batch for a retry.
-	Request->OnProcessRequestComplete().BindWeakLambda(this, [this, Batch = MoveTemp(Batch)](FHttpRequestPtr, FHttpResponsePtr Response, bool bConnected)
+	Request->OnProcessRequestComplete().BindWeakLambda(this, [this, Batch = MoveTemp(Batch), Generation = TargetGeneration](FHttpRequestPtr, FHttpResponsePtr Response, bool bConnected)
 	{
 		RequestsInFlight--;
+		if (Generation != TargetGeneration) return;
 		const int32 Code = Response ? Response->GetResponseCode() : 0;
 		if (bConnected && EHttpResponseCodes::IsOk(Code))
 		{

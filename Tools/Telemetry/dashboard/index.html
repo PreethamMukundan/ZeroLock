@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZeroLock Telemetry</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #1b1f24; --muted: #667085; --border: #e3e6ea;
+    --accent: #3b6fd8; --red: #d64545; --blue: #3b82d6;
+    --weapon: #e07b39; --spirit: #8b5cf6; --melee: #2e9e5b; --other: #7a8699;
+    --s1: #3b6fd8; --s2: #e07b39; --s3: #2e9e5b; --s4: #b04fc7; --s5: #c9a227; --s6: #2bb3b1; --s7: #d64545; --s8: #7a8699;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1216; --panel: #171b21; --text: #e6e9ee; --muted: #8b95a5; --border: #262c35;
+      --accent: #6d98f0; --red: #f07070; --blue: #6aa8f0;
+      --weapon: #f0995c; --spirit: #a78bfa; --melee: #4cc584; --other: #9aa5b8;
+      --s1: #6d98f0; --s2: #f0995c; --s3: #4cc584; --s4: #cf7be3; --s5: #e3c14f; --s6: #4fd1cf; --s7: #f07070; --s8: #9aa5b8;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 2; }
+  .bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 14px 24px 10px; max-width: 1500px; margin: 0 auto; }
+  h1 { font-size: 18px; margin: 0; }
+  h2 { font-size: 15px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 12px; margin: 0 0 12px; }
+  .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; min-width: 0; }
+  select, button { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; max-width: 100%; }
+  button { cursor: pointer; }
+  nav { display: flex; gap: 4px; padding: 0 24px; max-width: 1500px; margin: 0 auto; overflow-x: auto; }
+  nav a { padding: 10px 14px; color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent; white-space: nowrap; font-weight: 500; }
+  nav a:hover { color: var(--text); }
+  nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
+  main { padding: 20px 24px 40px; max-width: 1500px; margin: 0 auto; }
+  .tab { display: none; gap: 16px; grid-template-columns: repeat(12, 1fr); }
+  .tab.active { display: grid; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; min-width: 0; }
+  .w12 { grid-column: span 12; } .w8 { grid-column: span 8; } .w6 { grid-column: span 6; } .w4 { grid-column: span 4; }
+  @media (max-width: 1000px) { .w8, .w6, .w4 { grid-column: span 12; } main { padding: 16px; } .bar, nav { padding-left: 16px; padding-right: 16px; } }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; }
+  .kpi .v { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .kpi .l { color: var(--muted); font-size: 12px; }
+  .chart { position: relative; height: 300px; }
+  .chart.tall { height: 440px; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  td.n, th.n { text-align: right; }
+  tr.click { cursor: pointer; }
+  tr.click:hover td { background: var(--bg); }
+  .scroll { overflow-x: auto; }
+  #tlFeed td { white-space: normal; }
+  .muted { color: var(--muted); }
+  .empty { color: var(--muted); padding: 24px 0; text-align: center; }
+  .err { color: var(--red); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>ZeroLock Telemetry</h1>
+    <div class="controls">
+      <label class="muted" for="match">Match</label>
+      <select id="match"><option value="">All matches</option></select>
+      <button id="refresh">Refresh</button>
+      <span id="status" class="muted"></span>
+    </div>
+  </div>
+  <nav id="tabs">
+    <a href="#matches">Matches</a>
+    <a href="#match">Match timeline</a>
+    <a href="#heroes">Heroes</a>
+    <a href="#damage">Damage types</a>
+    <a href="#kills">Kills</a>
+    <a href="#items">Items</a>
+    <a href="#perf">Performance</a>
+    <a href="#map">Map</a>
+  </nav>
+</header>
+
+<main>
+  <!-- 1. Matches + overview -->
+  <section class="tab" id="tab-matches">
+    <div class="w12 kpis" id="kpis"></div>
+    <div class="card w12"><h2>Recent matches</h2><p class="sub">Click a match to look at only that match in every tab.</p><div class="scroll"><table id="matchTable"></table></div></div>
+    <div class="card w6"><h2>Match length</h2><p class="sub">Minutes per finished match</p><div class="chart"><canvas id="lengthChart"></canvas></div></div>
+    <div class="card w6"><h2>Players</h2><p class="sub">Across the selected matches</p><div class="scroll"><table id="playerTable"></table></div></div>
+  </section>
+
+  <!-- 1b. One match over time -->
+  <section class="tab" id="tab-match">
+    <div class="card w12"><h2 id="tlTitle">Match timeline</h2><p class="sub" id="tlSub"></p><div class="kpis" id="tlKpis"></div></div>
+    <div class="card w8"><h2>Kills over time</h2><p class="sub">Running kill count per team. Hover a point for who killed whom and with what. Point colour = damage type.</p><div class="chart"><canvas id="tlKills"></canvas></div></div>
+    <div class="card w4"><h2>Kill feed</h2><div class="scroll" style="max-height:300px;overflow-y:auto"><table id="tlFeed"></table></div></div>
+    <div class="card w6"><h2>Damage per 10 s, by team</h2><p class="sub">× = a kill by that team</p><div class="chart"><canvas id="tlTeamDamage"></canvas></div></div>
+    <div class="card w6"><h2>Total damage over time, by player</h2><p class="sub">Cumulative: who carried the damage, and when</p><div class="chart"><canvas id="tlCumDamage"></canvas></div></div>
+    <div class="card w6"><h2>Damage per 10 s, by type</h2><div class="chart"><canvas id="tlTypeDamage"></canvas></div></div>
+    <div class="card w6"><h2>Healing per 10 s, by player</h2><div class="chart"><canvas id="tlHeal"></canvas></div></div>
+    <div class="card w6"><h2>Souls over time</h2><p class="sub">◆ = item bought (hover for the item)</p><div class="chart"><canvas id="tlSouls"></canvas></div></div>
+    <div class="card w6"><h2>Health over time</h2><p class="sub">% of max health, sampled every 5 s while alive</p><div class="chart"><canvas id="tlHp"></canvas></div></div>
+    <div class="card w12"><h2>Ability uses per 10 s</h2><p class="sub">Top 10 abilities in this match</p><div class="chart"><canvas id="tlUses"></canvas></div></div>
+  </section>
+
+  <!-- 2. Heroes: pick rate + damage -->
+  <section class="tab" id="tab-heroes">
+    <div class="card w6"><h2>Pick rate</h2><p class="sub">Share of all hero picks</p><div class="chart"><canvas id="pickChart"></canvas></div></div>
+    <div class="card w6"><h2>Win rate</h2><p class="sub">Finished matches only</p><div class="chart"><canvas id="winChart"></canvas></div></div>
+    <div class="card w8"><h2>Damage done by each hero</h2><p class="sub">Split by damage type</p><div class="chart"><canvas id="heroDamageChart"></canvas></div></div>
+    <div class="card w4"><h2>Damage per pick</h2><p class="sub">Average damage a hero deals in one match</p><div class="chart"><canvas id="perPickChart"></canvas></div></div>
+    <div class="card w12"><h2>Hero summary</h2><div class="scroll"><table id="heroTable"></table></div></div>
+  </section>
+
+  <!-- 3. Damage dealt by type -->
+  <section class="tab" id="tab-damage">
+    <div class="card w4"><h2>Damage by type</h2><p class="sub">All damage dealt</p><div class="chart"><canvas id="typeChart"></canvas></div></div>
+    <div class="card w8"><h2>Damage taken by each hero</h2><p class="sub">What hurts each hero, by type</p><div class="chart"><canvas id="takenChart"></canvas></div></div>
+    <div class="card w12"><h2>Damage by ability / source (top 20)</h2><p class="sub">Colour = damage type. Hover for hits and damage per hit.</p><div class="chart tall"><canvas id="abilityChart"></canvas></div></div>
+    <div class="card w12"><h2>Ability details</h2><div class="scroll"><table id="abilityTable"></table></div></div>
+  </section>
+
+  <!-- 4. Kills by ability -->
+  <section class="tab" id="tab-kills">
+    <div class="card w8"><h2>Kills by ability</h2><p class="sub">The ability that landed the killing blow. Colour = damage type.</p><div class="chart tall"><canvas id="killAbilityChart"></canvas></div></div>
+    <div class="card w4"><h2>Kills by damage type</h2><div class="chart"><canvas id="killTypeChart"></canvas></div></div>
+    <div class="card w6"><h2>Kill details</h2><div class="scroll"><table id="killTable"></table></div></div>
+    <div class="card w6"><h2>Who kills whom</h2><p class="sub">Rows = killer, columns = victim</p><div class="scroll"><table id="matchupTable"></table></div></div>
+  </section>
+
+  <!-- Extras -->
+  <section class="tab" id="tab-items">
+    <div class="card w8"><h2>Items bought</h2><div class="chart tall"><canvas id="itemChart"></canvas></div></div>
+    <div class="card w4"><h2>Ability uses (top 15)</h2><div class="chart tall"><canvas id="usesChart"></canvas></div></div>
+  </section>
+
+  <section class="tab" id="tab-perf">
+    <div class="card w8"><h2>FPS over the match <span class="muted" id="perfMatch"></span></h2><div class="chart"><canvas id="fpsChart"></canvas></div></div>
+    <div class="card w4"><h2>Performance by build</h2><div class="scroll"><table id="perfTable"></table></div></div>
+  </section>
+
+  <section class="tab" id="tab-map">
+    <div class="card w12"><h2>Deaths (×) and positions (dots), top-down X/Y</h2><p class="sub">Colour = team of the hero who died / moved</p><div class="chart tall"><canvas id="mapChart"></canvas></div></div>
+  </section>
+</main>
+
+<script>
+// Each tab calls GET /v1/stats/<name> on the same Worker that serves this page, and draws the JSON with Chart.js.
+const TABS = {
+  matches: { stats: ['overview', 'matches', 'players'], render: renderMatches },
+  match: { stats: ['timeline'], render: renderTimeline },
+  heroes: { stats: ['heroes', 'damage_types'], render: renderHeroes },
+  damage: { stats: ['damage_types', 'abilities'], render: renderDamage },
+  kills: { stats: ['kills'], render: renderKills },
+  items: { stats: ['items', 'abilities'], render: renderItems },
+  perf: { stats: ['perf'], render: renderPerf },
+  map: { stats: ['map'], render: renderMap },
+};
+const TYPES = ['weapon', 'spirit', 'melee', 'other'];
+
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const series = () => ['--s1', '--s2', '--s3', '--s4', '--s5', '--s6', '--s7', '--s8'].map(css);
+const typeColor = (t) => css('--' + (TYPES.includes(t) ? t : 'other'));
+const charts = {};
+let readKey = '';
+try { readKey = localStorage.getItem('zl-read-key') || ''; } catch {}
+
+async function api(name) {
+  const match = document.getElementById('match').value;
+  const res = await fetch(`/v1/stats/${name}` + (match ? `?match=${encodeURIComponent(match)}` : ''),
+    { headers: readKey ? { Authorization: `Bearer ${readKey}` } : {} });
+  if (res.status === 401) {
+    readKey = prompt('Dashboard read key (READ_KEY):') || '';
+    try { localStorage.setItem('zl-read-key', readKey); } catch {}
+    if (readKey) return api(name);
+  }
+  if (!res.ok) throw new Error(`${name}: HTTP ${res.status}`);
+  return res.json();
+}
+
+function draw(id, config) {
+  charts[id]?.destroy();
+  Chart.defaults.color = css('--muted');
+  Chart.defaults.borderColor = css('--border');
+  Chart.defaults.font.family = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+  charts[id] = new Chart(document.getElementById(id), { ...config, options: { responsive: true, maintainAspectRatio: false, ...config.options } });
+}
+
+const esc = (v) => String(v ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function table(id, columns, rows, onClick) {
+  const el = document.getElementById(id);
+  if (!rows.length) { el.innerHTML = '<tr><td class="empty">No data yet</td></tr>'; return; }
+  el.innerHTML = '<tr>' + columns.map((c) => `<th class="${c.n ? 'n' : ''}">${c.label}</th>`).join('') + '</tr>' +
+    rows.map((r, i) => `<tr data-i="${i}" class="${onClick ? 'click' : ''}">` +
+      columns.map((c) => `<td class="${c.n ? 'n' : ''}">${c.html ? c.html(r) : esc(c.get ? c.get(r) : r[c.key])}</td>`).join('') + '</tr>').join('');
+  if (onClick) el.querySelectorAll('tr[data-i]').forEach((tr) => tr.addEventListener('click', () => onClick(rows[tr.dataset.i])));
+}
+
+const fmt = (n) => (n == null ? '–' : Math.round(Number(n)).toLocaleString());
+const pct = (a, b) => (b ? Math.round((100 * a) / b) + '%' : '–');
+const mmss = (s) => (s == null ? 'in progress' : `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`);
+const typeDot = (t) => `<span class="dot" style="background:${typeColor(t)}"></span>${esc(t)}`;
+const barOpts = (extra = {}) => ({ indexAxis: 'y', plugins: { legend: { display: false }, ...extra.plugins }, ...extra });
+
+/** Pivot rows {hero, damage_type, damage} into one stacked dataset per damage type. */
+function stackedByType(rows, key = 'hero') {
+  const heroes = [...new Set(rows.map((r) => r[key]).filter(Boolean))];
+  const total = (h) => rows.filter((r) => r[key] === h).reduce((s, r) => s + r.damage, 0);
+  heroes.sort((a, b) => total(b) - total(a));
+  const types = TYPES.filter((t) => rows.some((r) => (r.damage_type || 'other') === t));
+  return {
+    labels: heroes,
+    datasets: types.map((t) => ({
+      label: t, backgroundColor: typeColor(t), borderRadius: 3,
+      data: heroes.map((h) => rows.filter((r) => r[key] === h && (r.damage_type || 'other') === t).reduce((s, r) => s + r.damage, 0)),
+    })),
+  };
+}
+
+// ---- 1. Matches -------------------------------------------------------------------------------------------------
+function renderMatches({ overview, matches, players }) {
+  document.getElementById('kpis').innerHTML = [
+    ['Matches', overview.matches], ['Players', overview.players], ['Kills', overview.kills],
+    ['Damage dealt', overview.damage], ['Events stored', overview.events],
+  ].map(([l, v]) => `<div class="kpi"><div class="v">${fmt(v)}</div><div class="l">${l}</div></div>`).join('');
+
+  table('matchTable', [
+    { label: 'Started (UTC)', key: 'started' }, { label: 'Map', key: 'map' }, { label: 'Mode', key: 'mode' },
+    { label: 'Players', key: 'players', n: 1 }, { label: 'Length', get: (m) => mmss(m.duration), n: 1 },
+    { label: 'Winner', html: (m) => (m.winner ? `<span class="dot" style="background:${m.winner === 'red' ? css('--red') : m.winner === 'blue' ? css('--blue') : css('--other')}"></span>${esc(m.winner)}` : '–') },
+  ], matches, (m) => { document.getElementById('match').value = m.match_id; location.hash = '#match'; loadTab(); });
+
+  const finished = matches.filter((m) => m.duration != null).reverse();
+  draw('lengthChart', {
+    type: 'bar',
+    data: { labels: finished.map((m) => m.started.slice(5, 16)), datasets: [{ data: finished.map((m) => +(m.duration / 60).toFixed(1)), backgroundColor: css('--s1'), borderRadius: 4 }] },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'minutes' } } } },
+  });
+
+  players.sort((a, b) => b.kills - a.kills);
+  table('playerTable', [
+    { label: 'Player', key: 'name' }, { label: 'Matches', key: 'matches', n: 1 }, { label: 'Kills', key: 'kills', n: 1 },
+    { label: 'Deaths', key: 'deaths', n: 1 }, { label: 'K/D', get: (p) => (p.deaths ? (p.kills / p.deaths).toFixed(2) : p.kills), n: 1 },
+    { label: 'Damage', get: (p) => fmt(p.damage), n: 1 },
+  ], players);
+}
+
+// ---- 1b. Match timeline -----------------------------------------------------------------------------------------
+function renderTimeline({ timeline }) {
+  const { match, players, deaths, damage, heals, uses, items, samples } = timeline;
+  if (!match) { document.getElementById('tlTitle').textContent = 'No matches yet'; return; }
+  const c = series();
+  const teamColor = (t) => (t === 'red' ? css('--red') : t === 'blue' ? css('--blue') : css('--other'));
+  const end = match.duration ?? Math.max(0, ...deaths.map((d) => d.t), ...samples.map((s) => s.t), ...damage.map((d) => d.t + 10));
+
+  // Players: label "Hero (name)", one colour each.
+  const byId = Object.fromEntries(players.map((p, i) => [p.player, { ...p, color: c[i % c.length] }]));
+  const label = (id, hero) => { const p = byId[id]; return p ? `${p.hero ?? hero ?? '?'} (${p.name ?? id})` : (hero ?? 'unknown'); };
+  const color = (id) => byId[id]?.color ?? css('--other');
+  const ids = (rows) => [...new Set(rows.map((r) => r.player).filter(Boolean))];
+
+  // Time axis in mm:ss for every chart.
+  const timeAxis = { type: 'linear', min: 0, max: Math.ceil(end / 10) * 10 || 60, ticks: { callback: (v) => mmss(v), stepSize: end > 600 ? 120 : end > 180 ? 30 : 10 }, title: { display: true, text: 'match time' } };
+  const titleTime = { callbacks: { title: (items) => mmss(items[0].parsed.x) } };
+
+  document.getElementById('tlTitle').textContent = `Match timeline · ${match.map ?? '?'}`;
+  document.getElementById('tlSub').textContent = `${match.started ?? ''} UTC · ${match.mode ?? ''} · ${players.length} players` + (document.getElementById('match').value ? '' : ' · latest match (pick another in the Match menu)');
+  const totalDamage = damage.reduce((s, d) => s + d.amount, 0);
+  const totalHeal = heals.reduce((s, h) => s + h.amount, 0);
+  document.getElementById('tlKpis').innerHTML = [
+    ['Length', mmss(match.duration)], ['Winner', match.winner ?? '–'],
+    ['Score', match.red_score != null ? `${match.red_score} – ${match.blue_score}` : `${deaths.filter((d) => d.team === 'red').length} – ${deaths.filter((d) => d.team === 'blue').length}`],
+    ['Kills', deaths.length], ['Damage', fmt(totalDamage)], ['Healing', fmt(totalHeal)], ['Items bought', items.length],
+  ].map(([l, v]) => `<div class="kpi"><div class="v">${esc(v)}</div><div class="l">${l}</div></div>`).join('');
+
+  // Kills: running count per team; each point carries its death row for the tooltip.
+  const teams = ['red', 'blue'];
+  const killSets = teams.map((team) => {
+    let n = 0;
+    const pts = [{ x: 0, y: 0 }];
+    for (const d of deaths) if (d.team === team) pts.push({ x: d.t, y: ++n, kill: d });
+    pts.push({ x: end, y: n });
+    return {
+      label: `${team} kills`, data: pts, stepped: 'before', borderColor: teamColor(team), backgroundColor: teamColor(team),
+      pointRadius: pts.map((p) => (p.kill ? 6 : 0)), pointHoverRadius: pts.map((p) => (p.kill ? 8 : 0)),
+      pointBackgroundColor: pts.map((p) => (p.kill ? typeColor(p.kill.damage_type) : 'transparent')), pointBorderColor: teamColor(team), pointBorderWidth: 2,
+    };
+  });
+  const killText = (d) => [
+    `${label(d.player, d.hero)} killed ${label(d.target, d.target_hero)}`,
+    `with ${d.ability ?? 'unknown'} (${d.damage_type})`,
+    `${d.distance != null ? (d.distance / 100).toFixed(1) + ' m away' : ''}${d.assists ? ` · ${d.assists} assist${d.assists > 1 ? 's' : ''}` : ''}`,
+  ].filter(Boolean);
+  draw('tlKills', {
+    type: 'line', data: { datasets: killSets },
+    options: {
+      scales: { x: timeAxis, y: { beginAtZero: true, ticks: { precision: 0 }, title: { display: true, text: 'kills' } } },
+      interaction: { mode: 'nearest', intersect: true },
+      plugins: { tooltip: { filter: (i) => !!i.raw.kill, callbacks: { title: (i) => mmss(i[0].raw.x), label: (i) => killText(i.raw.kill) } } },
+    },
+  });
+
+  table('tlFeed', [
+    { label: 'Time', get: (d) => mmss(d.t) },
+    { label: 'Kill', html: (d) => `<span class="dot" style="background:${teamColor(d.team)}"></span><span title="${esc(label(d.player, d.hero))} → ${esc(label(d.target, d.target_hero))}">${esc(d.hero ?? '?')} → ${esc(d.target_hero ?? '?')}</span>` },
+    { label: 'With', html: (d) => `${typeDot(d.damage_type)} ${esc(d.ability ?? '?')}` },
+  ], deaths);
+
+  // Damage per bucket by team, with kill markers.
+  const buckets = []; for (let t = 0; t <= end; t += 10) buckets.push(t);
+  const sumAt = (rows, t, pred) => rows.filter((r) => r.t === t && pred(r)).reduce((s, r) => s + r.amount, 0);
+  const teamMax = Math.max(1, ...buckets.flatMap((t) => teams.map((team) => sumAt(damage, t, (r) => r.team === team))));
+  draw('tlTeamDamage', {
+    type: 'line',
+    data: {
+      datasets: [
+        ...teams.map((team) => ({ label: `${team} damage`, data: buckets.map((t) => ({ x: t, y: sumAt(damage, t, (r) => r.team === team) })), borderColor: teamColor(team), backgroundColor: teamColor(team) + '30', fill: true, tension: 0, pointRadius: 2 })),
+        ...teams.map((team) => ({ type: 'scatter', label: `${team} kill`, data: deaths.filter((d) => d.team === team).map((d) => ({ x: d.t, y: teamMax * 1.05, kill: d })), pointStyle: 'crossRot', pointRadius: 7, borderWidth: 2, borderColor: teamColor(team), backgroundColor: teamColor(team) })),
+      ],
+    },
+    options: { scales: { x: timeAxis, y: { beginAtZero: true, title: { display: true, text: 'damage / 10 s' } } }, plugins: { tooltip: { callbacks: { title: (i) => mmss(i[0].parsed.x), label: (i) => (i.raw.kill ? killText(i.raw.kill) : `${i.dataset.label}: ${fmt(i.parsed.y)}`) } } } },
+  });
+
+  // Cumulative damage per player.
+  draw('tlCumDamage', {
+    type: 'line',
+    data: {
+      datasets: ids(damage).map((id) => {
+        let total = 0;
+        return { label: label(id), data: buckets.map((t) => ({ x: t, y: (total += sumAt(damage, t, (r) => r.player === id)) })), borderColor: color(id), backgroundColor: color(id), pointRadius: 0, tension: 0.2 };
+      }),
+    },
+    options: { scales: { x: timeAxis, y: { beginAtZero: true, title: { display: true, text: 'total damage' } } }, plugins: { tooltip: titleTime } },
+  });
+
+  // Damage per bucket by type (stacked bars).
+  draw('tlTypeDamage', {
+    type: 'bar',
+    data: {
+      datasets: TYPES.filter((ty) => damage.some((r) => (r.damage_type || 'other') === ty)).map((ty) => ({
+        label: ty, backgroundColor: typeColor(ty), barPercentage: 1, categoryPercentage: 0.9,
+        data: buckets.map((t) => ({ x: t + 5, y: sumAt(damage, t, (r) => (r.damage_type || 'other') === ty) })),
+      })),
+    },
+    options: { scales: { x: { ...timeAxis, stacked: true, offset: false }, y: { stacked: true, beginAtZero: true, title: { display: true, text: 'damage / 10 s' } } }, plugins: { tooltip: { callbacks: { title: (i) => `${mmss(i[0].parsed.x - 5)}–${mmss(i[0].parsed.x + 5)}` } } } },
+  });
+
+  // Healing per bucket by player.
+  draw('tlHeal', {
+    type: 'line',
+    data: { datasets: ids(heals).map((id) => ({ label: label(id), data: buckets.map((t) => ({ x: t, y: sumAt(heals, t, (r) => r.player === id) })), borderColor: color(id), backgroundColor: color(id), pointRadius: 0, tension: 0.3 })) },
+    options: { scales: { x: timeAxis, y: { beginAtZero: true, title: { display: true, text: 'healing / 10 s' } } }, plugins: { tooltip: titleTime, legend: { display: true } } },
+  });
+  if (!heals.length) charts.tlHeal.options.plugins.title = { display: true, text: 'No healing recorded in this match' }, charts.tlHeal.update();
+
+  // Souls per player, with purchases as markers on the line.
+  const soulsAt = (id, t) => { let v = 0; for (const s of samples) if (s.player === id && s.t <= t) v = s.souls; return v; };
+  draw('tlSouls', {
+    type: 'line',
+    data: {
+      datasets: [
+        ...ids(samples).map((id) => ({ label: label(id), data: samples.filter((s) => s.player === id).map((s) => ({ x: s.t, y: s.souls })), borderColor: color(id), backgroundColor: color(id), pointRadius: 0, stepped: 'before' })),
+        { type: 'scatter', label: 'Item bought', data: items.map((i) => ({ x: i.t, y: soulsAt(i.player, i.t), item: i })), pointStyle: 'rectRot', pointRadius: 6, backgroundColor: items.map((i) => color(i.player)), borderColor: css('--panel') },
+      ],
+    },
+    options: { scales: { x: timeAxis, y: { beginAtZero: true, title: { display: true, text: 'souls' } } }, plugins: { tooltip: { callbacks: { title: (i) => mmss(i[0].parsed.x), label: (i) => (i.raw.item ? `${label(i.raw.item.player)} bought ${i.raw.item.item} (${i.raw.item.cost})` : `${i.dataset.label}: ${fmt(i.parsed.y)}`) } } } },
+  });
+  if (!samples.length) charts.tlSouls.options.plugins.title = { display: true, text: 'Needs a build with health/souls sampling' }, charts.tlSouls.update();
+
+  // Health % per player.
+  draw('tlHp', {
+    type: 'line',
+    data: { datasets: ids(samples).map((id) => ({ label: label(id), data: samples.filter((s) => s.player === id && s.max_hp).map((s) => ({ x: s.t, y: Math.round((100 * s.hp) / s.max_hp) })), borderColor: color(id), backgroundColor: color(id), pointRadius: 2, spanGaps: false, tension: 0.2 })) },
+    options: { scales: { x: timeAxis, y: { min: 0, max: 100, title: { display: true, text: 'health %' } } }, plugins: { tooltip: titleTime } },
+  });
+
+  // Ability uses per bucket, top 10 abilities, stacked.
+  const useTotals = {};
+  // Victim-side helpers (status bars, forced moves) aren't player casts.
+  const helper = /^(StatusTimerAbility|PullTOAbility|PullToAbility|KnockbackAbility|ReleaseAbility|StopAbility)$/;
+  for (const u of uses.filter((u) => !helper.test(u.ability))) useTotals[`${u.hero} · ${u.ability}`] = (useTotals[`${u.hero} · ${u.ability}`] || 0) + u.uses;
+  const topUses = Object.keys(useTotals).sort((a, b) => useTotals[b] - useTotals[a]).slice(0, 10);
+  draw('tlUses', {
+    type: 'bar',
+    data: { datasets: topUses.map((k, i) => ({ label: k, backgroundColor: c[i % c.length], barPercentage: 1, categoryPercentage: 0.9, data: buckets.map((t) => ({ x: t + 5, y: uses.filter((u) => u.t === t && `${u.hero} · ${u.ability}` === k).reduce((s, u) => s + u.uses, 0) })) })) },
+    options: { scales: { x: { ...timeAxis, stacked: true, offset: false }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 }, title: { display: true, text: 'uses / 10 s' } } }, plugins: { legend: { position: 'right' }, tooltip: { callbacks: { title: (i) => `${mmss(i[0].parsed.x - 5)}–${mmss(i[0].parsed.x + 5)}` } } } },
+  });
+}
+
+// ---- 2. Heroes --------------------------------------------------------------------------------------------------
+function renderHeroes({ heroes, damage_types }) {
+  const c = series();
+  const totalPicks = heroes.reduce((s, h) => s + h.picks, 0);
+  const byPicks = [...heroes].sort((a, b) => b.picks - a.picks);
+
+  draw('pickChart', {
+    type: 'bar',
+    data: { labels: byPicks.map((h) => h.hero), datasets: [{ data: byPicks.map((h) => (totalPicks ? (100 * h.picks) / totalPicks : 0)), backgroundColor: c[0], borderRadius: 4 }] },
+    options: barOpts({ plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.raw.toFixed(1)}% (${byPicks[ctx.dataIndex].picks} picks)` } } }, scales: { x: { min: 0, max: 100, title: { display: true, text: '% of picks' } } } }),
+  });
+
+  const withGames = byPicks.filter((h) => h.finished > 0);
+  draw('winChart', {
+    type: 'bar',
+    data: { labels: withGames.map((h) => h.hero), datasets: [{ data: withGames.map((h) => (100 * h.wins) / h.finished), backgroundColor: withGames.map((h) => ((100 * h.wins) / h.finished >= 50 ? c[2] : c[6])), borderRadius: 4 }] },
+    options: barOpts({ plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.raw.toFixed(0)}% (${withGames[ctx.dataIndex].wins}/${withGames[ctx.dataIndex].finished})` } } }, scales: { x: { min: 0, max: 100, title: { display: true, text: 'win %' } } } }),
+  });
+
+  draw('heroDamageChart', {
+    type: 'bar', data: stackedByType(damage_types.dealt),
+    options: { indexAxis: 'y', plugins: { legend: { position: 'bottom' } }, scales: { x: { stacked: true, title: { display: true, text: 'damage' } }, y: { stacked: true } } },
+  });
+
+  const perPick = [...heroes].filter((h) => h.picks).sort((a, b) => b.damage / b.picks - a.damage / a.picks);
+  draw('perPickChart', {
+    type: 'bar',
+    data: { labels: perPick.map((h) => h.hero), datasets: [{ data: perPick.map((h) => Math.round(h.damage / h.picks)), backgroundColor: c[1], borderRadius: 4 }] },
+    options: barOpts(),
+  });
+
+  table('heroTable', [
+    { label: 'Hero', key: 'hero' }, { label: 'Picks', key: 'picks', n: 1 }, { label: 'Pick rate', get: (h) => pct(h.picks, totalPicks), n: 1 },
+    { label: 'Win %', get: (h) => pct(h.wins, h.finished), n: 1 }, { label: 'Kills', key: 'kills', n: 1 }, { label: 'Deaths', key: 'deaths', n: 1 },
+    { label: 'K/D', get: (h) => (h.deaths ? (h.kills / h.deaths).toFixed(2) : h.kills), n: 1 },
+    { label: 'Damage', get: (h) => fmt(h.damage), n: 1 }, { label: 'Damage / pick', get: (h) => fmt(h.picks ? h.damage / h.picks : 0), n: 1 },
+  ], byPicks);
+}
+
+// ---- 3. Damage types --------------------------------------------------------------------------------------------
+function renderDamage({ damage_types, abilities }) {
+  const byType = {};
+  for (const r of damage_types.dealt) byType[r.damage_type || 'other'] = (byType[r.damage_type || 'other'] || 0) + r.damage;
+  const types = Object.keys(byType);
+  draw('typeChart', {
+    type: 'doughnut',
+    data: { labels: types, datasets: [{ data: types.map((t) => byType[t]), backgroundColor: types.map(typeColor), borderColor: css('--panel') }] },
+    options: { plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (ctx) => { const sum = ctx.dataset.data.reduce((a, b) => a + b, 0); return `${ctx.label}: ${fmt(ctx.raw)} (${pct(ctx.raw, sum)})`; } } } } },
+  });
+
+  draw('takenChart', {
+    type: 'bar', data: stackedByType(damage_types.taken),
+    options: { indexAxis: 'y', plugins: { legend: { position: 'bottom' } }, scales: { x: { stacked: true, title: { display: true, text: 'damage taken' } }, y: { stacked: true } } },
+  });
+
+  const top = abilities.damage.slice(0, 20);
+  draw('abilityChart', {
+    type: 'bar',
+    data: { labels: top.map((d) => `${d.hero} · ${d.ability}`), datasets: [{ data: top.map((d) => d.damage), backgroundColor: top.map((d) => typeColor(d.damage_type)), borderRadius: 4 }] },
+    options: barOpts({ plugins: { tooltip: { callbacks: { afterLabel: (ctx) => { const d = top[ctx.dataIndex]; return `${d.damage_type} · ${fmt(d.hits)} hits · ${fmt(d.damage / Math.max(d.hits, 1))} per hit`; } } } } }),
+  });
+
+  table('abilityTable', [
+    { label: 'Hero', key: 'hero' }, { label: 'Ability / source', key: 'ability' }, { label: 'Type', html: (d) => typeDot(d.damage_type || 'other') },
+    { label: 'Damage', get: (d) => fmt(d.damage), n: 1 }, { label: 'Hits', key: 'hits', n: 1 },
+    { label: 'Per hit', get: (d) => fmt(d.damage / Math.max(d.hits, 1)), n: 1 }, { label: 'Kills', key: 'kills', n: 1 },
+  ], abilities.damage);
+}
+
+// ---- 4. Kills ---------------------------------------------------------------------------------------------------
+function renderKills({ byAbility, byType, matchups }) {
+  const top = byAbility.slice(0, 20);
+  draw('killAbilityChart', {
+    type: 'bar',
+    data: { labels: top.map((k) => `${k.hero} · ${k.ability}`), datasets: [{ data: top.map((k) => k.kills), backgroundColor: top.map((k) => typeColor(k.damage_type)), borderRadius: 4 }] },
+    options: barOpts({ scales: { x: { beginAtZero: true, ticks: { precision: 0 }, title: { display: true, text: 'kills' } } } }),
+  });
+
+  draw('killTypeChart', {
+    type: 'doughnut',
+    data: { labels: byType.map((t) => t.damage_type), datasets: [{ data: byType.map((t) => t.kills), backgroundColor: byType.map((t) => typeColor(t.damage_type)), borderColor: css('--panel') }] },
+    options: { plugins: { legend: { position: 'bottom' } } },
+  });
+
+  table('killTable', [
+    { label: 'Hero', key: 'hero' }, { label: 'Killing ability', key: 'ability' }, { label: 'Type', html: (k) => typeDot(k.damage_type) },
+    { label: 'Kills', key: 'kills', n: 1 }, { label: 'Avg distance', get: (k) => (k.avg_distance == null ? '–' : `${(k.avg_distance / 100).toFixed(1)} m`), n: 1 },
+    { label: 'Avg assists', key: 'avg_assists', n: 1 },
+  ], byAbility);
+
+  const killers = [...new Set(matchups.map((m) => m.killer))];
+  const victims = [...new Set(matchups.map((m) => m.victim))];
+  const count = (k, v) => matchups.find((m) => m.killer === k && m.victim === v)?.kills ?? 0;
+  table('matchupTable', [{ label: 'Killer ↓ / Victim →', key: 'killer' }, ...victims.map((v) => ({ label: esc(v), get: (r) => count(r.killer, v) || '·', n: 1 }))],
+    killers.map((k) => ({ killer: k })));
+}
+
+// ---- Extras -----------------------------------------------------------------------------------------------------
+function renderItems({ items, abilities }) {
+  draw('itemChart', {
+    type: 'bar',
+    data: { labels: items.map((i) => i.item), datasets: [{ data: items.map((i) => i.buys), backgroundColor: css('--s5'), borderRadius: 4 }] },
+    options: barOpts({ plugins: { tooltip: { callbacks: { afterLabel: (ctx) => `avg at ${mmss(items[ctx.dataIndex].avg_time)} · cost ${items[ctx.dataIndex].cost}` } } } }),
+  });
+  const uses = abilities.uses.slice(0, 15);
+  draw('usesChart', {
+    type: 'bar',
+    data: { labels: uses.map((u) => `${u.hero} · ${u.ability}`), datasets: [{ data: uses.map((u) => u.uses), backgroundColor: css('--s6'), borderRadius: 4 }] },
+    options: barOpts(),
+  });
+}
+
+function renderPerf({ perf }) {
+  const c = series();
+  const bySession = {};
+  for (const s of perf.samples) (bySession[s.session + ' ' + s.role] ??= []).push({ x: s.t, y: s.fps });
+  draw('fpsChart', {
+    type: 'line',
+    data: { datasets: Object.entries(bySession).map(([k, pts], i) => ({ label: k, data: pts, borderColor: c[i % c.length], backgroundColor: c[i % c.length], pointRadius: 2, tension: 0.2 })) },
+    options: { scales: { x: { type: 'linear', title: { display: true, text: 'match time (s)' } }, y: { beginAtZero: true, title: { display: true, text: 'fps' } } } },
+  });
+  document.getElementById('perfMatch').textContent = document.getElementById('match').value ? '' : '(latest match)';
+  table('perfTable', [
+    { label: 'Build', key: 'build' }, { label: 'Role', key: 'role' }, { label: 'FPS', key: 'fps', n: 1 },
+    { label: 'Ping', key: 'ping_ms', n: 1 }, { label: 'Hitches', key: 'hitches', n: 1 },
+  ], perf.summary);
+}
+
+function renderMap({ map }) {
+  const team = (t) => (t === 'red' ? css('--red') : css('--blue'));
+  const deaths = map.filter((m) => m.type === 'death');
+  const positions = map.filter((m) => m.type === 'pos');
+  draw('mapChart', {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'Positions', data: positions.map((p) => ({ x: p.x, y: p.y })), pointRadius: 2, backgroundColor: positions.map((p) => team(p.team) + '40') },
+        { label: 'Deaths', data: deaths.map((d) => ({ x: d.x, y: d.y })), pointStyle: 'crossRot', pointRadius: 7, borderWidth: 2, borderColor: deaths.map((d) => team(d.target_team)) },
+      ],
+    },
+    options: { scales: { x: { title: { display: true, text: 'X' } }, y: { reverse: true, title: { display: true, text: 'Y' } } } },
+  });
+}
+
+// ---- Tabs + loading ---------------------------------------------------------------------------------------------
+const currentTab = () => (TABS[location.hash.slice(1)] ? location.hash.slice(1) : 'matches');
+
+async function loadTab() {
+  const name = currentTab();
+  document.querySelectorAll('nav a').forEach((a) => a.classList.toggle('active', a.getAttribute('href') === '#' + name));
+  document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.id === 'tab-' + name));
+
+  const status = document.getElementById('status');
+  status.textContent = 'Loading…';
+  status.className = 'muted';
+  try {
+    const tab = TABS[name];
+    const results = await Promise.all(tab.stats.map(api));
+    tab.render(Object.fromEntries(tab.stats.map((s, i) => [s, results[i]])));
+    status.textContent = 'Updated ' + new Date().toLocaleTimeString();
+  } catch (err) {
+    console.error(err);
+    status.textContent = err.message;
+    status.className = 'err';
+  }
+}
+
+async function loadMatchList() {
+  const select = document.getElementById('match');
+  const current = select.value;
+  const res = await fetch('/v1/stats/matches', { headers: readKey ? { Authorization: `Bearer ${readKey}` } : {} });
+  if (!res.ok) return;
+  const matches = await res.json();
+  select.innerHTML = '<option value="">All matches</option>' + matches.map((m) =>
+    `<option value="${esc(m.match_id)}">${esc(m.started)} · ${esc(m.map ?? '?')} · ${m.players} players</option>`).join('');
+  select.value = current;
+}
+
+window.addEventListener('hashchange', loadTab);
+document.getElementById('match').addEventListener('change', loadTab);
+document.getElementById('refresh').addEventListener('click', async () => { await loadMatchList(); loadTab(); });
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', loadTab);
+loadMatchList().finally(loadTab);
+</script>
+</body>
+</html>

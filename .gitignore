@@ -65,3 +65,9 @@ Thumbs.db.meta
 
 # EOS client credentials (loaded with -CustomConfig=EOS). Never commit: the repo is public.
 Config/Custom/EOS/DefaultEngine.ini
+
+# Telemetry API address + ingest key (Docs/Claude/Telemetry.md)
+Config/Telemetry.ini
+Tools/Telemetry/**/node_modules/
+Tools/Telemetry/**/.wrangler/
+Tools/Telemetry/**/.dev.vars

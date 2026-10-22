@@ -45,7 +45,7 @@ void UZL_Lash_Flog::OnAnimationPointTrigger()
 					{
 						Hero->GetMyAbilitySystemComp()->ApplyGameplayEffect(villan->GetMyAbilitySystemComp(),FlogEffect,myLevel);
 					}
-					Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(villan->GetMyAbilitySystemComp(),FlogDamage.GetValueAtLevel(myLevel));
+					Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(villan->GetMyAbilitySystemComp(),FlogDamage.GetValueAtLevel(myLevel), this);
 					Hero->GetMyAbilitySystemComp()->ApplyHeal(Hero->GetMyAbilitySystemComp(),(FlogDamage.GetValueAtLevel(myLevel)*0.6));
 					
 				}

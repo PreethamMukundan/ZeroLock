@@ -31,6 +31,10 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Heroes")
 	bool bPickHeroOnJoin = false;
 
+	/** Set by the game mode from UZL_TelemetrySubsystem::BeginMatch; clients tag their perf samples with it. */
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Telemetry")
+	FString TelemetryMatchId;
+
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	int32 TeamRedScore = 0;
 

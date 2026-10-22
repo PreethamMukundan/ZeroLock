@@ -9,6 +9,8 @@
 #include "GAS/ZL_GameplayTags.h"
 #include "GAS/ZL_GE_BaseCooldown.h"
 #include "GAS/Tasks/ZL_Task_WaitSlamLocation.h"
+#include "Telemetry/ZL_TelemetrySubsystem.h"
+#include "ZeroLock/ZeroLockCharacter.h"
 #include "ZeroLock/ZeroLock.h"
 
 void UBaseCharAbilitySystemComponent::OnGiveAbility(FGameplayAbilitySpec& AbilitySpec)
@@ -30,6 +32,19 @@ void UBaseCharAbilitySystemComponent::OnRep_ActivateAbilities()
 	for (FGameplayAbilitySpec& Spec : ActivatableAbilities.Items)
 	{
 		OnNewAbilityAdded.Broadcast(Spec);
+	}
+}
+
+void UBaseCharAbilitySystemComponent::NotifyAbilityActivated(const FGameplayAbilitySpecHandle Handle, UGameplayAbility* Ability)
+{
+	Super::NotifyAbilityActivated(Handle, Ability);
+
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		if (UZL_TelemetrySubsystem* Telemetry = UZL_TelemetrySubsystem::Get(this))
+		{
+			Telemetry->RecordAbilityUse(Cast<AZeroLockCharacter>(GetAvatarActor()), Ability);
+		}
 	}
 }
 
@@ -58,7 +73,7 @@ void UBaseCharAbilitySystemComponent::LevelUpAbility(UGameplayAbility* AbilityTo
 	}
 }
 
-void UBaseCharAbilitySystemComponent::ApplyWeaponDamage(UAbilitySystemComponent* TargetASC, float DamageValue)
+void UBaseCharAbilitySystemComponent::ApplyWeaponDamage(UAbilitySystemComponent* TargetASC, float DamageValue, const UObject* DamageSource)
 {
 	if (!TargetASC || !GE_WeaponClass)return;
 	if (IsUntouchable(TargetASC)) return;
@@ -74,6 +89,8 @@ void UBaseCharAbilitySystemComponent::ApplyWeaponDamage(UAbilitySystemComponent*
 	//Setting the base damage value 
 	SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("Zerolock.DamageCalc.Weapon",false), DamageValue);
 	//Apply the effect 
+	// Telemetry reads this in PostGameplayEffectExecute, which runs inside the apply. Without DamageSource, a name the caller set stays.
+	TGuardValue<FString> TelemetrySourceGuard(TelemetryDamageSource, DamageSource ? UZL_TelemetrySubsystem::CleanClassName(DamageSource->GetClass()) : TelemetryDamageSource);
 	ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(),TargetASC);
 
 	//Sending event to the source
@@ -88,7 +105,7 @@ void UBaseCharAbilitySystemComponent::ApplyWeaponDamage(UAbilitySystemComponent*
 	
 }
 
-void UBaseCharAbilitySystemComponent::ApplySpiritDamage(UAbilitySystemComponent* TargetASC, float DamageValue)
+void UBaseCharAbilitySystemComponent::ApplySpiritDamage(UAbilitySystemComponent* TargetASC, float DamageValue, const UObject* DamageSource)
 {
 	if (!TargetASC || !GE_SpiritClass)return;
 	if (IsUntouchable(TargetASC)) return;
@@ -104,6 +121,8 @@ void UBaseCharAbilitySystemComponent::ApplySpiritDamage(UAbilitySystemComponent*
 
 	SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("Zerolock.DamageCalc.Spirit",false), DamageValue);
 
+	// Telemetry reads this in PostGameplayEffectExecute, which runs inside the apply. Without DamageSource, a name the caller set stays.
+	TGuardValue<FString> TelemetrySourceGuard(TelemetryDamageSource, DamageSource ? UZL_TelemetrySubsystem::CleanClassName(DamageSource->GetClass()) : TelemetryDamageSource);
 	ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(),TargetASC);
 
 	FGameplayTag TagToSend =FGameplayTag::RequestGameplayTag("Event.SpiritHit",false);
@@ -112,7 +131,7 @@ void UBaseCharAbilitySystemComponent::ApplySpiritDamage(UAbilitySystemComponent*
 	SendGameplayEventToTarget(TagToSend, TargetASC);
 }
 
-void UBaseCharAbilitySystemComponent::ApplyMeleeDamage(UAbilitySystemComponent* TargetASC, float DamageValue)
+void UBaseCharAbilitySystemComponent::ApplyMeleeDamage(UAbilitySystemComponent* TargetASC, float DamageValue, const UObject* DamageSource)
 {
 	if (!TargetASC || !GE_MeleeClass)return;
 	if (IsUntouchable(TargetASC)) return;
@@ -128,6 +147,8 @@ void UBaseCharAbilitySystemComponent::ApplyMeleeDamage(UAbilitySystemComponent* 
 
 	SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("Zerolock.DamageCalc.Melee",false), DamageValue);
 
+	// Telemetry reads this in PostGameplayEffectExecute, which runs inside the apply. Without DamageSource, a name the caller set stays.
+	TGuardValue<FString> TelemetrySourceGuard(TelemetryDamageSource, DamageSource ? UZL_TelemetrySubsystem::CleanClassName(DamageSource->GetClass()) : TelemetryDamageSource);
 	ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(),TargetASC);
 
 	FGameplayTag TagToSend =FGameplayTag::RequestGameplayTag("Event.MeleeHit",false);

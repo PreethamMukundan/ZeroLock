@@ -165,7 +165,7 @@ void UZL_Pocket_EnchantersSatchel::ApplyExitDamage(AZeroLockCharacter* Hero) con
 	const float Damage = SpiritDamage.GetValueAtLevel(GetAbilityLevel());
 	for (AZeroLockCharacter* Villan : Villans)
 	{
-		HeroASC->ApplySpiritDamage(Villan->GetMyAbilitySystemComp(), Damage);
+		HeroASC->ApplySpiritDamage(Villan->GetMyAbilitySystemComp(), Damage, this);
 	}
 
 	DrawExitDebug(Hero, Villans.Num() > 0);

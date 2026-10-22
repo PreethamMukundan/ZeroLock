@@ -19,6 +19,9 @@ public:
 	AZero_BaseGameModeBase();
 
 	virtual void BeginPlay() override;
+	/** Ends the telemetry match (no win condition yet, so a match lasts as long as the map). */
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void Logout(AController* Exiting) override;
 
 	UFUNCTION()
 	void UpdateGameTime(AZero_BaseGameState* GS);

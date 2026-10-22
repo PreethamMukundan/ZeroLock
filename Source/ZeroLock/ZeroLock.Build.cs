@@ -24,6 +24,7 @@ public class ZeroLock : ModuleRules
 			"CommonUI",
 			"OnlineSubsystem",
 			"OnlineSubsystemUtils",
+			"CoreOnline",
 			"CommonUser",
 			"HTTP",
 			"OpenSSL",

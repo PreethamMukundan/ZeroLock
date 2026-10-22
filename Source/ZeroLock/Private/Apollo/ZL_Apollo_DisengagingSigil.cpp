@@ -56,7 +56,7 @@ void UZL_Apollo_DisengagingSigil::OnAnimationPointTrigger()
               {
                  if(!Hero->IsOnSameTeam(HitHero))
                  {
-                    Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(HitHero->GetMyAbilitySystemComp(), BaseDamageValue.GetValueAtLevel(GetAbilityLevel()));
+                    Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(HitHero->GetMyAbilitySystemComp(), BaseDamageValue.GetValueAtLevel(GetAbilityLevel()), this);
                  }
               }
            }

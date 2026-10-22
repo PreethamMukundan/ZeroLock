@@ -85,7 +85,7 @@ void AZero_BaseProjectile::HitEventCallBack(UPrimitiveComponent* HitComponent, A
 
 	if (AZeroLockCharacter* enemy = Cast<AZeroLockCharacter>(OtherActor))
 	{
-		OwnerCharacter->GetMyAbilitySystemComp()->ApplyWeaponDamage(enemy->GetMyAbilitySystemComp(),1);
+		OwnerCharacter->GetMyAbilitySystemComp()->ApplyWeaponDamage(enemy->GetMyAbilitySystemComp(),1, this);
 	}
 	Destroy();
 }

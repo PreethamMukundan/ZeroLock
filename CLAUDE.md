@@ -14,6 +14,7 @@ Main branch `main`; feature branches `feature/Hero/<Hero>`.
 | `Docs/Claude/GameFlow.md` | Game mode/state, teams, death/respawn, hero select, online (CommonUser sessions, EOS config split, console commands) |
 | `Docs/Claude/UI.md` | CommonUI layers, MVVM viewmodels/resolvers, HUD, shop, menus |
 | `Docs/Claude/Animation.md` | `ABP_DeadlockHero` C++ anim node/instance/anim set, Deadlock importer |
+| `Docs/Claude/Telemetry.md` | Stats recording (`UZL_TelemetrySubsystem`), Cloudflare Worker API + D1, dashboard, setup/deploy |
 | `Docs/Claude/Content.md` | Content folder map, editor module, `Tools/` |
 
 ## Architecture in one screen

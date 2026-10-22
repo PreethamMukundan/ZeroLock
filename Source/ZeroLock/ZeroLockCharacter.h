@@ -150,7 +150,8 @@ public:
 	/** Server: sphere sweep Start→End (Hero + Pawn object types) plus ExtraTarget. Enemies only (no self, dead or
 	 * teammates). If any of them is parrying (TAG_MELEE_PARRY) the hero gets ParriedStunEffect and nobody is hit;
 	 * otherwise each takes Damage as melee damage. Used by heavy melee (MeleeStrike) and UZeroBase_LightMelee. */
-	void PerformMeleeStrike(const FVector& Start, const FVector& End, float Radius, float Damage, AActor* ExtraTarget = nullptr);
+	/** TelemetrySource: name of the strike in telemetry damage/kill stats. */
+	void PerformMeleeStrike(const FVector& Start, const FVector& End, float Radius, float Damage, AActor* ExtraTarget = nullptr, const FString& TelemetrySource = TEXT("Melee"));
 
 protected:
 

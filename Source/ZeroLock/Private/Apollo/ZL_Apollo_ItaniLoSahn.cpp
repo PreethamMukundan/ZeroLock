@@ -182,7 +182,7 @@ void UZL_Apollo_ItaniLoSahn::OnExecutecallback()
                 
                 if (UBaseCharAbilitySystemComponent* HeroASC = Hero->GetMyAbilitySystemComp())
                 {
-                    HeroASC->ApplySpiritDamage(Villan->GetMyAbilitySystemComp(), DamageAmp);
+                    HeroASC->ApplySpiritDamage(Villan->GetMyAbilitySystemComp(), DamageAmp, this);
                 }
             }
         }

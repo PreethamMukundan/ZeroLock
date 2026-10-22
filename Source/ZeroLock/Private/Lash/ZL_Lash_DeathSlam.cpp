@@ -202,7 +202,7 @@ void UZL_Lash_DeathSlam::TargetSlamFinish()
              continue;
           }
 
-          Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(VictimASC, Damage);
+          Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(VictimASC, Damage, this);
           if (AfterSlamEffect)
           {
              Hero->GetMyAbilitySystemComp()->ApplyGameplayEffect(VictimASC, AfterSlamEffect, GetAbilityLevel());

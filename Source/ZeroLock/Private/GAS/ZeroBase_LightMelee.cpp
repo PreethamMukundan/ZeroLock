@@ -99,7 +99,7 @@ void UZeroBase_LightMelee::Strike()
 
     const float CapsuleRadius = Hero->GetCapsuleComponent() ? Hero->GetCapsuleComponent()->GetScaledCapsuleRadius() : 40.f;
     const FVector Start = Hero->GetActorLocation();
-    Hero->PerformMeleeStrike(Start, Start + Forward * (CapsuleRadius + StrikeRange), StrikeRadius, StrikeDamage);
+    Hero->PerformMeleeStrike(Start, Start + Forward * (CapsuleRadius + StrikeRange), StrikeRadius, StrikeDamage, nullptr, TEXT("LightMelee"));
 }
 
 void UZeroBase_LightMelee::OnMontageEnded(FGameplayTag EventTag, FGameplayEventData EventData)

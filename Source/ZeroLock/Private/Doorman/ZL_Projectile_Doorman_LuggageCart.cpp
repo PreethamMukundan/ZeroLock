@@ -326,7 +326,7 @@ void AZL_Projectile_Doorman_LuggageCart::OnHitboxOverlapBegin(UPrimitiveComponen
 		{
 			Entry.CarryHandle = HeroASC->ApplyGameplayEffectSpecToTarget(*CarrySpec.Data.Get(), VillanASC);
 		}
-		HeroASC->ApplySpiritDamage(VillanASC, SpiritDamage);
+		HeroASC->ApplySpiritDamage(VillanASC, SpiritDamage, this);
 	}
 	UpdateDrag();
 }

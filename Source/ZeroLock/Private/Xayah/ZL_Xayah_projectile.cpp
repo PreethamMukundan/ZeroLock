@@ -152,13 +152,13 @@ void AZL_Xayah_projectile::OverlapEventCallBack(UPrimitiveComponent* OverlappedC
 			}
 			else
 			{
-				OwnerCharacter->GetMyAbilitySystemComp()->ApplySpiritDamage(enemy->GetMyAbilitySystemComp(),5);
+				OwnerCharacter->GetMyAbilitySystemComp()->ApplySpiritDamage(enemy->GetMyAbilitySystemComp(),5, this);
 			}
 		}
 		else
 		{
 			
-			OwnerCharacter->GetMyAbilitySystemComp()->ApplyWeaponDamage(enemy->GetMyAbilitySystemComp(),1);
+			OwnerCharacter->GetMyAbilitySystemComp()->ApplyWeaponDamage(enemy->GetMyAbilitySystemComp(),1, this);
 
 			if (!bIsActivatedToPull)
 			{

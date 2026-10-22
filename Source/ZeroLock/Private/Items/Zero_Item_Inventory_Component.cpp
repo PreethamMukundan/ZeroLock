@@ -7,6 +7,7 @@
 #include "GAS/BaseCharAttributeSet.h"
 #include "Items/Zero_Item_data.h"
 #include "Net/UnrealNetwork.h"
+#include "Telemetry/ZL_TelemetrySubsystem.h"
 #include "ZeroLock/ZeroLockCharacter.h"
 
 
@@ -61,6 +62,10 @@ void UZero_Item_Inventory_Component::ServerBuyItem_Implementation(UZero_Item_dat
 	DeductSouls(ItemData->Cost);
 	ZLOG(ItemData->ItemName);
 	ApplyItemEffects(Items[Index]);
+	if (UZL_TelemetrySubsystem* Telemetry = UZL_TelemetrySubsystem::Get(this))
+	{
+		Telemetry->RecordItem(Cast<AZeroLockCharacter>(GetOwner()), ItemData, true);
+	}
 }
 
 void UZero_Item_Inventory_Component::ServerSellItem_Implementation(UZero_Item_data* ItemData)
@@ -86,6 +91,10 @@ void UZero_Item_Inventory_Component::ServerSellItem_Implementation(UZero_Item_da
 
 	Items.RemoveAt(FoundIndex);
 	ItemDelegate.Broadcast(Items);
+	if (UZL_TelemetrySubsystem* Telemetry = UZL_TelemetrySubsystem::Get(this))
+	{
+		Telemetry->RecordItem(Cast<AZeroLockCharacter>(GetOwner()), ItemData, false);
+	}
 }
 
 void UZero_Item_Inventory_Component::ApplyItemEffects(FZeroInventoryItem& Item)

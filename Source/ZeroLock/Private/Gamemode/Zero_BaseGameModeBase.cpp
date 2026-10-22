@@ -9,6 +9,7 @@
 #include "Gamemode/Zero_BasePlayerStart.h"
 #include "GAS/BaseCharAttributeSet.h"
 #include "Kismet/GameplayStatics.h"
+#include "Telemetry/ZL_TelemetrySubsystem.h"
 #include "ZeroLock/ZeroLockCharacter.h"
 
 AZero_BaseGameModeBase::AZero_BaseGameModeBase()
@@ -28,12 +29,45 @@ void AZero_BaseGameModeBase::BeginPlay()
     AZero_BaseGameState* GS = GetGameState<AZero_BaseGameState>();
     if (!GS) return;
 
+    if (UZL_TelemetrySubsystem* Telemetry = UZL_TelemetrySubsystem::Get(this))
+    {
+        GS->TelemetryMatchId = Telemetry->BeginMatch(GetWorld(), UZL_TelemetrySubsystem::CleanClassName(GetClass()));
+        // Players who logged in and spawned before BeginPlay (e.g. the host).
+        for (APlayerState* PS : GS->PlayerArray)
+        {
+            Telemetry->RecordPlayerJoin(PS);
+            if (const APawn* Pawn = PS ? PS->GetPawn() : nullptr)
+            {
+                Telemetry->RecordHeroPick(PS, Pawn->GetClass(), true);
+            }
+        }
+    }
+
     // Bind with parameter
     FTimerDelegate TimerDel;
     TimerDel.BindUFunction(this, FName("UpdateGameTime"), GS);
 
     // Run every 1 second
     GetWorldTimerManager().SetTimer(GameTimerHandle, TimerDel, 1.0f, true);
+}
+
+void AZero_BaseGameModeBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    if (UZL_TelemetrySubsystem* Telemetry = UZL_TelemetrySubsystem::Get(this))
+    {
+        const AZero_BaseGameState* GS = GetGameState<AZero_BaseGameState>();
+        Telemetry->EndMatch(GS ? GS->TeamRedScore : 0, GS ? GS->TeamBlueScore : 0);
+    }
+    Super::EndPlay(EndPlayReason);
+}
+
+void AZero_BaseGameModeBase::Logout(AController* Exiting)
+{
+    if (UZL_TelemetrySubsystem* Telemetry = UZL_TelemetrySubsystem::Get(this))
+    {
+        Telemetry->RecordPlayerLeave(Exiting ? Exiting->PlayerState : nullptr);
+    }
+    Super::Logout(Exiting);
 }
 
 void AZero_BaseGameModeBase::UpdateGameTime(AZero_BaseGameState* GS)
@@ -71,6 +105,11 @@ void AZero_BaseGameModeBase::PostLogin(APlayerController* NewPlayer)
             }
         }
         UE_LOG(LogTemp, Log, TEXT("[GM] PostLogin: Team counts -> Red: %d, Blue: %d"), TeamRedCount, TeamBlueCount);
+
+        if (UZL_TelemetrySubsystem* Telemetry = UZL_TelemetrySubsystem::Get(this))
+        {
+            Telemetry->RecordPlayerJoin(PS);
+        }
     }
     else
     {
@@ -143,7 +182,15 @@ APawn* AZero_BaseGameModeBase::SpawnDefaultPawnFor_Implementation(AController* N
         PawnToSpawn = DefaultHeroClass;
     }
 
-    return SpawnPawnDefault(PawnToSpawn, NewPlayer, StartSpot);
+    APawn* NewPawn = SpawnPawnDefault(PawnToSpawn, NewPlayer, StartSpot);
+    if (UZL_TelemetrySubsystem* Telemetry = UZL_TelemetrySubsystem::Get(this))
+    {
+        if (NewPawn && NewPlayer)
+        {
+            Telemetry->RecordHeroPick(NewPlayer->PlayerState, NewPawn->GetClass(), true);
+        }
+    }
+    return NewPawn;
 }
 
 /** Handle death: update stats and schedule respawn via controller (safe) */
@@ -198,6 +245,7 @@ void AZero_BaseGameModeBase::HandlePlayerDeath(AZeroLockCharacter* DeadPawn, ACo
     // Assist credits
     if (DeadPawn)
     {
+        int32 NumAssists = 0;
         for (AZeroLockCharacter* AssistPawn : DeadPawn->AssistListCharacters)
         {
             if (!AssistPawn) continue;
@@ -208,9 +256,15 @@ void AZero_BaseGameModeBase::HandlePlayerDeath(AZeroLockCharacter* DeadPawn, ACo
                 if (AZero_BasePlayerState* AssistPS = AssistController->GetPlayerState<AZero_BasePlayerState>())
                 {
                     AssistPS->AddAssist();
+                    NumAssists++;
                     UE_LOG(LogTemp, Log, TEXT("[GM] HandlePlayerDeath: %s got an assist (Team %d)"), *AssistController->GetName(), AssistPS->TeamID);
                 }
             }
+        }
+
+        if (UZL_TelemetrySubsystem* Telemetry = UZL_TelemetrySubsystem::Get(this))
+        {
+            Telemetry->RecordDeath(DeadPawn, DeadPawn->LastHitCharacter, NumAssists);
         }
 
         // Trigger the pawn's death functionality (visuals, ragdoll, etc.)
@@ -336,6 +390,11 @@ void AZero_BaseGameModeBase::SwapHero(AZero_BasePlayerController* PC, TSubclassO
     NewHero->StartLocation = OldStartLocation;
     PC->Possess(NewHero);
     PC->SetControlRotation(Rot);
+
+    if (UZL_TelemetrySubsystem* Telemetry = UZL_TelemetrySubsystem::Get(this))
+    {
+        Telemetry->RecordHeroPick(PC->PlayerState, HeroClass, false);
+    }
 
     UE_LOG(LogTemp, Log, TEXT("[GM] SwapHero: %s is now %s"), *PC->GetName(), *GetNameSafe(HeroClass));
 }

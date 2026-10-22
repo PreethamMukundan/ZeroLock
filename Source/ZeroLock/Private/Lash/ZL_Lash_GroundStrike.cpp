@@ -214,7 +214,7 @@ void UZL_Lash_GroundStrike::OnMovementFinished(bool didreach)
 					if (!villan) continue;
 					if (Hero->IsOnSameTeam(villan)) continue;
 					ZLOG(FString::SanitizeFloat(DamageCalc));
-					Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(villan->GetMyAbilitySystemComp(),DamageCalc);
+					Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(villan->GetMyAbilitySystemComp(),DamageCalc, this);
 					if (mylevel>=2)
 					{
 				//		villan->LaunchCharacter(FVector(0,0,100),true,true);

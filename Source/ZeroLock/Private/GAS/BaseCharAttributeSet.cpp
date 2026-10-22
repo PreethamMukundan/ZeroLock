@@ -5,7 +5,9 @@
 
 #include "GameplayEffect.h"
 #include "GameplayEffectExtension.h"
+#include "GAS/BaseCharAbilitySystemComponent.h"
 #include "GAS/ZL_GameplayTags.h"
+#include "Telemetry/ZL_TelemetrySubsystem.h"
 #include "Zero_BasePlayerController.h"
 #include "Zero_BasePlayerState.h"
 #include "Chaos/Deformable/MuscleActivationConstraints.h"
@@ -56,6 +58,45 @@ void UBaseCharAttributeSet::PreAttributeChange(const FGameplayAttribute & Attrib
 		AdjustAttributeForMaxChange(CurrentHealth, MaximumHealth, NewValue, GetCurrentHealthAttribute());
 	}
 
+}
+
+void UBaseCharAttributeSet::RecordDamageTelemetry(const FGameplayEffectModCallbackData& Data, UAbilitySystemComponent* Source,
+	AZeroLockCharacter* SourceCharacter, AZeroLockCharacter* TargetCharacter, float HealthLost, bool bKillingBlow) const
+{
+	UZL_TelemetrySubsystem* Telemetry = UZL_TelemetrySubsystem::Get(GetOwningActor());
+	if (!Telemetry || !Telemetry->IsInMatch()) return;
+
+	// weapon / spirit / melee from the Damage.Tag.* the calc adds.
+	FString DamageType = TEXT("other");
+	for (const FGameplayTag& Tag : Data.EffectSpec.GetDynamicAssetTags())
+	{
+		FString TagName = Tag.GetTagName().ToString();
+		if (TagName.RemoveFromStart(TEXT("Damage.Tag.")) && TagName != TEXT("NonLethal"))
+		{
+			DamageType = TagName.ToLower();
+			break;
+		}
+	}
+
+	// Source name: what Apply*Damage was given, else the GE's ability, else the damage type.
+	FString SourceName;
+	if (const UBaseCharAbilitySystemComponent* SourceASC = Cast<UBaseCharAbilitySystemComponent>(Source))
+	{
+		SourceName = SourceASC->TelemetryDamageSource;
+	}
+	if (SourceName.IsEmpty())
+	{
+		if (const UGameplayAbility* Ability = Data.EffectSpec.GetContext().GetAbility())
+		{
+			SourceName = UZL_TelemetrySubsystem::CleanClassName(Ability->GetClass());
+		}
+	}
+	if (SourceName.IsEmpty())
+	{
+		SourceName = DamageType;
+	}
+
+	Telemetry->RecordDamage(SourceCharacter, TargetCharacter, SourceName, DamageType, HealthLost, bKillingBlow);
 }
 
 void UBaseCharAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData & Data)
@@ -135,9 +176,11 @@ void UBaseCharAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 						{
 							MyPC->ShowDamageNumber(LocalDamageDone,TargetCharacter,Data.EffectSpec.GetDynamicAssetTags());
 						}
+						const float OldHealth = GetCurrentHealth();
 						const float NewHealth = GetCurrentHealth() - LocalDamageDone;
-						SetCurrentHealth(FMath::Clamp(NewHealth, 0.0f, GetMaximumHealth()));	
+						SetCurrentHealth(FMath::Clamp(NewHealth, 0.0f, GetMaximumHealth()));
 						TargetCharacter->AddLastHit(SourceCharacter);
+						RecordDamageTelemetry(Data, Source, SourceCharacter, TargetCharacter, OldHealth - GetCurrentHealth(), !TargetCharacter->IsAlive());
 						if (!TargetCharacter->IsAlive())
 						{
 							//TargetDeath
@@ -166,9 +209,14 @@ void UBaseCharAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		if (LocalHealingDone > 0.0f)
 		{
 			// Apply the Health change and then clamp it.
+			const float OldHealth = GetCurrentHealth();
 			const float NewHealth = GetCurrentHealth() + LocalHealingDone;
 
 			SetCurrentHealth(FMath::Clamp(NewHealth, 0.0f, GetMaximumHealth()));
+			if (UZL_TelemetrySubsystem* Telemetry = UZL_TelemetrySubsystem::Get(GetOwningActor()))
+			{
+				Telemetry->RecordHeal(SourceCharacter, TargetCharacter, GetCurrentHealth() - OldHealth);
+			}
 			//TargetCharacter->HealthChanged(GetCurrentHealth(),GetMaximumHealth());
 		}
 	}

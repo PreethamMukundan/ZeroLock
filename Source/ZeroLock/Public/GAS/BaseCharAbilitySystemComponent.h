@@ -25,6 +25,9 @@ class ZEROLOCK_API UBaseCharAbilitySystemComponent : public UAbilitySystemCompon
 
 
 	virtual void OnRep_ActivateAbilities() override;
+
+	/** Server: counts ability uses for telemetry. */
+	virtual void NotifyAbilityActivated(const FGameplayAbilitySpecHandle Handle, UGameplayAbility* Ability) override;
 	
 protected:
 	TMap<FPredictionKey, TWeakObjectPtr<UZL_Task_WaitSlamLocation>> PendingSlamTasks;
@@ -39,14 +42,18 @@ public:
 	UFUNCTION()
 	void LevelUpAbility(UGameplayAbility* AbilityToUpgrade,int32 mLevel);
 	
+	/** DamageSource (optional): the ability, projectile or actor dealing the damage; telemetry groups damage by its class. */
 	UFUNCTION(BlueprintCallable)
-	void ApplyWeaponDamage(UAbilitySystemComponent* TargetASC,float DamageValue);
+	void ApplyWeaponDamage(UAbilitySystemComponent* TargetASC,float DamageValue, const UObject* DamageSource = nullptr);
 
 	UFUNCTION(BlueprintCallable)
-	void ApplySpiritDamage(UAbilitySystemComponent* TargetASC,float DamageValue);
+	void ApplySpiritDamage(UAbilitySystemComponent* TargetASC,float DamageValue, const UObject* DamageSource = nullptr);
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyMeleeDamage(UAbilitySystemComponent* TargetASC,float DamageValue);
+	void ApplyMeleeDamage(UAbilitySystemComponent* TargetASC,float DamageValue, const UObject* DamageSource = nullptr);
+
+	/** Telemetry name of the damage being applied right now: set by Apply*Damage around the apply, read in PostGameplayEffectExecute. */
+	FString TelemetryDamageSource;
 
 	UFUNCTION(BlueprintCallable)
 	void ApplyHeal(UAbilitySystemComponent* TargetASC,float HealValue);

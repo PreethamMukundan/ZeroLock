@@ -104,7 +104,7 @@ void UZL_Drifter_EternalNight::OnWeaponEventTrigger(FGameplayEventData Payload)
 	AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
 	if (!IsValid(Villan)) return;
 	if (!IsValid(Hero)) return;
-	Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(Villan->GetMyAbilitySystemComp(),SpiritDamage.GetValueAtLevel(GetAbilityLevel()));
+	Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(Villan->GetMyAbilitySystemComp(),SpiritDamage.GetValueAtLevel(GetAbilityLevel()), this);
 }
 
 

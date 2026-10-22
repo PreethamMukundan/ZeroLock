@@ -76,7 +76,7 @@ Without `-AUTH_*` args EOS AutoLogin uses persistent auth, then the Epic Account
 
 Blueprint users: `WBP_HeroSelector` used to call `UZL_EOS_SubSystem::Login` on Construct and `ServerTravelAfterPlayersJoin` on `Button_65`. Those nodes were removed with the old subsystem (2026-10-19). Wire the new subsystem in if the menu should do online.
 
-Tutorial / dev-only: `AZL_EOS_GameSession` (dedicated server, used only by `Developers/rpm86/EOSTEST/BP_EOSTESTGM`), `AZL_EOS_PlayerController` (used only by `BP_EOSPLayerController` in EOSTEST), `UZL_TelemetrySubsystem` (empty). `UZL_EOS_SubSystem` and the dead `AZL_EOSGameSession` were deleted.
+Tutorial / dev-only: `AZL_EOS_GameSession` (dedicated server, used only by `Developers/rpm86/EOSTEST/BP_EOSTESTGM`), `AZL_EOS_PlayerController` (used only by `BP_EOSPLayerController` in EOSTEST). `UZL_TelemetrySubsystem` moved to `Telemetry/` and is now the stats recorder (Telemetry.md); the game mode starts/ends its match and calls it on join/leave/hero pick/death. `UZL_EOS_SubSystem` and the dead `AZL_EOSGameSession` were deleted.
 
 ## Known issues
 - Unvalidated server RPCs: `ServerSetSelectedHero` (any class), `ServerSetStartLocation` (any vector) (`Zero_BasePlayerController.cpp:10,20`), **`ServerHandleDeath` lets a client trigger death/kill credit/respawn** (`ZeroLockCharacter.h:256`, `.cpp:533`).

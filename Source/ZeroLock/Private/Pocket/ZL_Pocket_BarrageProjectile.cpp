@@ -111,7 +111,7 @@ void AZL_Pocket_BarrageProjectile::ApplyImpact()
 				continue;
 			}
 			ZLOG("ApplyingDamage");
-			HeroASC->ApplySpiritDamage(VillanASC, SpiritDamage);
+			HeroASC->ApplySpiritDamage(VillanASC, SpiritDamage, this);
 		}
 		DamagedVillans.Add(Villan);
 	}

@@ -223,6 +223,9 @@ public:
 	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, MaxCharges_4)
 
 protected:
+	void RecordDamageTelemetry(const FGameplayEffectModCallbackData& Data, UAbilitySystemComponent* Source,
+		class AZeroLockCharacter* SourceCharacter, class AZeroLockCharacter* TargetCharacter, float HealthLost, bool bKillingBlow) const;
+
 	UFUNCTION() virtual void OnRep_AbilityCharges_1(const FGameplayAttributeData& OldValue);
 	UFUNCTION() virtual void OnRep_MaxCharges_1(const FGameplayAttributeData& OldValue);
 	UFUNCTION() virtual void OnRep_AbilityCharges_2(const FGameplayAttributeData& OldValue);

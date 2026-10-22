@@ -40,11 +40,11 @@ void UZL_Drifter_Rend::OnAnimationPointTrigger()
 				for (AZeroLockCharacter* villan : OutVillans)
 				{
 					ZLOG("One");
-					Hero->GetMyAbilitySystemComp()->ApplyMeleeDamage(villan->GetMyAbilitySystemComp(),BaseDamage);
+					Hero->GetMyAbilitySystemComp()->ApplyMeleeDamage(villan->GetMyAbilitySystemComp(),BaseDamage, this);
 					float DistanceSq = FVector::DistSquared(Origin, villan->GetActorLocation());
 					if (DistanceSq <= (BonusTargetDist*BonusTargetDist))
 					{
-						Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(villan->GetMyAbilitySystemComp(),BonusDamage.GetValueAtLevel(GetCurrentAbilitySpec()->Level));
+						Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(villan->GetMyAbilitySystemComp(),BonusDamage.GetValueAtLevel(GetCurrentAbilitySpec()->Level), this);
 					}
 				}
 			}

@@ -93,5 +93,5 @@ void AZL_Pocket_CloakProjectile::OnHitboxOverlapBegin(UPrimitiveComponent* Overl
 	}
 
 	DamagedVillans.Add(Villan);
-	HeroASC->ApplySpiritDamage(VillanASC, SpiritDamage);
+	HeroASC->ApplySpiritDamage(VillanASC, SpiritDamage, this);
 }

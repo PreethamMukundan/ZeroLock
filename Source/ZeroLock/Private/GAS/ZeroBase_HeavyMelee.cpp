@@ -136,7 +136,7 @@ void UZeroBase_HeavyMelee::MeleeDamageExec(TSubclassOf<class UGameplayEffect> Me
               
               if (AbilitySystemComp && MeleeDamageEffect)
               {
-                 Hero->GetMyAbilitySystemComp()->ApplyMeleeDamage(Villan->GetMyAbilitySystemComp(), 90);
+                 Hero->GetMyAbilitySystemComp()->ApplyMeleeDamage(Villan->GetMyAbilitySystemComp(), 90, this);
                  
                  FVector KnockbackDir = (Villan->GetActorLocation() - Hero->GetActorLocation()).GetSafeNormal();
                  KnockbackDir.Z = 0.2f; 

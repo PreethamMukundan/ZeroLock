@@ -35,7 +35,7 @@ All replicated `COND_None` (health and charges `REPNOTIFY_Always`). Percent stat
 - Death: `HandleDeath` (once) → CancelAllAbilities, remove effects, DisableInput, `ServerHandleDeath` → GameFlow.md. Respawn: `ResetCharacter` (remove effects, re-init, re-activate passives, full health).
 
 ## Damage pipeline
-1. Server caller: `SourceASC->ApplyWeaponDamage | ApplySpiritDamage | ApplyMeleeDamage(TargetASC, value)` (`BaseCharAbilitySystemComponent.cpp:59-135`): `IsUntouchable` → authority → spec of BP-set `GE_<Type>Class` (L1) with SetByCaller `Zerolock.DamageCalc.Weapon|Spirit|Melee` → apply → `Event.<Type>Hit` to self, `Event.<Type>Recieved` to target (+ client RPC to victim owner).
+1. Server caller: `SourceASC->ApplyWeaponDamage | ApplySpiritDamage | ApplyMeleeDamage(TargetASC, value, DamageSource = nullptr)` (pass `this` from abilities/projectiles: telemetry groups damage by that class, Telemetry.md) (`BaseCharAbilitySystemComponent.cpp:59-135`): `IsUntouchable` → authority → spec of BP-set `GE_<Type>Class` (L1) with SetByCaller `Zerolock.DamageCalc.Weapon|Spirit|Melee` → apply → `Event.<Type>Hit` to self, `Event.<Type>Recieved` to target (+ client RPC to victim owner).
 2. GE asset (BP) runs `UCalc_WeaponDamage` / `UCalc_Spirit_Damage` / `UCalc_Melee_Damage` (`GAS/Calculations/`). The calcs **capture the Source's `Damage` attribute**, so the GE must feed SetByCaller into that capture (verify in asset).
    - Weapon: `base = Damage + FlatWeapon`; `unmit = base × (1+WeaponDamage/100) × (1+UniversalDamage/100)`; `mit = unmit × (1 − (WeaponRes − WeaponResReduction)/100)`.
    - Spirit: same with spirit stats. Melee: `D + D×WeaponDamage/100×0.5 + D×MeleeDamage/100`, × universal, mitigation (see issues).
@@ -92,7 +92,7 @@ Cooldown: `CommitAbility` → `ApplyCooldown` (spec of cooldown GE, `CooldownTag
 ## New ability recipe
 1. Pick a base: montage+notify → `UZL_BasePlayAnimation_AndDo`; reticle → `UBase_GA_TargetActors`; projectile → `UZL_GA_WeaponFire`-style predicted task (Weapons.md) or `UZL_BaseProjectileThrowAbility`; else `UBaseGameplayAbility`.
 2. `Public/<Hero>/ZL_<Hero>_<Name>.h` + `Private/<Hero>/ZL_<Hero>_<Name>.cpp`. Tunables as `FScalableFloat` by level (spec level starts at 0).
-3. Server-only effects: `Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(Villan->GetMyAbilitySystemComp(), Damage)`; victim moves via `SendVictimMoveEvent`; self moves via Mover tasks / `RequestSafe*`; status bars via `SendStatusTimer`.
+3. Server-only effects: `Hero->GetMyAbilitySystemComp()->ApplySpiritDamage(Villan->GetMyAbilitySystemComp(), Damage, this)`; victim moves via `SendVictimMoveEvent`; self moves via Mover tasks / `RequestSafe*`; status bars via `SendStatusTimer`.
 4. Add `ZerolockAbilities.Cooldown.<Name>` to `DefaultGameplayTags.ini`.
 5. BP subclass in `Content/ZERO/HeroAbilities/<Hero>/<Name>/`: CooldownTags, CooldownDuration, Slot, name/icon/descriptions, montage/event tag, charges.
 6. Assign on the hero BP slot (`Ability_1`, `Ability_2`, `SecondryFireAbility`, `UltimateAbility`); passives in `DefaultAbilities`.

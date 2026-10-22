@@ -196,7 +196,7 @@ void UZL_Apollo_FlawlessAdvance::ExecuteLunge(bool bIsPerfect)
         {
             for (AZeroLockCharacter* villan : Targets)
             {
-                Character->GetMyAbilitySystemComp()->ApplySpiritDamage(villan->GetMyAbilitySystemComp(), DamageToUse);
+                Character->GetMyAbilitySystemComp()->ApplySpiritDamage(villan->GetMyAbilitySystemComp(), DamageToUse, this);
             }
             if (bIsPerfect)
             {

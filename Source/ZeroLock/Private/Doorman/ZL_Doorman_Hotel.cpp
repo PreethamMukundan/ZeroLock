@@ -275,7 +275,7 @@ bool AZL_Doorman_Hotel::CheckIn(AZeroLockCharacter* Doorman, AZeroLockCharacter*
 	// Last: if this kills the guest, the pre-death handler checks them out right away.
 	if (Params.EntryDamage > 0.0f)
 	{
-		DoormanASC->ApplySpiritDamage(GuestASC, Params.EntryDamage);
+		DoormanASC->ApplySpiritDamage(GuestASC, Params.EntryDamage, this);
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("[Hotel] %s checked in %s (lane %d, %.1f s)"), *Doorman->GetName(), *Guest->GetName(), Lane, Params.TimeLimit);
@@ -315,7 +315,7 @@ void AZL_Doorman_Hotel::CheckOut(AZeroLockCharacter* Guest, EZL_HotelCheckout Re
 			{
 				if (UBaseCharAbilitySystemComponent* DoormanASC = Stay.DoormanASC.Get())
 				{
-					DoormanASC->ApplySpiritDamage(GuestASC, Stay.LateCheckoutDamage);
+					DoormanASC->ApplySpiritDamage(GuestASC, Stay.LateCheckoutDamage, this);
 				}
 			}
 		}

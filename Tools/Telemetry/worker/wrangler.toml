@@ -1,0 +1,22 @@
+# Cloudflare Worker config. Docs/Claude/Telemetry.md has the setup steps.
+name = "zerolock-telemetry"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+# The dashboard website: files in ../dashboard are served at /. Requests to /v1/* go to the Worker code.
+[assets]
+directory = "../dashboard"
+binding = "ASSETS"
+run_worker_first = ["/v1/*"]
+
+# The database. `npx wrangler d1 create zerolock-telemetry` prints the real database_id; paste it here.
+# Local dev (`npm run dev`) uses a separate local copy in .wrangler/.
+[[d1_databases]]
+binding = "DB"
+database_name = "zerolock-telemetry"
+database_id = "a112dfe0-083e-47cc-b5be-6ef5cb7083ab"
+
+# Secrets are NOT in this file:
+#   INGEST_KEY  the game sends it to POST events      (npx wrangler secret put INGEST_KEY)
+#   READ_KEY    the dashboard needs it to read stats  (npx wrangler secret put READ_KEY), optional
+# Local dev reads them from .dev.vars (gitignored).

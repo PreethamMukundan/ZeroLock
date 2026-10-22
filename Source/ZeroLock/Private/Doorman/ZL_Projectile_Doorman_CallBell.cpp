@@ -132,7 +132,7 @@ void AZL_Projectile_Doorman_CallBell::OnHitboxOverlapBegin(UPrimitiveComponent* 
 	}
 
 	DamagedVillans.Add(Villan);
-	HeroASC->ApplySpiritDamage(VillanASC, ImpactDamage);
+	HeroASC->ApplySpiritDamage(VillanASC, ImpactDamage, this);
 }
 
 void AZL_Projectile_Doorman_CallBell::OnStop(const FHitResult& Hit)
@@ -196,7 +196,7 @@ void AZL_Projectile_Doorman_CallBell::Explode()
 			HitVillans.Add(Villan);
 			if (UBaseCharAbilitySystemComponent* VillanASC = Villan->GetMyAbilitySystemComp())
 			{
-				HeroASC->ApplySpiritDamage(VillanASC, ExplosionDamage);
+				HeroASC->ApplySpiritDamage(VillanASC, ExplosionDamage, this);
 			}
 		}
 	}

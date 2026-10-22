@@ -821,10 +821,10 @@ void AZeroLockCharacter::MeleeStrike(TWeakObjectPtr<AActor> LungeHitActor, FVect
 	const FVector End = GetActorLocation() + Forward * (CapsuleRadius + MeleeStrikeRange);
 
 	// What the lunge ran into always counts, even if it slid out of the sweep.
-	PerformMeleeStrike(Start, End, MeleeStrikeRadius, MeleeStrikeDamage, LungeHitActor.Get());
+	PerformMeleeStrike(Start, End, MeleeStrikeRadius, MeleeStrikeDamage, LungeHitActor.Get(), TEXT("HeavyMelee"));
 }
 
-void AZeroLockCharacter::PerformMeleeStrike(const FVector& Start, const FVector& End, float Radius, float Damage, AActor* ExtraTarget)
+void AZeroLockCharacter::PerformMeleeStrike(const FVector& Start, const FVector& End, float Radius, float Damage, AActor* ExtraTarget, const FString& TelemetrySource)
 {
 	if (!HasAuthority() || bIsDead || !AbilitySystemComp) return;
 
@@ -870,6 +870,8 @@ void AZeroLockCharacter::PerformMeleeStrike(const FVector& Start, const FVector&
 		Targets.Add(Villan);
 	}
 
+	// No DamageSource object here, so name the strike directly; ApplyMeleeDamage keeps it.
+	TGuardValue<FString> TelemetrySourceGuard(AbilitySystemComp->TelemetryDamageSource, TelemetrySource);
 	for (AZeroLockCharacter* Villan : Targets)
 	{
 		AbilitySystemComp->ApplyMeleeDamage(Villan->GetMyAbilitySystemComp(), Damage);

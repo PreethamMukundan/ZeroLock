@@ -1066,7 +1066,7 @@ void AProjectile::ApplyEffectToTarget(const bool bDirectImpact, const AActor* Ta
 
 	if (UBaseCharAbilitySystemComponent* SourceASC = Shooter->GetMyAbilitySystemComp())
 	{
-		SourceASC->ApplyWeaponDamage(Victim->GetMyAbilitySystemComp(), WeaponDamage);
+		SourceASC->ApplyWeaponDamage(Victim->GetMyAbilitySystemComp(), WeaponDamage, this);
 	}
 }
 

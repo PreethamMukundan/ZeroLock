@@ -25,7 +25,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(HERE, "config.json"), encoding="utf-8") as f:
     CFG = json.load(f)
 
-asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+# Deferred initialization to prevent thread-safety crashes when loaded via C++ console commands[cite: 1]
+asset_tools = None
 eal = unreal.EditorAssetLibrary
 mel = unreal.MaterialEditingLibrary
 
@@ -310,13 +311,11 @@ def import_animations(m, dest, skeleton):
 
 DIRS = ["n", "ne", "e", "se", "s", "sw", "w", "nw"]
 
-# Anim set property -> clip names to try, first match wins. Deadlock heroes don't all use the same names.
 ANIM_SET_SLOTS = {
     "stand_idle": ["weapon_stand_idle", "primary_stand_idle", "primary_idle", "out_of_combat_stand_idle", "item_stand_idle"],
     "crouch_idle": ["weapon_crouch_idle", "primary_crouch_idle", "out_of_combat_crouch_idle", "item_crouch_idle"],
     "jump_start": ["jump_ground", "jump_start"],
     "air_jump_start": ["jump_air", "jump_ground"],
-    # UE's Python names drop the "In" prefix: InAirApex -> air_apex
     "air_apex": ["in_air_apex_loop", "in_air_loop_apex", "jump_in_air_loop"],
     "air_fall": ["in_air_down_loop", "in_air_loop_down", "jump_in_air_loop"],
     "land": ["landing_impact", "land_impact_idle", "jump_landing"],
@@ -331,14 +330,11 @@ ANIM_SET_SLOTS = {
     "dash_right": ["dash_air_right", "primary_airdash_right"],
     "zipline_start": ["zipline_attached_start", "zipline_grab"],
     "zipline_loop": ["zipline_attached_loop", "zipline_loop", "zipline_latched_loop"],
-    # Played while the pawn has ZeroLock.Stun. Not every hero has a stunned clip; knockdown_medium_loop is the fallback.
-    # stun_start isn't filled: the intros don't match every loop (a knockdown intro into a standing stun). Set it by hand.
     "stun_loop": ["standing_stunned", "crouching_stunned", "knockdown_medium_loop"],
-    # Heavy melee = the Mover "Melee" lunge: Deadlock's wind-up, then the dash loop.
     "heavy_melee_start": ["melee_start"],
     "heavy_melee_loop": ["melee_dash"],
 }
-# Anim set montage property -> montage names under <dest>/Montages/, first match wins.
+
 ANIM_SET_MONTAGES = {
     "light_melee_montage": ["Melee/AM_{hero}_Melee_Quick1", "Melee/AM_{hero}_Melee_Quick2"],
 }
@@ -410,7 +406,6 @@ def build_anim_set(m, dest):
 
 # --------------------------------------------------------------------------- ability montages
 
-# Clip-name words that never identify an ability on their own.
 GENERIC_TOKENS = {"citadel", "ability", "the", "and", "of", "up", "down", "left", "right", "start", "end",
                   "loop", "in", "air", "aim", "hit", "dash", "n", "e", "s", "w", "x"}
 MELEE_CLIPS = ["melee_quick_1", "melee_quick_2", "melee_start", "melee_dash", "melee_hit",
@@ -433,7 +428,6 @@ def hero_abilities(m):
 
 
 def match_ability(core, abilities, hero_tokens):
-    """Return (ability, leftover clip words) for an 'ability_<core>' clip, or (None, words)."""
     words = core.split("_")
     best, best_hits = None, set()
     for ability in abilities:
@@ -465,7 +459,6 @@ def create_montage(seq, folder, name):
 
 
 def build_montages(m, dest):
-    """Montages/<AbilityName>/AM_<Hero>_<AbilityName>[_<Part>] for every ability clip, plus Melee/ and Parry/."""
     hero = m["hero"]
     anim_dir, root = f"{dest}/Animations", f"{dest}/Montages"
     clips = {a["name"]: load(f"{anim_dir}/A_{hero}_{a['name']}") for a in m["animations"]}
@@ -473,7 +466,7 @@ def build_montages(m, dest):
     abilities = [a for a in hero_abilities(m) if a["slot"].startswith("ESlot_Signature")]
     hero_tokens = {m.get("codename", "").lower(), hero.lower()}
 
-    plan = []  # (seq, folder, montage name)
+    plan = []
     for clip, seq in sorted(clips.items()):
         if not clip.startswith("ability_"):
             continue
@@ -525,7 +518,6 @@ def import_hero(hero, no_anims=False, anims_only=False, anim_set_only=False, mon
 
     if not no_anims and m["animations"]:
         import_animations(m, dest, skm.get_editor_property("skeleton"))
-    # Montages first: the anim set references the light melee montage.
     if m["animations"]:
         build_montages(m, dest)
     if m["animations"] and hasattr(unreal, "ZL_DeadlockAnimSet"):
@@ -536,6 +528,9 @@ def import_hero(hero, no_anims=False, anims_only=False, anim_set_only=False, mon
 
 
 def main(argv):
+    global asset_tools
+    asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+
     no_anims = "--no-anims" in argv
     anims_only = "--anims-only" in argv
     anim_set_only = "--anim-set-only" in argv
@@ -546,9 +541,9 @@ def main(argv):
         heroes = sorted(d for d in os.listdir(out) if os.path.exists(os.path.join(out, d, "manifest.json")))
         log(f"Importing all exported heroes: {heroes}")
     for h in heroes:
-        # manifests are keyed by asset name ("Lash", "GreyTalon"); accept any casing
         match = next((d for d in os.listdir(CFG["output_dir"]) if d.lower() == h.lower().replace(" ", "")), h)
         import_hero(match, no_anims, anims_only, anim_set_only, montages_only)
 
 
-main(sys.argv[1:])
+if __name__ == "__main__":
+    main(sys.argv[1:])

@@ -36,6 +36,7 @@ public class ZeroEditorModule : ModuleRules
                 "AssetTools",
                 "Kismet",
                 "CurveTableEditor", 
+                "PythonScriptPlugin",
             }
         );
     }

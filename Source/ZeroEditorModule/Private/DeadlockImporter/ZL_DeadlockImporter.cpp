@@ -4,6 +4,7 @@
 #include "ZL_DeadlockImporter.h"
 #include "Async/Async.h"
 #include "Editor.h"
+#include "IPythonScriptPlugin.h"
 #include "HAL/FileManager.h"
 #include "HAL/PlatformProcess.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -272,88 +273,102 @@ TSharedRef<ITableRow> SZL_DeadlockImporter::OnGenerateHeroRow(TSharedPtr<FZL_Dea
 			]
 		];
 }
-
 FReply SZL_DeadlockImporter::OnRunImportClicked(TSharedPtr<FZL_DeadlockHeroInfo> Hero)
 {
-	if (!Hero.IsValid() || bIsImporting)
-	{
-		return FReply::Handled();
-	}
+    if (!Hero.IsValid() || bIsImporting)
+    {
+       return FReply::Handled();
+    }
 
-	bIsImporting = true;
-	StatusMessage = FString::Printf(TEXT("[BUSY] Stopping old tasks & running import for %s..."), *Hero->DisplayName);
-	UE_LOG(LogTemp, Log, TEXT("[DeadlockImporter] Initiating pipeline for hero: %s"), *Hero->DisplayName);
+    bIsImporting = true;
+    StatusMessage = FString::Printf(TEXT("[BUSY] Running export & import pipeline for %s..."), *Hero->DisplayName);
+    UE_LOG(LogTemp, Log, TEXT("[DeadlockImporter] Initiating full pipeline for hero: %s"), *Hero->DisplayName);
 
-	Async(EAsyncExecution::ThreadPool, [this, Hero]()
-	{
-		// Force-kill any hanging background tasks or helper tools from previous runs to clear the slate
-		int32 DummyCode = 0;
-		FPlatformProcess::ExecProcess(TEXT("taskkill"), TEXT("/f /im blender.exe"), &DummyCode, nullptr, nullptr);
-		FPlatformProcess::ExecProcess(TEXT("taskkill"), TEXT("/f /im python.exe"), &DummyCode, nullptr, nullptr);
+    Async(EAsyncExecution::ThreadPool, [this, Hero]()
+    {
+       // Force-kill any hanging background tasks or helper tools from previous runs
+       int32 DummyCode = 0;
+       FPlatformProcess::ExecProcess(TEXT("taskkill"), TEXT("/f /im blender.exe"), &DummyCode, nullptr, nullptr);
+       FPlatformProcess::ExecProcess(TEXT("taskkill"), TEXT("/f /im python.exe"), &DummyCode, nullptr, nullptr);
 
-		FString ToolDir = GetToolDirectory();
-		FString BatPath = FPaths::Combine(ToolDir, TEXT("deadlock_import.bat"));
-		FString PyScript = FPaths::Combine(ToolDir, TEXT("ue_import.py"));
+       FString ToolDir = GetToolDirectory();
+       FString BatPath = FPaths::Combine(ToolDir, TEXT("deadlock_import.bat"));
+       FString PyScript = FPaths::Combine(ToolDir, TEXT("ue_import.py"));
+       FPaths::NormalizeFilename(PyScript);
 
-		// 1. Run Export Step
-		FString ExportArgs = FString::Printf(TEXT("%s"), *Hero->Codename);
-		if (!bIncludeAnimations)
-		{
-			ExportArgs += TEXT(" --anims none");
-		}
+       // 1. Run Export Step on background thread
+       FString ExportArgs = FString::Printf(TEXT("%s"), *Hero->Codename);
+       if (!bIncludeAnimations)
+       {
+          ExportArgs += TEXT(" --anims none");
+       }
 
-		int32 OutReturnCode = -1;
-		FString StdOut, StdErr;
+       int32 OutReturnCode = -1;
+       FString StdOut, StdErr;
 
-		bool bExportSuccess = FPlatformProcess::ExecProcess(
-			*BatPath, *ExportArgs, &OutReturnCode, &StdOut, &StdErr, *ToolDir
-		);
+       bool bExportSuccess = FPlatformProcess::ExecProcess(
+          *BatPath, *ExportArgs, &OutReturnCode, &StdOut, &StdErr, *ToolDir
+       );
 
-		if (!StdOut.IsEmpty())
-		{
-			UE_LOG(LogTemp, Log, TEXT("[DeadlockImporter Export Output]:\n%s"), *StdOut);
-		}
-		if (!StdErr.IsEmpty())
-		{
-			UE_LOG(LogTemp, Error, TEXT("[DeadlockImporter Export Error]:\n%s"), *StdErr);
-		}
+       if (!StdOut.IsEmpty())
+       {
+          UE_LOG(LogTemp, Log, TEXT("[DeadlockImporter Export Output]:\n%s"), *StdOut);
+       }
+       if (!StdErr.IsEmpty())
+       {
+          UE_LOG(LogTemp, Error, TEXT("[DeadlockImporter Export Error]:\n%s"), *StdErr);
+       }
 
-		// 2. Run Python Unreal Import Step if export succeeded
-		if (bExportSuccess && OutReturnCode == 0)
-		{
-		  
-		   FPaths::NormalizeFilename(PyScript);
+       // 2. Run Python Unreal Import Step safely via FTSTicker on the Game Thread
+       if (bExportSuccess && OutReturnCode == 0)
+       {
+          FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([this, Hero, ToolDir](float DeltaTime)
+          {
+             FString PyScriptPath = FPaths::Combine(ToolDir, TEXT("ue_import.py"));
+             FPaths::NormalizeFilename(PyScriptPath);
 
-		   // Format as: py "E:/Repo/.../ue_import.py" Solomon
-		   FString PyCommand = FString::Printf(TEXT("py \"%s\" %s"), *PyScript, *Hero->DisplayName);
+             // Define __file__ and sys.argv, then execute the file via the plugin API
+             FString PythonCommand = FString::Printf(
+                TEXT("import sys; __file__ = r'%s'; sys.argv = [__file__, '%s']; exec(open(__file__, 'rb').read())"),
+                *PyScriptPath, *Hero->DisplayName
+             );
 
-		   UE_LOG(LogTemp, Log, TEXT("[DeadlockImporter] Executing console command: %s"), *PyCommand);
+             UE_LOG(LogTemp, Log, TEXT("[DeadlockImporter] Executing Python via plugin for: %s"), *Hero->DisplayName);
 
-		   // Get world context from GEngine
-		   UWorld* WorldContext = nullptr;
-		   if (GEngine && GEngine->GameViewport)
-		   {
-			  WorldContext = GEngine->GameViewport->GetWorld();
-		   }
+             bool bSuccess = false;
+             if (IPythonScriptPlugin::Get() && IPythonScriptPlugin::Get()->IsPythonAvailable())
+             {
+                bSuccess = IPythonScriptPlugin::Get()->ExecPythonCommand(*PythonCommand);
+                UE_LOG(LogTemp, Log, TEXT("[DeadlockImporter] Python execution success: %s"), bSuccess ? TEXT("true") : TEXT("false"));
+             }
+             else
+             {
+                UE_LOG(LogTemp, Error, TEXT("[DeadlockImporter] PythonScriptPlugin is not available."));
+             }
 
-		   // Execute the python console command
-		   UKismetSystemLibrary::ExecuteConsoleCommand(WorldContext, PyCommand, nullptr);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("[DeadlockImporter] Export step failed. Skipping import."));
-		}
+             // Finish and reset state
+             bIsImporting = false;
+             StatusMessage = FString::Printf(TEXT("Finished import pipeline for %s! Check Output Log."), *Hero->DisplayName);
+             ScanHeroes();
 
-		// Finish and reset state back on the Game Thread
-		AsyncTask(ENamedThreads::GameThread, [this, Hero]()
-		{
-			bIsImporting = false;
-			StatusMessage = FString::Printf(TEXT("Finished import pipeline for %s! Check Output Log."), *Hero->DisplayName);
-			ScanHeroes();
-		});
-	});
+             // Return false to unregister the ticker (fire once)
+             return false;
+          }));
+       }
+       else
+       {
+          UE_LOG(LogTemp, Error, TEXT("[DeadlockImporter] Export step failed. Skipping import."));
 
-	return FReply::Handled();
+          AsyncTask(ENamedThreads::GameThread, [this]()
+          {
+             bIsImporting = false;
+             StatusMessage = TEXT("Export step failed.");
+             ScanHeroes();
+          });
+       }
+    });
+
+    return FReply::Handled();
 }
 
 #undef LOCTEXT_NAMESPACE

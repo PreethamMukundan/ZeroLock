@@ -35,6 +35,7 @@ public class ZeroEditorModule : ModuleRules
                 "InputCore",
                 "AssetTools",
                 "Kismet",
+                "CurveTableEditor", 
             }
         );
     }

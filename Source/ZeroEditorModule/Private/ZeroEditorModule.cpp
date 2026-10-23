@@ -1,5 +1,6 @@
 ﻿#include "ZeroEditorModule.h"
 #include "LevelEditor.h"
+#include "DeadlockImporter/ZL_DeadlockImporter.h"
 #include "Framework/Docking/TabManager.h"
 #include "GAS/BaseGameplayAbility.h"
 #include "HeroWorkbench/SZL_HeroWorkbench.h"
@@ -38,6 +39,18 @@ void FZeroEditorModuleModule::StartupModule()
 		.SetDisplayName(LOCTEXT("HeroWorkbenchTab", "Hero Workbench"))
 		.SetTooltipText(LOCTEXT("HeroWorkbenchTabTip", "Heroes, their abilities, mesh, weapon and stats, and the project audit"))
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
+	
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(SZL_DeadlockImporter::TabName, FOnSpawnTab::CreateLambda([](const FSpawnTabArgs&)
+	{
+		return SNew(SDockTab)
+			.TabRole(ETabRole::NomadTab)
+			[
+				SNew(SZL_DeadlockImporter)
+			];
+	}))
+	.SetDisplayName(LOCTEXT("DeadlockImporterTab", "Deadlock Hero Importer"))
+	.SetTooltipText(LOCTEXT("DeadlockImporterTabTip", "Browse, export, and import Deadlock heroes and animations into Unreal"))
+	.SetMenuType(ETabSpawnerMenuType::Hidden);
 }
 
 void FZeroEditorModuleModule::AddMenu(FMenuBarBuilder& MenuBarBuilder)
@@ -58,6 +71,11 @@ void FZeroEditorModuleModule::FillMenu(FMenuBuilder& MenuBuilder)
 		FText::FromString("Base Ability List"),
 		FSlateIcon(),
 		FUIAction(FExecuteAction::CreateRaw(this,&FZeroEditorModuleModule::PrintAllAbilities)));
+	
+	MenuBuilder.AddMenuEntry(LOCTEXT("DeadlockImporterMenu", "Deadlock Hero Importer"),
+	LOCTEXT("DeadlockImporterMenuTip", "Open the Deadlock hero management and automated import panel"),
+	FSlateIcon(),
+	FUIAction(FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(SZL_DeadlockImporter::TabName); })));
 }
 
 void FZeroEditorModuleModule::PrintAllAbilities()
@@ -101,6 +119,7 @@ void FZeroEditorModuleModule::ShutdownModule()
 	{
 		FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor").GetMenuExtensibilityManager()->RemoveExtender(MenuExtender);
 	}
+	
 	MenuExtender.Reset();
 }
 

@@ -35,7 +35,7 @@ def log(msg):
 
 def s2v(args):
     cmd = [CFG["source2viewer_cli"], "-i", VPK] + args
-    r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    r = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL, text=True, encoding="utf-8", errors="replace")
     if r.returncode != 0:
         raise RuntimeError(f"Source2Viewer failed ({r.returncode}): {' '.join(args)}\n{r.stdout}\n{r.stderr}")
     return r.stdout

@@ -18,6 +18,10 @@
 #include "GameFramework/Character.h"
 #include "GAS/BaseCharAttributeSet.h"
 #include "GAS/ZL_GameplayTags.h"
+#include "Mover/ZeroCubedMode.h"
+#include "Mover/ZeroGooBallMode.h"
+#include "Mover/ZeroGooBallShapeModifier.h"
+#include "MoveLibrary/FloorQueryUtils.h"
 #include "Mover/ZeroDashMove.h"
 #include "Mover/ZeroInstantMovementEffects.h"
 #include "Mover/ZeroMovementData.h"
@@ -36,6 +40,16 @@ UZeroMoverComponent::UZeroMoverComponent()
 void UZeroMoverComponent::InitializeComponent()
 {
     Super::InitializeComponent();
+
+    // The modes live in the Blueprint (BP_Mover_Monkey); add the Cubed mode here so no Blueprint has to.
+    if (!MovementModes.Contains(CubedModeName))
+    {
+        AddMovementModeFromClass(CubedModeName, CubedModeClass ? CubedModeClass.Get() : UZeroCubedMode::StaticClass());
+    }
+    if (!MovementModes.Contains(GooBallModeName))
+    {
+        AddMovementModeFromClass(GooBallModeName, GooBallModeClass ? GooBallModeClass.Get() : UZeroGooBallMode::StaticClass());
+    }
     if (UStanceSettings* MyStanceSettings = FindSharedSettings_Mutable<UStanceSettings>())
     {
         MyStanceSettings->CrouchHalfHeight = 50.0f;
@@ -93,6 +107,30 @@ void UZeroMoverComponent::OnMoverPreSimulationTick(const FMoverTimeStep& TimeSte
     if (SimStartState.bWasRooted && CurrentMode == RootedModeName)
     {
         QueueNextMode(RootedExitModeName);
+    }
+
+    // Before the cube: the ball's capsule stays while cubed inside the ball.
+    UpdateGooBallShape(FoundZeroInputs->bIsGooBall);
+
+    if (FoundZeroInputs->bIsCubed)
+    {
+        HandleCubed(*FoundZeroInputs, CurrentMode);
+        return;
+    }
+    if (FoundZeroInputs->bIsGooBall)
+    {
+        // Also takes over from the Cubed mode when a cube ends while the ball still has time.
+        HandleGooBall(*FoundDefaults, *FoundZeroInputs, CurrentMode);
+        return;
+    }
+    if (CurrentMode == CubedModeName)
+    {
+        // The cube is gone: carry on with the same velocity.
+        QueueNextMode(CubedExitModeName);
+    }
+    if (CurrentMode == GooBallModeName)
+    {
+        QueueNextMode(GooBallExitModeName);
     }
 
     const bool bSliding = CurrentMode == TEXT("Sliding");
@@ -323,6 +361,26 @@ bool UZeroMoverComponent::IsStunned() const
     return ASC && ASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STUN);
 }
 
+bool UZeroMoverComponent::IsGooBall() const
+{
+    const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+    return ASC && ASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_GOOBALL);
+}
+
+bool UZeroMoverComponent::IsCubed() const
+{
+    const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+    return ASC && ASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_CUBED);
+}
+
+float UZeroMoverComponent::GetMoveSpeedMultiplier() const
+{
+    const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+    bool bFound = false;
+    const float Multiplier = ASC ? ASC->GetGameplayAttributeValue(UBaseCharAttributeSet::GetMoveSpeedMultiplierAttribute(), bFound) : 1.0f;
+    return bFound && Multiplier > 0.0f ? FMath::Clamp(Multiplier, 0.1f, 1.0f) : 1.0f;
+}
+
 void UZeroMoverComponent::HandleRooted(const FMoverTimeStep& TimeStep, const FName& CurrentMode)
 {
     bPendingRooted = true;
@@ -341,6 +399,101 @@ void UZeroMoverComponent::HandleRooted(const FMoverTimeStep& TimeStep, const FNa
         StopMove->MixMode = EMoveMixMode::OverrideVelocity;
         QueueLayeredMove(StopMove);
     }
+}
+
+void UZeroMoverComponent::HandleCubed(const FZeroMovementInputs& ZeroInputs, const FName& CurrentMode)
+{
+    if (CurrentMode != CubedModeName)
+    {
+        QueueNextMode(CubedModeName);
+    }
+    HandleForcedMovesAsImpulses(ZeroInputs);
+}
+
+void UZeroMoverComponent::HandleForcedMovesAsImpulses(const FZeroMovementInputs& ZeroInputs)
+{
+    // Pushes (melee, Puddle Punch, knockbacks) add to the momentum once instead of overriding it for a while.
+    if (ZeroInputs.bHasAbilityMove)
+    {
+        TSharedPtr<FApplyVelocityEffect> Push = MakeShared<FApplyVelocityEffect>();
+        Push->VelocityToApply = ZeroInputs.AbilityVelocity;
+        Push->bAdditiveVelocity = true;
+        QueueInstantMovementEffect(Push);
+    }
+
+    if (ZeroInputs.bWantsStop)
+    {
+        TSharedPtr<FLayeredMove_LinearVelocity> StopMove = MakeShared<FLayeredMove_LinearVelocity>();
+        StopMove->Velocity = FVector::ZeroVector;
+        StopMove->DurationMs = 100.f;
+        StopMove->MixMode = EMoveMixMode::OverrideVelocity;
+        QueueLayeredMove(StopMove);
+    }
+
+    if (ZeroInputs.bHasPullMove)
+    {
+        TSharedPtr<FLayeredMove_MoveTo> Pull = MakeShared<FLayeredMove_MoveTo>();
+        Pull->StartLocation  = GetSimStartLocation();
+        Pull->TargetLocation = ZeroInputs.PullTarget;
+        Pull->DurationMs     = ZeroInputs.PullDuration * 1000.f;
+        Pull->MixMode        = EMoveMixMode::OverrideVelocity;
+        QueueLayeredMove(Pull);
+    }
+
+    HandleTeleportInput(ZeroInputs);
+}
+
+void UZeroMoverComponent::UpdateGooBallShape(bool bWantsBall)
+{
+    const FZeroGooBallShapeModifier* Shape = static_cast<const FZeroGooBallShapeModifier*>(FindMovementModifier(GooBallShapeHandle));
+    // The handle isn't rolled back; after a correction find the modifier by type.
+    if (!Shape)
+    {
+        Shape = FindMovementModifierByType<FZeroGooBallShapeModifier>();
+    }
+
+    if (bWantsBall && !Shape)
+    {
+        TSharedPtr<FZeroGooBallShapeModifier> NewShape = MakeShared<FZeroGooBallShapeModifier>();
+        NewShape->BallRadius = GooBallRadius;
+        GooBallShapeHandle = QueueMovementModifier(NewShape);
+    }
+    else if (!bWantsBall && Shape)
+    {
+        CancelModifierFromHandle(Shape->GetHandle());
+        GooBallShapeHandle.Invalidate();
+    }
+}
+
+void UZeroMoverComponent::HandleGooBall(const FCharacterDefaultInputs& DefaultInputs, const FZeroMovementInputs& ZeroInputs, const FName& CurrentMode)
+{
+    if (CurrentMode != GooBallModeName)
+    {
+        QueueNextMode(GooBallModeName);
+    }
+
+    // Jumps: ground + air, counted in the rolled-back sim state (shares the air jump counter), reset on the ground.
+    bool bWalkable = false;
+    FFloorCheckResult Floor;
+    UFloorQueryUtils::TryFindFloor(this, bWalkable, Floor);
+    const bool bGrounded = Floor.bBlockingHit && Floor.FloorDist <= 6.0f && Floor.HitResult.ImpactNormal.Z >= 0.5f;
+    if (bGrounded)
+    {
+        PendingAirJumpsUsed = 0;
+    }
+    if (ZeroInputs.bCustomJumpJustPressed && PendingAirJumpsUsed < GooBallMaxJumps)
+    {
+        // A jump sets the upward speed (an air jump also cancels the fall).
+        const float CurrentUp = GetSimStartVelocity().Z;
+        TSharedPtr<FApplyVelocityEffect> Jump = MakeShared<FApplyVelocityEffect>();
+        Jump->VelocityToApply = FVector(0.0f, 0.0f, GooBallJumpSpeed - FMath::Min(CurrentUp, 0.0f) - FMath::Max(CurrentUp, 0.0f) * 0.5f);
+        Jump->bAdditiveVelocity = true;
+        QueueInstantMovementEffect(Jump);
+        // Leaving the ground counts the ground jump; jumping in the air without it counts both, like the normal air jump.
+        PendingAirJumpsUsed = bGrounded ? 1 : FMath::Max(PendingAirJumpsUsed, 1) + 1;
+    }
+
+    HandleForcedMovesAsImpulses(ZeroInputs);
 }
 
 void UZeroMoverComponent::HandleTeleportInput(const FZeroMovementInputs& ZeroInputs)

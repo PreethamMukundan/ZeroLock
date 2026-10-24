@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Abilities/GameplayAbilityTargetActor_Trace.h"
+#include "Abilities/Tasks/AbilityTask_WaitInputPress.h"
 #include "Abilities/Tasks/AbilityTask_WaitInputRelease.h"
 #include "Abilities/Tasks/AbilityTask_WaitTargetData.h"
 //#include "GAS/Tasks/GAST_WaitTargetData.h"
@@ -24,6 +25,7 @@ void UBase_GA_TargetActors::TargetConfirmed(const FGameplayAbilityTargetDataHand
 		AbilityCancelledAction(Data);
 		return;
 	}
+	bTargetConfirmed = true;
 	CommitAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo);
 	AbilityConfirmedAction(Data);
 }
@@ -52,12 +54,19 @@ void UBase_GA_TargetActors::ActivateAbility(const FGameplayAbilitySpecHandle Han
                                             const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
                                             const FGameplayEventData* TriggerEventData)
 {
-	
+	bTargetConfirmed = false;
+	RepressTask = nullptr;
+
 	FVector StartLocation = GetAvatarActorFromActorInfo()->GetActorLocation();
 	FTransform SpawnTransform = FTransform::Identity;
 	SpawnTransform.SetLocation(StartLocation);
 
 	AGameplayAbilityTargetActor_Trace* TargetActor = GetWorld()->SpawnActor<AGameplayAbilityTargetActor_Trace>(Targetclass,SpawnTransform);
+	if (!TargetActor)
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
 
 	TargetActor->OwningAbility = this;
 	TargetActor->PrimaryPC = Cast<APlayerController>(ActorInfo->PlayerController.Get());
@@ -102,7 +111,28 @@ void UBase_GA_TargetActors::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		InputRTask->OnRelease.AddDynamic(this, &UBase_GA_TargetActors::TargetInputRelease);
 		InputRTask->ReadyForActivation();
 	}
-	
+
+	// Instant may already have confirmed and ended
+	if (bCancelOnRepress && TargetConfirmationStyle == EGASTargetConfirmationStyle::Confirm && IsActive() && !bTargetConfirmed)
+	{
+		RepressTask = UAbilityTask_WaitInputPress::WaitInputPress(this);
+		RepressTask->OnPress.AddDynamic(this, &UBase_GA_TargetActors::HandleRepress);
+		RepressTask->ReadyForActivation();
+	}
+}
+
+void UBase_GA_TargetActors::HandleRepress(float TimeWaited)
+{
+	if (bTargetConfirmed || !IsLocallyControlled())
+	{
+		return;
+	}
+	OnTargetRepressed(TimeWaited);
+}
+
+void UBase_GA_TargetActors::OnTargetRepressed(float TimeWaited)
+{
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
 void UBase_GA_TargetActors::AbilityConfirmedAction(const FGameplayAbilityTargetDataHandle& Data)

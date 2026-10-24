@@ -104,7 +104,9 @@ void AZeroMoverPawn::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmd
     /* Stunned (also while carried by Doorman's Luggage Cart): none of the player's own movement. Latched forced moves
      * (pulls, teleports) below still go through. Dropping the cached input also keeps keys released during the stun
      * from sticking (Stunned's DisableInput eats the release). */
-    if (MoverComponent && MoverComponent->IsStunned())
+    // Cubed (Viscous's Cube) too: the cube slides on its own; jump only asks to escape (AZeroLockCharacter).
+    const bool bCubed = MoverComponent && MoverComponent->IsCubed();
+    if (MoverComponent && (MoverComponent->IsStunned() || bCubed))
     {
         CachedMoveInput = FVector2D::ZeroVector;
         bLocalJumpPressed = false;
@@ -129,6 +131,11 @@ void AZeroMoverPawn::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmd
 
         ControlVector = (ForwardDirection * CachedMoveInput.Y) + (RightDirection * CachedMoveInput.X);
         ControlVector.Normalize();
+        // Slows: the Mover's desired speed is MaxSpeed × input length, so a shorter input walks slower (predicted with the input)
+        if (MoverComponent)
+        {
+            ControlVector *= MoverComponent->GetMoveSpeedMultiplier();
+        }
     }
 
     DefaultInputs.SetMoveInput(EMoveInputType::DirectionalIntent, ControlVector); 
@@ -160,6 +167,16 @@ void AZeroMoverPawn::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmd
         ZeroInputs.LookDir = Controller->GetControlRotation();
     }
     ZeroInputs.bIsRooted = MoverComponent && MoverComponent->IsRooted();
+    ZeroInputs.bIsCubed = bCubed;
+    // Goo Ball: steer and jump only; no dash, crouch/slide, melee lunge or zipline.
+    ZeroInputs.bIsGooBall = MoverComponent && MoverComponent->IsGooBall();
+    if (ZeroInputs.bIsGooBall)
+    {
+        ZeroInputs.bWantsToCrouch = false;
+        ZeroInputs.bWantsToDash = false;
+        ZeroInputs.bWantsToMelee = false;
+        ZeroInputs.bWantsToZipline = false;
+    }
 
     if (MoverComponent && MoverComponent->bLatchedAbilityMove)
     {

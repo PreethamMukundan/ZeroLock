@@ -5,7 +5,7 @@ Paths below are under `Source/ZeroLock/`.
 
 ## Flow of one shot
 1. `AZeroLockCharacter::PrimaryFirePressed` (`ZeroLockCharacter.cpp:303`) runs a **local looping timer** at the `FireRate` attribute (seconds) → `PrimaryFireTickFunction` (`:337`) → `TryActivateAbilityByClass(PrimaryFireAbility)` while `CurrentAmmo > 0`. `ChangeFireRate` (`:330`) restarts it on attribute change.
-2. `UZL_GA_WeaponFire` (`Weapon/ZL_GA_WeaponFire`, LocalPredicted, InstancedPerExecution, blocked by `ZeroLock.Weapon.Reloading`) → `CommitAbility` (ammo cost GE set in BP).
+2. `UZL_GA_WeaponFire` (`Weapon/ZL_GA_WeaponFire`, LocalPredicted, InstancedPerExecution, blocked by `ZeroLock.Weapon.Reloading` and (in `CanActivateAbility`) by `Zerolock.Status.GooBall`) → `CommitAbility` (ammo cost GE set in BP).
    - `FireMode`: Single / Burst (`BurstCount` 3, `BurstInterval` 0.07, chained `WaitDelay`) / Shotgun (`PelletCount` 8, `SpreadAngle` 6°). `BulletSpreadAngle` (default 0) uses `VRandCone` **on the client**.
    - `GetAimData` (`:140`): spawn at `MuzzleSocketName` or actor + camera-forward × `SpawnForwardOffset` (100). Aim trace from the camera (projected to character depth) against WorldStatic, Pawn, `ECC_GameTraceChannel1` ("Hero"), `MaxAimDistance` 20000; converges unless the hit is behind the muzzle.
    - Remote server starts N spawn tasks with placeholder transforms, each consuming one client packet. Ability ends when all spawns report (`OnSpawnFinished`, `:189`).

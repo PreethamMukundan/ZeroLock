@@ -8,7 +8,7 @@
   - `Core`: `BP_ZeroGameInstance`, `ZeroBaseGameMode`, `BP_BaseZiplineActor`, `AN_TriggerEventNotify`.
   - `monkeyBoi/`: `BP_Mover_Monkey` (reference Mover pawn: modes + transitions configured here), abilities, montages. `Moveer/`: `BP_ZeromoverPawn`, Mover test game mode and movement settings.
   - `Bow_Bitch`, `GuNGuy`: older per-hero folders. `DeadlockChar/Pocket`: Pocket built from the Deadlock import.
-  - `HeroAbilities/{ApolloTest,DoormanTest,DrifterTest,LashTesst,PocketTest}/<Ability>/BP_<Hero>_<Ability>`: hero ability BPs. Each hero folder also holds its curve table `C_<Hero>` (ability values per level) and, for the four Deadlock heroes, `GE_<Hero>_DefaultStats` (the hero BP's `DefaultGameplayEffect`; copies of `Developers/rpm86/GAS_TEST/GE_Defaulttest`, made 2026-10-22).
+  - `HeroAbilities/{ApolloTest,DoormanTest,DrifterTest,LashTesst,PocketTest,ViscousTest}/<Ability>/BP_<Hero>_<Ability>`: hero ability BPs. Each hero folder also holds its curve table `C_<Hero>` (ability values per level) and, for the four Deadlock heroes, `GE_<Hero>_DefaultStats` (the hero BP's `DefaultGameplayEffect`; copies of `Developers/rpm86/GAS_TEST/GE_Defaulttest`, made 2026-10-22).
   - `Levels`: `CharacterSelector.umap`, `Lvl_MainMenu.umap`. `MATS`: materials.
   - `UI/BP/...`: widget BPs (`Widgets/WBP_BaseUILayout`, `BP_BAseHUD`, `WBP_PlayerHUD`, `CharacterSelector/`, `DamageNumber/`, `Input/`, `OverHead/`, `Widgets/ItemShop`, `MainMenu`, `Abilities`, `StatBoxs`; `UI/BP/Weapon` holds fire-ability BPs, misplaced). `UI/CommonStyles`, `UI/CommonUI/Inputs`, `UI/Images`, `UI/Materials`.
 - `Developers/rpm86/`: personal sandbox (test GEs, editor utility widgets `EUW_*`, `EOSTEST`, `GAS_TEST`).

@@ -136,6 +136,9 @@ void AZeroLockCharacter::BeginPlay()
 
 	ParryComp->SetVisibility(false);
 
+	// Only fires for the locally controlled pawn (jump is input).
+	OnJumpInputPressed.AddUObject(this, &AZeroLockCharacter::HandleJumpForEscape);
+
 	if (UZeroMoverComponent* MoverComp = GetZeroMoverComponent())
 	{
 		MoverComp->OnStaminaChanged.AddUObject(this, &AZeroLockCharacter::MoverStaminaChanged);
@@ -778,7 +781,20 @@ void AZeroLockCharacter::Stunned(FGameplayTag GameplayTag, int NewCount)
 	APlayerController* PC = Cast<APlayerController>(GetController());
 	if (NewCount > 0)
 	{
-		AbilitySystemComp->CancelAllAbilities();
+		// Only abilities that opt in are cancelled; the stun blocks new activations either way (UBaseGameplayAbility::CanActivateAbility)
+		TArray<FGameplayAbilitySpecHandle> ToCancel;
+		for (const FGameplayAbilitySpec& Spec : AbilitySystemComp->GetActivatableAbilities())
+		{
+			const UBaseGameplayAbility* Ability = Cast<UBaseGameplayAbility>(Spec.Ability);
+			if (Spec.IsActive() && Ability && Ability->bCancelOnStun)
+			{
+				ToCancel.Add(Spec.Handle);
+			}
+		}
+		for (const FGameplayAbilitySpecHandle& Handle : ToCancel)
+		{
+			AbilitySystemComp->CancelAbilityHandle(Handle);
+		}
 		if (PC) DisableInput(PC);
 		
 		if (StunChangedDelegate.IsBound())
@@ -843,17 +859,38 @@ void AZeroLockCharacter::PerformMeleeStrike(const FVector& Start, const FVector&
 	}
 	for (const FHitResult& Hit : Hits)
 	{
-		if (AZeroLockCharacter* Villan = Cast<AZeroLockCharacter>(Hit.GetActor()))
+		AActor* HitActor = Hit.GetActor();
+		AZeroLockCharacter* Villan = Cast<AZeroLockCharacter>(HitActor);
+		// Viscous's Cube is its own actor attached to the hero inside.
+		if (!Villan && HitActor)
+		{
+			Villan = Cast<AZeroLockCharacter>(HitActor->GetAttachParentActor());
+		}
+		if (Villan)
 		{
 			Villans.AddUnique(Villan);
 		}
 	}
 
 	const FGameplayTag ParryTag = ZerolockGameplayTagsForBinding::TAG_MELEE_PARRY;
+	const FVector StrikeDir = (End - Start).GetSafeNormal2D();
 	TArray<AZeroLockCharacter*> Targets;
 	for (AZeroLockCharacter* Villan : Villans)
 	{
-		if (!Villan || Villan == this || Villan->bIsDead || IsOnSameTeam(Villan) || !Villan->GetMyAbilitySystemComp())
+		if (!Villan || Villan == this || Villan->bIsDead || !Villan->GetMyAbilitySystemComp())
+		{
+			continue;
+		}
+
+		// Cubed (any team): the strike shoves the cube instead (impulse in its Cubed mover mode), no damage, no parry.
+		if (Villan->GetMyAbilitySystemComp()->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_CUBED))
+		{
+			const FVector Push = StrikeDir * CubePushSpeed + FVector::UpVector * CubePushLift;
+			UBaseGameplayAbility::SendVictimMoveEvent(this, Villan, TEXT("Zerolock.Movement.Forced"), 0.1f, &Push);
+			continue;
+		}
+
+		if (IsOnSameTeam(Villan))
 		{
 			continue;
 		}
@@ -875,6 +912,24 @@ void AZeroLockCharacter::PerformMeleeStrike(const FVector& Start, const FVector&
 	for (AZeroLockCharacter* Villan : Targets)
 	{
 		AbilitySystemComp->ApplyMeleeDamage(Villan->GetMyAbilitySystemComp(), Damage);
+	}
+}
+
+void AZeroLockCharacter::HandleJumpForEscape()
+{
+	if (AbilitySystemComp && AbilitySystemComp->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_CUBED))
+	{
+		// The jump only breaks the cube open.
+		ConsumeJumpPress();
+		Server_RequestJumpEscape();
+	}
+}
+
+void AZeroLockCharacter::Server_RequestJumpEscape_Implementation()
+{
+	if (AbilitySystemComp && AbilitySystemComp->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_CUBED))
+	{
+		OnServerJumpEscapeRequested.Broadcast();
 	}
 }
 

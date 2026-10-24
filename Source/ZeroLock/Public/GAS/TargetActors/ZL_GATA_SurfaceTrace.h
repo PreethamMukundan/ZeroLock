@@ -78,9 +78,13 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Surface|Preview")
 	FBox PreviewBox = FBox(ForceInit);
 
-	/** Scaled to PreviewBox (assumed a 100 cm cube centered on its origin, like the engine Cube). */
+	/** Placement space: X out of the surface. Any mesh works: its bounds are fitted to PreviewBox (bFitPreviewMeshToBox). */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Surface|Preview")
 	TObjectPtr<UStaticMesh> PreviewMesh;
+
+	/** Stretch the mesh's bounds onto PreviewBox. Off: the mesh keeps its own size, pivot at the placement. */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Surface|Preview")
+	bool bFitPreviewMeshToBox = true;
 
 	/** Needs a "Color" vector parameter (engine BasicShapeMaterial by default). */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Surface|Preview")
@@ -97,6 +101,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = Surface)
 	bool IsSurfaceAllowed(const FVector& Normal) const;
+
+	/** The SurfaceMode angle rule without an actor (abilities' server re-check). */
+	static bool IsSurfaceAllowedFor(EZL_SurfaceTargetMode Mode, float GroundAngle, float WallTolerance, const FVector& Normal);
 
 	virtual void ConfirmTargeting() override;
 

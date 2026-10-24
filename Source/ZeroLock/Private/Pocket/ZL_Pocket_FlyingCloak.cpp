@@ -17,6 +17,7 @@
 UZL_Pocket_FlyingCloak::UZL_Pocket_FlyingCloak()
 {
 	bIsMovementAbility = true;
+	bCancelOnStun = true;
 	// SpawnPredictedProjectile requires a Local Predicted ability.
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 }

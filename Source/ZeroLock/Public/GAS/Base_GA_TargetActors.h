@@ -7,6 +7,7 @@
 #include "Base_GA_TargetActors.generated.h"
 
 class AGATA_SingleLineTrace;
+class UAbilityTask_WaitInputPress;
 /**
  * 
  */
@@ -47,4 +48,22 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Ability")
 	EGASTargetConfirmationStyle TargetConfirmationStyle;
+
+	/** Confirm style only: pressing the ability again while aiming calls OnTargetRepressed (default: free cancel). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Ability")
+	bool bCancelOnRepress = false;
+
+protected:
+	/** Set once the target passed CanConfirmTarget: re-presses are ignored from then on. */
+	bool bTargetConfirmed = false;
+
+	/** Re-press while aiming, on the aiming player's machine only (a cancel replicates through EndAbility). */
+	virtual void OnTargetRepressed(float TimeWaited);
+
+private:
+	UPROPERTY()
+	TObjectPtr<UAbilityTask_WaitInputPress> RepressTask;
+
+	UFUNCTION()
+	void HandleRepress(float TimeWaited);
 };

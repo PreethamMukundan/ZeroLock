@@ -147,9 +147,11 @@ protected:
 	int32 LightMeleePressHeavyCount = 0;
 
 public:
-	/** Server: sphere sweep Start→End (Hero + Pawn object types) plus ExtraTarget. Enemies only (no self, dead or
-	 * teammates). If any of them is parrying (TAG_MELEE_PARRY) the hero gets ParriedStunEffect and nobody is hit;
-	 * otherwise each takes Damage as melee damage. Used by heavy melee (MeleeStrike) and UZeroBase_LightMelee. */
+	/** Server: sphere sweep Start→End (Hero + Pawn object types) plus ExtraTarget. Cubed heroes (Viscous's Cube, any
+	 * team; the cube actor counts as its hero) are pushed along the strike at CubePushSpeed instead of hit. Otherwise
+	 * enemies only (no self, dead or teammates). If any of them is parrying (TAG_MELEE_PARRY) the hero gets
+	 * ParriedStunEffect and nobody is hit; otherwise each takes Damage as melee damage. Used by heavy melee
+	 * (MeleeStrike) and UZeroBase_LightMelee. */
 	/** TelemetrySource: name of the strike in telemetry damage/kill stats. */
 	void PerformMeleeStrike(const FVector& Start, const FVector& End, float Radius, float Damage, AActor* ExtraTarget = nullptr, const FString& TelemetrySource = TEXT("Melee"));
 
@@ -280,6 +282,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS/Melee|Strike")
 	TSubclassOf<UGameplayEffect> ParriedStunEffect;
 
+	/** A melee strike on a cubed hero (Viscous's Cube) pushes the cube: impulse along the strike (cm/s), plus CubePushLift up. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS/Melee|Strike")
+	float CubePushSpeed = 1200.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS/Melee|Strike")
+	float CubePushLift = 200.f;
+
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "GAS")
 	TArray<FGameplayAbilitySpecHandle> DefaultAbilitiesHandles;
 
@@ -303,6 +312,15 @@ public:
 	void HandleDeath();
 	UFUNCTION(Server, Reliable)
 	void ServerHandleDeath(APlayerController* PC);
+
+	/** Server: a cubed player pressed jump (Viscous's Cube listens and breaks open). */
+	FSimpleMulticastDelegate OnServerJumpEscapeRequested;
+
+	UFUNCTION(Server, Reliable)
+	void Server_RequestJumpEscape();
+
+	/** Local jump press: while cubed, swallow it and ask the server to escape. */
+	void HandleJumpForEscape();
 
 	/** Server: fired by AZero_BaseGameModeBase::HandlePlayerDeath before kill credit, Death() and the respawn timer
 	 * (e.g. Doorman's hotel takes its guest out first). */

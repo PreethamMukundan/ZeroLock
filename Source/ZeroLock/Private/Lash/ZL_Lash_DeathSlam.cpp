@@ -19,6 +19,7 @@
 
 UZL_Lash_DeathSlam::UZL_Lash_DeathSlam()
 {
+	bCancelOnStun = true;
 }
 
 void UZL_Lash_DeathSlam::TargetTimeOut()

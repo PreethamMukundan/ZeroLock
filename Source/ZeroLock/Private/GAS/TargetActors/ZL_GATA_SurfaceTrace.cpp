@@ -71,18 +71,37 @@ bool AZL_GATA_SurfaceTrace::UpdatePreview(bool bHasHit, const FTransform& Placem
 		PreviewMID->SetVectorParameterValue(TEXT("Color"), bValid ? ValidPreviewColor : InvalidPreviewColor);
 	}
 
-	PreviewComponent->SetWorldTransform(FTransform(Placement.GetRotation(), Placement.TransformPositionNoScale(PreviewBox.GetCenter()), PreviewBox.GetSize() / 100.f));
+	if (!bFitPreviewMeshToBox)
+	{
+		PreviewComponent->SetWorldTransform(FTransform(Placement.GetRotation(), Placement.GetLocation()));
+		return true;
+	}
+
+	// Fit the mesh's own bounds onto the box (the engine Cube: 100 cm centered, so scale = size / 100)
+	const FBox MeshBounds = PreviewMesh->GetBoundingBox();
+	const FVector MeshSize = MeshBounds.GetSize();
+	const FVector BoxSize = PreviewBox.GetSize();
+	const FVector Scale(MeshSize.X > KINDA_SMALL_NUMBER ? BoxSize.X / MeshSize.X : 1.f,
+		MeshSize.Y > KINDA_SMALL_NUMBER ? BoxSize.Y / MeshSize.Y : 1.f,
+		MeshSize.Z > KINDA_SMALL_NUMBER ? BoxSize.Z / MeshSize.Z : 1.f);
+	const FVector LocalPivot = PreviewBox.GetCenter() - MeshBounds.GetCenter() * Scale;
+	PreviewComponent->SetWorldTransform(FTransform(Placement.GetRotation(), Placement.TransformPositionNoScale(LocalPivot), Scale));
 	return true;
 }
 
 bool AZL_GATA_SurfaceTrace::IsSurfaceAllowed(const FVector& Normal) const
 {
-	switch (SurfaceMode)
+	return IsSurfaceAllowedFor(SurfaceMode, MaxGroundAngle, WallAngleTolerance, Normal);
+}
+
+bool AZL_GATA_SurfaceTrace::IsSurfaceAllowedFor(EZL_SurfaceTargetMode Mode, float GroundAngle, float WallTolerance, const FVector& Normal)
+{
+	switch (Mode)
 	{
 	case EZL_SurfaceTargetMode::Ground:
-		return Normal.Z >= FMath::Cos(FMath::DegreesToRadians(MaxGroundAngle));
+		return Normal.Z >= FMath::Cos(FMath::DegreesToRadians(GroundAngle));
 	case EZL_SurfaceTargetMode::Wall:
-		return FMath::Abs(Normal.Z) <= FMath::Sin(FMath::DegreesToRadians(WallAngleTolerance));
+		return FMath::Abs(Normal.Z) <= FMath::Sin(FMath::DegreesToRadians(WallTolerance));
 	default:
 		return true;
 	}

@@ -31,6 +31,23 @@ namespace ZerolockGameplayTagsForBinding
 	/** SetByCaller tag for a cooldown GE's duration (UBaseGameplayAbility::ApplyCooldown sets it, UZL_GE_BaseCooldown reads it). */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SETBYCALLER_COOLDOWN_DURATION)
 
+	/** SetByCaller tag for UZL_GE_MoveSlow: the MoveSpeedMultiplier the slow sets (e.g. 0.6 = 40% slower). */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SETBYCALLER_MOVE_SPEED_MULTIPLIER)
+
+	/** Granted while a UZL_GE_MoveSlow is on the owner (on the spec, by whoever applies it). */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_SLOWED)
+
+	/** Encased in Viscous's Cube (UZL_Viscous_CubeEffect): no own abilities (UBaseGameplayAbility::CanActivateAbility, event-triggered
+	 * ones still run), no own movement input, Mover in the Cubed mode (pushes are impulses), jump asks the server to escape. Also the HUD status bar's tag. */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_CUBED)
+
+	/** Viscous is a Goo Ball (UZL_Viscous_GooBall's ActivationOwnedTags, predicted): Mover GooBall mode + sphere capsule, no weapon. */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_GOOBALL)
+
+	/** SetByCaller tags for UZL_Viscous_GooBallEffect: added WeaponResistance / SpiritResistance (percent). */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SETBYCALLER_BULLET_RESIST)
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SETBYCALLER_SPIRIT_RESIST)
+
 	/** Granted by the recharge timer of a charged ability in that EGameplayAbilitySlot (UBaseCharAbilitySystemComponent::ConsumeAbilityCharge);
 	 * the HUD reads the next charge's time from it. */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_CHARGE_RECHARGE_SLOT1)
@@ -54,7 +71,7 @@ namespace ZerolockGameplayTagsForBinding
 	 * Not under ZeroLock.Abilities on purpose: that branch blocks every ability. */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_MOVEMENT_ABILITIES_BLOCKED)
 
-	/** Stunned: AZeroLockCharacter::Stunned cancels abilities and disables input; ABP_DeadlockHero plays StunLoop. */
+	/** Stunned: no new abilities; AZeroLockCharacter::Stunned cancels the running ones with bCancelOnStun and disables input; ABP_DeadlockHero plays StunLoop. */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STUN)
 
 	/** Parrying (BPGE_Parry): a melee strike that lands on the owner stuns the attacker instead (AZeroLockCharacter::MeleeStrike). */

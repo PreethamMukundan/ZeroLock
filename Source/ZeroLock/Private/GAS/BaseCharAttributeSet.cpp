@@ -24,6 +24,7 @@ UBaseCharAttributeSet::UBaseCharAttributeSet()
 	HealingReduction = 0.0f;
 	CurrentSpeed = 0.0f;
 	CurrentJump = 0.0f;
+	MoveSpeedMultiplier = 1.0f;
 	// Deadlock-style defaults: 3 stamina, one back every 5 seconds. Override them in the hero's DefaultGameplayEffect.
 	MaxStamina = 3.0f;
 	Stamina = 3.0f;
@@ -56,6 +57,10 @@ void UBaseCharAttributeSet::PreAttributeChange(const FGameplayAttribute & Attrib
 	if (Attribute == GetMaximumHealthAttribute())
 	{
 		AdjustAttributeForMaxChange(CurrentHealth, MaximumHealth, NewValue, GetCurrentHealthAttribute());
+	}
+	else if (Attribute == GetMoveSpeedMultiplierAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.1f, 1.0f);
 	}
 
 }
@@ -295,6 +300,7 @@ void UBaseCharAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet,HealingBonus, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, CurrentSpeed, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, CurrentJump, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, MoveSpeedMultiplier, COND_None, REPNOTIFY_Always);
 	
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, Stamina, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, MaxStamina, COND_None, REPNOTIFY_OnChanged);
@@ -411,6 +417,10 @@ void UBaseCharAttributeSet::OnRep_CurrentSpeed(const FGameplayAttributeData& Old
 void UBaseCharAttributeSet::OnRep_CurrentJump(const FGameplayAttributeData& OldValue)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, CurrentJump, OldValue);
+}
+void UBaseCharAttributeSet::OnRep_MoveSpeedMultiplier(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, MoveSpeedMultiplier, OldValue);
 }
 
 void UBaseCharAttributeSet::OnRep_MaximumHealth(const FGameplayAttributeData & OldValue)

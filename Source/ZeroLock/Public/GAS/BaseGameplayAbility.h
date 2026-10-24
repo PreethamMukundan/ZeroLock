@@ -93,6 +93,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ZeroLock|Ability")
 	bool bIsMovementAbility = false;
 
+	/** A stun (ZeroLock.Stun) cancels this ability while it runs. Off: the stun only blocks new activations and input. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ZeroLock|Ability")
+	bool bCancelOnStun = false;
+
 	UFUNCTION()
 	void SetInputID(EGASAbilityInputID in);
 

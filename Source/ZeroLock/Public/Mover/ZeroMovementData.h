@@ -88,6 +88,14 @@ struct FZeroMovementInputs : public FMoverDataStructBase
 	UPROPERTY(BlueprintReadWrite, Category="Zero")
 	bool bIsRooted = false;
 
+	// Sampled from the owner's Zerolock.Status.Cubed tag (Viscous's Cube): the sim runs the Cubed mode and treats ability moves as impulses.
+	UPROPERTY(BlueprintReadWrite, Category="Zero")
+	bool bIsCubed = false;
+
+	// Sampled from Zerolock.Status.GooBall (Viscous's Goo Ball): sphere capsule, GooBall mode, ball jumps.
+	UPROPERTY(BlueprintReadWrite, Category="Zero")
+	bool bIsGooBall = false;
+
     virtual UScriptStruct* GetScriptStruct() const override { return FZeroMovementInputs::StaticStruct(); }
     virtual FMoverDataStructBase* Clone() const override { return new FZeroMovementInputs(*this); }
 
@@ -123,6 +131,8 @@ struct FZeroMovementInputs : public FMoverDataStructBase
     	Ar << bTeleportSetsVelocity;
     	Ar << TeleportVelocity;
     	Ar << bIsRooted;
+    	Ar << bIsCubed;
+    	Ar << bIsGooBall;
 
     	Map->SerializeObject(Ar, AActor::StaticClass(), (UObject*&)DynamicTargetActor);
     

@@ -75,6 +75,11 @@ public:
 	FGameplayAttributeData CurrentJump;
 	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, CurrentJump)
 
+	/** Own movement speed multiplier (1 = normal, clamped 0.1-1). Slows lower it; the pawn scales its move input with it (predicted). */
+	UPROPERTY(BlueprintReadOnly, Category = "Movement Attribute Set", ReplicatedUsing = OnRep_MoveSpeedMultiplier)
+	FGameplayAttributeData MoveSpeedMultiplier;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, MoveSpeedMultiplier)
+
 	// Stamina is simulated by UZeroMoverComponent (predicted, rolls back); the server mirrors it here for replication and UI.
 	// Effects that modify Stamina directly get overwritten by the mover. Change MaxStamina / StaminaRegenRate instead.
 	UPROPERTY(BlueprintReadOnly, Category = "Stamina Attribute Set", ReplicatedUsing = OnRep_Stamina)
@@ -250,6 +255,9 @@ protected:
 
 	UFUNCTION()
 		virtual void OnRep_CurrentJump(const FGameplayAttributeData& OldValue);
+
+	UFUNCTION()
+		virtual void OnRep_MoveSpeedMultiplier(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
 		virtual void OnRep_MaximumHealth(const FGameplayAttributeData& OldValue);

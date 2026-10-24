@@ -42,6 +42,17 @@ bool UBaseGameplayAbility::CanActivateAbility(const FGameplayAbilitySpecHandle H
 		}
 		return false;
 	}
+	// Cubed (Viscous's Cube): no actions of its own, but event-triggered reactions (knockback pushes) still run.
+	// Not ZeroLock.Abilities.Blocked: that tag would also block the victim move abilities.
+	if (AbilityTriggers.IsEmpty() && ActorInfo && ActorInfo->AbilitySystemComponent.IsValid()
+		&& ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_CUBED))
+	{
+		if (OptionalRelevantTags)
+		{
+			OptionalRelevantTags->AddTag(ZerolockGameplayTagsForBinding::TAG_STATUS_CUBED);
+		}
+		return false;
+	}
 	if (bIsMovementAbility && ActorInfo && ActorInfo->AbilitySystemComponent.IsValid()
 		&& ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_MOVEMENT_ABILITIES_BLOCKED))
 	{

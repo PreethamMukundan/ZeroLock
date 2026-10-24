@@ -159,11 +159,71 @@ public:
 	/** True while the owner has the ZeroLock.Stun tag: ProduceInput drops the player's own move inputs (latched forced moves still apply). */
 	bool IsStunned() const;
 
+	/**
+	 * The owner's MoveSpeedMultiplier attribute (slows), 1 without one. Only read when producing input: ProduceInput scales the
+	 * move input by it, and the Mover's desired speed is MaxSpeed × input length, so walking speed and acceleration drop (predicted).
+	 */
+	float GetMoveSpeedMultiplier() const;
+
+	/** Mode the pawn slides in while cubed (Viscous's Cube). Added at runtime from CubedModeClass if the mode map doesn't have it. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Cubed")
+	FName CubedModeName = FName("Cubed");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Cubed")
+	TSubclassOf<UBaseMovementMode> CubedModeClass;
+
+	/** Mode queued when the cube ends (keeps the velocity). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Cubed")
+	FName CubedExitModeName = FName("Falling");
+
+	/** True while the owner has Zerolock.Status.Cubed. Only read when producing input (FZeroMovementInputs::bIsCubed). */
+	bool IsCubed() const;
+
+	/** Mode the pawn rolls in as Viscous's Goo Ball. Added at runtime from GooBallModeClass if the mode map doesn't have it. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Goo Ball")
+	FName GooBallModeName = FName("GooBall");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Goo Ball")
+	TSubclassOf<UBaseMovementMode> GooBallModeClass;
+
+	/** Mode queued when the ball ends (keeps the velocity). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Goo Ball")
+	FName GooBallExitModeName = FName("Falling");
+
+	/** Capsule becomes a sphere of this radius while in the ball (FZeroGooBallShapeModifier, predicted). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Goo Ball", meta = (ForceUnits = "cm"))
+	float GooBallRadius = 90.0f;
+
+	/** Jumps in the ball: 2 = ground jump + one in the air. Reset on the ground. No stamina. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Goo Ball")
+	int32 GooBallMaxJumps = 2;
+
+	/** Upward speed a ball jump sets (cm/s). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Goo Ball", meta = (ForceUnits = "cm/s"))
+	float GooBallJumpSpeed = 900.0f;
+
+	/** True while the owner has Zerolock.Status.GooBall. Only read when producing input (FZeroMovementInputs::bIsGooBall). */
+	bool IsGooBall() const;
+
 	/** True while the current sim step re-runs a frame after a correction. Use it to skip cosmetics. */
 	bool IsResimulatingStep() const { return bStepIsResimulating; }
 
 protected:
 	void HandleRooted(const FMoverTimeStep& TimeStep, const FName& CurrentMode);
+
+	/** Cubed: hold the Cubed mode; ability moves become impulses; pulls, stops and teleports still apply. */
+	void HandleCubed(const FZeroMovementInputs& ZeroInputs, const FName& CurrentMode);
+
+	/** Goo Ball: queue/cancel the sphere-capsule modifier (runs every step, also while cubed inside the ball). */
+	void UpdateGooBallShape(bool bWantsBall);
+
+	/** Goo Ball: hold the GooBall mode; ball jumps; ability moves become impulses; pulls, stops, teleports apply. */
+	void HandleGooBall(const FCharacterDefaultInputs& DefaultInputs, const FZeroMovementInputs& ZeroInputs, const FName& CurrentMode);
+
+	FMovementModifierHandle GooBallShapeHandle;
+
+	/** Ability moves, stops, pulls, teleports as Cubed / GooBall handle them (pushes add velocity once). */
+	void HandleForcedMovesAsImpulses(const FZeroMovementInputs& ZeroInputs);
 
 	void HandleTeleportInput(const FZeroMovementInputs& ZeroInputs);
 

@@ -46,10 +46,15 @@ AZL_GATA_ConeSingleTarget::AZL_GATA_ConeSingleTarget()
 }
 
 bool AZL_GATA_ConeSingleTarget::IsValidConeTarget(const AZeroLockCharacter* Hero, const AZeroLockCharacter* Target, const FVector& Origin,
-	const FVector& AimDir, float Range, float HalfAngleDeg, float* OutAngleDeg)
+	const FVector& AimDir, float Range, float HalfAngleDeg, EZL_ConeTargetTeam Team, float* OutAngleDeg)
 {
-	if (!Hero || !IsValid(Target) || Target == Hero || Target->bIsDead || !Target->GetAbilitySystemComponent()
-		|| const_cast<AZeroLockCharacter*>(Hero)->IsOnSameTeam(const_cast<AZeroLockCharacter*>(Target)))
+	if (!Hero || !IsValid(Target) || Target == Hero || Target->bIsDead || !Target->GetAbilitySystemComponent())
+	{
+		return false;
+	}
+
+	const bool bSameTeam = const_cast<AZeroLockCharacter*>(Hero)->IsOnSameTeam(const_cast<AZeroLockCharacter*>(Target));
+	if ((Team == EZL_ConeTargetTeam::Enemies && bSameTeam) || (Team == EZL_ConeTargetTeam::Allies && !bSameTeam))
 	{
 		return false;
 	}
@@ -87,11 +92,22 @@ FHitResult AZL_GATA_ConeSingleTarget::PerformTrace(AActor* InSourceActor)
 	CurrentTarget = nullptr;
 
 	// Only the aiming player picks; the server gets the result as target data.
-	const AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(InSourceActor);
+	AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(InSourceActor);
 	const UBaseGameplayAbility* Ability = Cast<UBaseGameplayAbility>(OwningAbility);
 	if (!Hero || !Ability || !PrimaryPC || !PrimaryPC->IsLocalController())
 	{
 		UpdateIndicator();
+		return HitResult;
+	}
+
+	// Self-cast: the target data names the caster
+	if (bConfirmOnSelf)
+	{
+		CurrentTarget = Hero;
+		HitResult = FHitResult(Hero, nullptr, Hero->GetActorLocation(), FVector::UpVector);
+		HitResult.bBlockingHit = true;
+		HitResult.TraceStart = Hero->GetActorLocation();
+		HitResult.TraceEnd = Hero->GetActorLocation();
 		return HitResult;
 	}
 
@@ -108,7 +124,7 @@ FHitResult AZL_GATA_ConeSingleTarget::PerformTrace(AActor* InSourceActor)
 	{
 		AZeroLockCharacter* Candidate = Cast<AZeroLockCharacter>(Overlap.GetActor());
 		float Angle = 0.0f;
-		if (Candidate && IsValidConeTarget(Hero, Candidate, Origin, AimDir, MaxRange, ConeHalfAngle, &Angle)
+		if (Candidate && IsValidConeTarget(Hero, Candidate, Origin, AimDir, MaxRange, ConeHalfAngle, TargetTeam, &Angle)
 			&& Angle < BestAngle && (!TargetCheck || TargetCheck(Candidate)))
 		{
 			BestAngle = Angle;
@@ -188,6 +204,12 @@ void AZL_GATA_ConeSingleTarget::ConfirmTargeting()
 		return;
 	}
 
+	if (bSelfCastWithoutTarget)
+	{
+		ConfirmOnSelf();
+		return;
+	}
+
 	// Instant confirms once and Quick confirms on release: neither gets another try
 	const UBase_GA_TargetActors* TargetAbility = Cast<UBase_GA_TargetActors>(OwningAbility);
 	if (TargetAbility && TargetAbility->TargetConfirmationStyle != EGASTargetConfirmationStyle::Confirm)
@@ -201,4 +223,14 @@ void AZL_GATA_ConeSingleTarget::ConfirmTargeting()
 	{
 		GenericDelegateBoundASC->GenericLocalConfirmCallbacks.AddUniqueDynamic(this, &AZL_GATA_ConeSingleTarget::ConfirmTargeting);
 	}
+}
+
+void AZL_GATA_ConeSingleTarget::ConfirmOnSelf()
+{
+	if (!SourceActor || !ShouldProduceTargetData())
+	{
+		return;
+	}
+	bConfirmOnSelf = true;
+	Super::ConfirmTargeting();
 }

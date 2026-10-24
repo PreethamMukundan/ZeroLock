@@ -19,6 +19,7 @@
 UZL_Apollo_FlawlessAdvance::UZL_Apollo_FlawlessAdvance()
 {
 	bIsMovementAbility = true;
+	bCancelOnStun = true;
 }
 
 

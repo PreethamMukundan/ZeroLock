@@ -6,7 +6,9 @@
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "AbilitySystemComponent.h"
 #include "Engine/World.h"
+#include "GAS/ZL_GameplayTags.h"
 #include "Weapon/Projectile.h"
 #include "Weapon/ZL_Task_SpawnPredictedProjectile.h"
 #include "ZeroLock/ZeroLockCharacter.h"
@@ -22,6 +24,17 @@ UZL_GA_WeaponFire::UZL_GA_WeaponFire()
 	{
 		ActivationBlockedTags.AddTag(ReloadTag);
 	}
+}
+
+bool UZL_GA_WeaponFire::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
+{
+	if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid()
+		&& ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_GOOBALL))
+	{
+		return false;
+	}
+	return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
 }
 
 void UZL_GA_WeaponFire::ActivateAbility(const FGameplayAbilitySpecHandle Handle,

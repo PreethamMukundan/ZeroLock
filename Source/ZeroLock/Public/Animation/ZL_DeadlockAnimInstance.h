@@ -60,9 +60,30 @@ struct ZEROLOCK_API FZLDeadlockAnimState
 	UPROPERTY(BlueprintReadOnly, Category = "Deadlock")
 	bool bHeavyMelee = false;
 
-	/** Increments on every jump, air jump and wall jump, so the anim graph can restart the jump clip. */
+	/** The current lunge started in the air (picks the in-air melee clips). */
+	UPROPERTY(BlueprintReadOnly, Category = "Deadlock")
+	bool bHeavyMeleeInAir = false;
+
+	/** Increments when a heavy melee lunge ends (enemy reached or timed out), to play the hit clip. */
+	UPROPERTY(BlueprintReadOnly, Category = "Deadlock")
+	int32 HeavyMeleeEndCount = 0;
+
+	/** Increments on every jump and air jump, so the anim graph can restart the jump clip. Wall bounces and mantles
+	 * have their own counters and don't count here. */
 	UPROPERTY(BlueprintReadOnly, Category = "Deadlock")
 	int32 JumpCount = 0;
+
+	/** Increments on every wall bounce (FZeroMoverSimState::WallJumpCount). */
+	UPROPERTY(BlueprintReadOnly, Category = "Deadlock")
+	int32 WallJumpCount = 0;
+
+	/** Increments on every mantle (FZeroMoverSimState::MantleCount). */
+	UPROPERTY(BlueprintReadOnly, Category = "Deadlock")
+	int32 MantleCount = 0;
+
+	/** Ledge height of the last mantle above the feet, cm. */
+	UPROPERTY(BlueprintReadOnly, Category = "Deadlock")
+	float MantleHeight = 0.f;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Deadlock")
 	bool bLastJumpWasAirJump = false;
@@ -170,4 +191,11 @@ private:
 	float AirTime = 0.f;
 	float MaxFallSpeed = 0.f;
 	FName PrevMode;
+
+	// Last FZeroMoverSimState event counters seen (uint8, wrap around).
+	bool bHasSimCounters = false;
+	uint8 SeenSimMantleCount = 0;
+	uint8 SeenSimWallJumpCount = 0;
+	/** Seconds since the last mantle or wall bounce: their upward kick isn't a jump. */
+	float TimeSinceClimb = 10.f;
 };

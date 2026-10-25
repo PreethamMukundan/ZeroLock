@@ -2,12 +2,14 @@
 
 #include "Animation/ZL_DeadlockAnimInstance.h"
 #include "Animation/AnimSequence.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Animation/ZL_DeadlockAnimSet.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "GAS/ZL_GameplayTags.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "Mover/ZeroMoverComponent.h"
+#include "Mover/ZeroMovementData.h"
 #include "Mover/ZeroMoverPawn.h"
 
 void UZL_DeadlockAnimInstance::NativeInitializeAnimation()
@@ -139,8 +141,16 @@ void UZL_DeadlockAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		return;
 	}
 
+	// Facing as drawn: Mover's smoothing turns the mesh between fixed sim steps, the actor only on them.
+	FQuat Facing = Pawn->GetActorQuat();
+	const USkeletalMeshComponent* MeshComp = GetSkelMeshComponent();
+	if (MeshComp && MoverComp->GetPrimaryVisualComponent() == MeshComp)
+	{
+		Facing = MeshComp->GetComponentQuat() * MoverComp->GetBaseVisualComponentTransform().GetRotation().Inverse();
+	}
+
 	const FVector Velocity = MoverComp->GetVelocity();
-	State.LocalVelocity = Pawn->GetActorRotation().UnrotateVector(Velocity);
+	State.LocalVelocity = Facing.UnrotateVector(Velocity);
 	State.GroundSpeed = Velocity.Size2D();
 	State.VerticalSpeed = Velocity.Z;
 	State.AimPitch = FRotator::NormalizeAxis(Pawn->GetBaseAimRotation().Pitch);
@@ -160,7 +170,7 @@ void UZL_DeadlockAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		SeenMoverDashCount = ZeroMover->DashCount;
 		++State.DashCount;
-		State.DashDirection = Pawn->GetActorRotation().UnrotateVector(ZeroMover->LastDashDirection).GetSafeNormal2D();
+		State.DashDirection = Facing.UnrotateVector(ZeroMover->LastDashDirection).GetSafeNormal2D();
 		TimeSinceDash = 0.f;
 	}
 	const float DashThreshold = (ZeroMover ? ZeroMover->DashSpeed : 1500.f) * DashDetectSpeedRatio;
@@ -176,6 +186,39 @@ void UZL_DeadlockAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	State.bZiplining = Mode == ZipliningModeName;
 	State.bWallJumping = Mode == WallJumpingModeName;
 	State.bHeavyMelee = Mode == MeleeModeName;
+	if (State.bHeavyMelee && PrevMode != MeleeModeName)
+	{
+		State.bHeavyMeleeInAir = !bWasOnGround;
+	}
+	else if (!State.bHeavyMelee && PrevMode == MeleeModeName)
+	{
+		++State.HeavyMeleeEndCount;
+	}
+
+	// Mantles and wall bounces are layered moves; the sim counts them in its sync state (rolls back, replicates).
+	TimeSinceClimb += DeltaSeconds;
+	if (const FZeroMoverSimState* SimState = MoverComp->GetSyncState().SyncStateCollection.FindDataByType<FZeroMoverSimState>())
+	{
+		if (!bHasSimCounters)
+		{
+			SeenSimMantleCount = SimState->MantleCount;
+			SeenSimWallJumpCount = SimState->WallJumpCount;
+			bHasSimCounters = true;
+		}
+		if (SimState->MantleCount != SeenSimMantleCount)
+		{
+			SeenSimMantleCount = SimState->MantleCount;
+			++State.MantleCount;
+			State.MantleHeight = SimState->MantleHeight;
+			TimeSinceClimb = 0.f;
+		}
+		if (SimState->WallJumpCount != SeenSimWallJumpCount)
+		{
+			SeenSimWallJumpCount = SimState->WallJumpCount;
+			++State.WallJumpCount;
+			TimeSinceClimb = 0.f;
+		}
+	}
 
 	if (!OwnerASC.IsValid())
 	{
@@ -189,11 +232,12 @@ void UZL_DeadlockAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		AirTime += DeltaSeconds;
 		MaxFallSpeed = FMath::Max(MaxFallSpeed, -State.VerticalSpeed);
 
-		// Jumps: leaving the ground upwards, or a sudden upward kick while airborne (multi-jump, wall bounce).
+		// Jumps: leaving the ground upwards, or a sudden upward kick while airborne (multi-jump). A mantle's or wall
+		// bounce's kick isn't one: those have their own counters.
 		const bool bTookOff = bWasOnGround && State.VerticalSpeed > 100.f;
 		const bool bAirKick = !bWasOnGround && State.VerticalSpeed > 100.f && State.VerticalSpeed - PrevVerticalSpeed > 250.f;
 		const bool bEnteredJumpMode = Mode != PrevMode && (Mode == AirJumpingModeName || Mode == WallJumpingModeName);
-		if (bTookOff || bAirKick || bEnteredJumpMode)
+		if ((bTookOff || bAirKick || bEnteredJumpMode) && TimeSinceClimb > 0.3f)
 		{
 			++State.JumpCount;
 			State.bLastJumpWasAirJump = !bTookOff;

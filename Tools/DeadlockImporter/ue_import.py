@@ -6,6 +6,7 @@ Deadlock hero importer (step 2 of 2): runs inside the Unreal editor.
     py ".../ue_import.py" Lash --anims-only      re-import just the animations
     py ".../ue_import.py" Lash --anim-set-only   just (re)build DA_<Hero>_AnimSet for ABP_DeadlockHero
     py ".../ue_import.py" Lash --montages-only   just create Montages/<AbilityName>/AM_<Hero>_<AbilityName>_* (existing ones are kept)
+    py ".../ue_import.py" Lash --hero-only       just BP_Deadlock_<Hero> + DA_<Hero>_Hero + hero list row (existing ones are kept)
     py ".../ue_import.py"                        every hero exported by deadlock_import.bat
 
 Reads Saved/DeadlockImporter/<Hero>/manifest.json written by deadlock_import.py and creates:
@@ -333,7 +334,15 @@ ANIM_SET_SLOTS = {
     "stun_loop": ["standing_stunned", "crouching_stunned", "knockdown_medium_loop"],
     "heavy_melee_start": ["melee_start"],
     "heavy_melee_loop": ["melee_dash"],
+    "heavy_melee_hit": ["melee_hit"],
+    "heavy_melee_air_start": ["melee_in_air_start"],
+    "heavy_melee_air_loop": ["melee_in_air_dash"],
+    "heavy_melee_air_hit": ["melee_in_air_hit"],
 }
+
+# Deadlock's mantle clips are named by ledge height in Source units; the cm values are what the ZeroLock capsule
+# (176 cm, mantles up to ~226 cm) reaches with each. The anim node picks the nearest.
+MANTLE_CLIPS = [("mantle_32", 60.0), ("mantle_64", 110.0), ("mantle_96", 160.0), ("mantle_128", 210.0)]
 
 ANIM_SET_MONTAGES = {
     "light_melee_montage": ["Melee/AM_{hero}_Melee_Quick1", "Melee/AM_{hero}_Melee_Quick2"],
@@ -384,6 +393,18 @@ def build_anim_set(m, dest):
         aset.set_editor_property(prop, cycle)
         if found < 8:
             missing.append(f"{prop} ({found}/8)")
+
+    mantles = []
+    for name, height in MANTLE_CLIPS:
+        seq = clip([name])
+        if seq:
+            entry = unreal.ZLMantleAnim()
+            entry.set_editor_property("clip", seq)
+            entry.set_editor_property("ledge_height", height)
+            mantles.append(entry)
+    aset.set_editor_property("mantles", mantles)
+    if not mantles:
+        missing.append("mantles")
 
     for prop, names in ANIM_SET_MONTAGES.items():
         montage = next((m for m in (load(f"{dest}/Montages/{n.format(hero=hero)}") for n in names) if m), None)
@@ -491,9 +512,104 @@ def build_montages(m, dest):
     return summary
 
 
+# --------------------------------------------------------------------------- hero BP, hero data, hero list
+
+HERO_SETUP = CFG.get("hero_setup", {})
+
+
+def duplicate_template(template, path, what):
+    if not eal.does_asset_exist(template):
+        warn(f"  {what}: template {template} not found (config.json hero_setup)")
+        return None
+    return eal.duplicate_asset(template, path)
+
+
+def build_hero_bp(m, dest, aset):
+    """BP_Deadlock_<Hero>: a copy of the template hero (Mover setup, weapon, abilities) with this hero's mesh,
+    anim blueprint, anim set and melee montages. An existing BP is left alone (it may have hand edits)."""
+    hero = m["hero"]
+    path = f"{dest}/BP_Deadlock_{hero}"
+    if eal.does_asset_exist(path):
+        log(f"  {path} exists, kept")
+        return eal.load_blueprint_class(path)
+
+    bp = duplicate_template(HERO_SETUP.get("template_bp", ""), path, "hero BP")
+    if bp is None:
+        return None
+    unreal.BlueprintEditorLibrary.compile_blueprint(bp)
+    cls = eal.load_blueprint_class(path)
+    cdo = unreal.get_default_object(cls)
+
+    mesh = cdo.get_editor_property("mesh_component")
+    mesh.set_editor_property("skeletal_mesh_asset", load(f"{dest}/SK_{hero}"))
+    abp = eal.load_blueprint_class(HERO_SETUP.get("anim_blueprint", ""))
+    if abp:
+        mesh.set_editor_property("anim_class", abp)
+    cdo.set_editor_property("deadlock_anim_set", aset)
+    # A duplicate keeps the template's montages, which win over the anim set's: point them at this hero's.
+    cdo.set_editor_property("light_melee_montage", load(f"{dest}/Montages/Melee/AM_{hero}_Melee_Quick1"))
+    cdo.set_editor_property("heavy_melee_montage", load(f"{dest}/Montages/Melee/AM_{hero}_Melee_Hit"))
+
+    eal.save_loaded_asset(bp)
+    log(f"  hero BP {path} (abilities copied from {HERO_SETUP.get('template_bp')})")
+    return cls
+
+
+def build_hero_data(m, dest, hero_class):
+    """DA_<Hero>_Hero for hero select: a copy of the template's data (icon, colour, preview framing) with this hero's
+    name, class, mesh and pose. An existing one is left alone."""
+    hero = m["hero"]
+    path = f"{dest}/DA_{hero}_Hero"
+    if eal.does_asset_exist(path):
+        log(f"  {path} exists, kept")
+        return load(path)
+
+    data = duplicate_template(HERO_SETUP.get("template_data", ""), path, "hero data")
+    if data is None:
+        return None
+    data.set_editor_property("character_name", m["display"])
+    data.set_editor_property("character_description", "")
+    data.set_editor_property("character_class", hero_class)
+    data.set_editor_property("display_seletal_mesh", load(f"{dest}/SK_{hero}"))
+    pose = next((s for s in (load(f"{dest}/Animations/A_{hero}_{n}") for n in HERO_SETUP.get("display_anims", [])) if s), None)
+    data.set_editor_property("display_animation", pose)
+    data.set_editor_property("display_animation_pose_time", 0.0)
+
+    eal.save_loaded_asset(data)
+    log(f"  hero data {path} (pose {pose.get_name() if pose else 'none'}; icon, colour and preview framing are the "
+        f"template's: change them on the asset)")
+    return data
+
+
+def add_to_hero_list(m, data):
+    """Adds a <Hero> row pointing at DA_<Hero>_Hero to the hero select table, unless one exists."""
+    table = load(HERO_SETUP.get("hero_list", ""))
+    if table is None or data is None:
+        warn(f"  hero list {HERO_SETUP.get('hero_list')} not found, row not added")
+        return
+    lib = unreal.DataTableFunctionLibrary
+    hero = m["hero"]
+    if hero in [str(n) for n in lib.get_data_table_row_names(table)]:
+        log(f"  hero list already has {hero}")
+        return
+    rows = json.loads(lib.export_data_table_to_json_string(table))
+    rows.append({"Name": hero, "HeroAsset": data.get_path_name()})
+    lib.fill_data_table_from_json_string(table, json.dumps(rows))
+    eal.save_loaded_asset(table)
+    log(f"  hero list: added {hero} to {table.get_path_name()}")
+
+
+def setup_hero(m, dest):
+    aset = load(f"{dest}/DA_{m['hero']}_AnimSet")
+    hero_class = build_hero_bp(m, dest, aset)
+    if hero_class is None:
+        return
+    add_to_hero_list(m, build_hero_data(m, dest, hero_class))
+
+
 # --------------------------------------------------------------------------- main
 
-def import_hero(hero, no_anims=False, anims_only=False, anim_set_only=False, montages_only=False):
+def import_hero(hero, no_anims=False, anims_only=False, anim_set_only=False, montages_only=False, hero_only=False):
     path = os.path.join(CFG["output_dir"], hero, "manifest.json")
     if not os.path.exists(path):
         raise RuntimeError(f"No export for '{hero}' - run: deadlock_import.bat {hero}")
@@ -501,6 +617,9 @@ def import_hero(hero, no_anims=False, anims_only=False, anim_set_only=False, mon
         m = json.load(f)
     dest = m["ue_dest"]
     log(f"=== {m['display']} -> {dest}")
+    if hero_only:
+        setup_hero(m, dest)
+        return
     if anim_set_only:
         build_anim_set(m, dest)
         return
@@ -522,6 +641,8 @@ def import_hero(hero, no_anims=False, anims_only=False, anim_set_only=False, mon
         build_montages(m, dest)
     if m["animations"] and hasattr(unreal, "ZL_DeadlockAnimSet"):
         build_anim_set(m, dest)
+    if not anims_only and not no_anims and m["animations"]:
+        setup_hero(m, dest)
 
     eal.save_directory(dest, only_if_is_dirty=True, recursive=True)
     log(f"=== {m['display']} done")
@@ -535,6 +656,7 @@ def main(argv):
     anims_only = "--anims-only" in argv
     anim_set_only = "--anim-set-only" in argv
     montages_only = "--montages-only" in argv
+    hero_only = "--hero-only" in argv
     heroes = [a for a in argv if not a.startswith("--")]
     if not heroes:
         out = CFG["output_dir"]
@@ -542,7 +664,7 @@ def main(argv):
         log(f"Importing all exported heroes: {heroes}")
     for h in heroes:
         match = next((d for d in os.listdir(CFG["output_dir"]) if d.lower() == h.lower().replace(" ", "")), h)
-        import_hero(match, no_anims, anims_only, anim_set_only, montages_only)
+        import_hero(match, no_anims, anims_only, anim_set_only, montages_only, hero_only)
 
 
 if __name__ == "__main__":

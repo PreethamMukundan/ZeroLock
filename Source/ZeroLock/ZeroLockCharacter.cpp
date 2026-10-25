@@ -43,7 +43,9 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 AZeroLockCharacter::AZeroLockCharacter()
 {
 	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = true;
+	// Mover owns facing (OrientationIntent = control yaw). Also turning the actor from the controller made the two fight
+	// over yaw every frame, which shook the mesh while turning (Movement.md).
+	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
 	//GAS Components

@@ -243,6 +243,9 @@ void UZeroMoverComponent::BeginSimStep(const FMoverTimeStep& TimeStep)
     PendingDashRemainingMs = FMath::Max(0.0f, SimStartState.DashRemainingMs - TimeStep.StepMs);
     bPendingRooted = false;
     bPendingSliding = false;
+    PendingMantleCount = SimStartState.MantleCount;
+    PendingMantleHeight = SimStartState.MantleHeight;
+    PendingWallJumpCount = SimStartState.WallJumpCount;
 
     StepMaxStamina = DefaultMaxStamina;
     StepStaminaRegenRate = DefaultStaminaRegenRate;
@@ -270,6 +273,9 @@ void UZeroMoverComponent::HandlePostMovement(const FMoverTimeStep& TimeStep, FMo
     OutSimState.DashRemainingMs = PendingDashRemainingMs;
     OutSimState.bWasRooted = bPendingRooted;
     OutSimState.bWasSliding = bPendingSliding;
+    OutSimState.MantleCount = PendingMantleCount;
+    OutSimState.MantleHeight = PendingMantleHeight;
+    OutSimState.WallJumpCount = PendingWallJumpCount;
 
     CacheSimStartState(SyncState);
     NewestSimTimeMs = FMath::Max(NewestSimTimeMs, TimeStep.BaseSimTimeMs);
@@ -732,6 +738,7 @@ bool UZeroMoverComponent::HandleWallBounceCheck(const FZeroMovementInputs& ZeroI
         WallBounceMove->MixMode = EMoveMixMode::OverrideVelocity;
 
         QueueLayeredMove(WallBounceMove);
+        ++PendingWallJumpCount;
         return true;
     }
     return false;
@@ -936,6 +943,8 @@ bool UZeroMoverComponent::TryMantle(const FCharacterDefaultInputs& DefaultInputs
     MantleMove->bRestrictSpeedToExpected = true;
 
     QueueLayeredMove(MantleMove);
+    ++PendingMantleCount;
+    PendingMantleHeight = Height;
 
     return true;
 }

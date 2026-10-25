@@ -171,6 +171,18 @@ struct FZeroMoverSimState : public FMoverDataStructBase
 	UPROPERTY(BlueprintReadOnly, Category = "Zero|State")
 	bool bWasSliding = false;
 
+	// Cosmetic event counters for the anim (mantle and wall bounce are layered moves, not modes). In the sync state so
+	// they roll back with resimulation and reach simulated proxies. Not reconciled: they never cause a correction.
+	UPROPERTY(BlueprintReadOnly, Category = "Zero|State")
+	uint8 MantleCount = 0;
+
+	/** Ledge height of the last mantle above the feet, cm. */
+	UPROPERTY(BlueprintReadOnly, Category = "Zero|State")
+	float MantleHeight = 0.0f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Zero|State")
+	uint8 WallJumpCount = 0;
+
 	virtual UScriptStruct* GetScriptStruct() const override { return FZeroMoverSimState::StaticStruct(); }
 	virtual FMoverDataStructBase* Clone() const override { return new FZeroMoverSimState(*this); }
 
@@ -183,6 +195,9 @@ struct FZeroMoverSimState : public FMoverDataStructBase
 		Ar << DashRemainingMs;
 		Ar << bWasRooted;
 		Ar << bWasSliding;
+		Ar << MantleCount;
+		Ar << MantleHeight;
+		Ar << WallJumpCount;
 		bOutSuccess = true;
 		return true;
 	}
@@ -208,6 +223,9 @@ struct FZeroMoverSimState : public FMoverDataStructBase
 		DashRemainingMs = ToState->DashRemainingMs;
 		bWasRooted = ToState->bWasRooted;
 		bWasSliding = ToState->bWasSliding;
+		MantleCount = ToState->MantleCount;
+		MantleHeight = ToState->MantleHeight;
+		WallJumpCount = ToState->WallJumpCount;
 	}
 };
 

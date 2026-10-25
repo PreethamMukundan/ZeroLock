@@ -306,6 +306,9 @@ private:
 	float PendingDashRemainingMs = 0.0f;
 	bool bPendingRooted = false;
 	bool bPendingSliding = false;
+	uint8 PendingMantleCount = 0;
+	float PendingMantleHeight = 0.0f;
+	uint8 PendingWallJumpCount = 0;
 	bool bPendingStaminaRefill = false;
 	float StepMaxStamina = 0.0f;
 	float StepStaminaRegenRate = 0.0f;

@@ -24,12 +24,14 @@ enum class EZLDeadlockPoseState : uint8
 	Zipline,
 	Stunned,
 	HeavyMelee,
+	HeavyMeleeHit,
+	Mantle,
 };
 
 /**
  * The whole Deadlock hero pose in one node, driven by UZL_DeadlockAnimInstance + a UZL_DeadlockAnimSet:
  *  - 8-way idle/run and crouch cycles, phase-synced and speed-scaled
- *  - jump / multi-jump / apex / fall / land, slide, dash, wall jump, zipline, crossfaded between states
+ *  - jump / multi-jump / apex / fall / land, slide, dash, wall jump, mantle, zipline, heavy melee, crossfaded between states
  *  - aim offset from the camera pitch
  *  - montage slots: an upper-body slot layered from UpperBodyRootBone, then a full-body slot
  *  - strips the root_motion bone's translation so every clip (montages included) plays in place; Mover moves the pawn
@@ -86,6 +88,8 @@ private:
 		float Time = 0.f;
 		/** Clip picked when the layer started (dash direction, land vs hard land, jump vs air jump). */
 		TObjectPtr<UAnimSequence> Clip = nullptr;
+		/** Heavy melee lunge started in the air: use the in-air melee clips. */
+		bool bAir = false;
 	};
 
 	struct FSlotWeights
@@ -104,7 +108,8 @@ private:
 
 	void EvaluateLayer(const FLayer& Layer, FPoseContext& Output) const;
 	void EvaluateLocomotion(FPoseContext& Output, UAnimSequence* Idle, const struct FZLDirectionalAnims& Cycle, float IdleTime) const;
-	void EvaluateIntoLoop(FPoseContext& Output, UAnimSequence* Intro, UAnimSequence* LoopA, UAnimSequence* LoopB, float LoopBAlpha, float Time) const;
+	/** IntroRate: play speed of Intro (the loop always plays at 1x). */
+	void EvaluateIntoLoop(FPoseContext& Output, UAnimSequence* Intro, UAnimSequence* LoopA, UAnimSequence* LoopB, float LoopBAlpha, float Time, float IntroRate = 1.f) const;
 	void ApplyAimOffset(FPoseContext& Output) const;
 	void ApplySlots(FPoseContext& Output) const;
 	void StripRootMotion(FPoseContext& Output) const;
@@ -121,11 +126,16 @@ private:
 	int32 SeenJumpCount = 0;
 	int32 SeenLandCount = 0;
 	int32 SeenDashCount = 0;
+	int32 SeenWallJumpCount = 0;
+	int32 SeenMantleCount = 0;
+	int32 SeenHeavyMeleeEndCount = 0;
 
 	/** Seconds since the character was last airborne. Mover can pass through Walking for a tick between Falling and Sliding. */
 	float TimeSinceAirborne = 10.f;
 
 	UAnimSequence* ChooseDashClip() const;
+	/** The mantle clip authored for the ledge height closest to State.MantleHeight. */
+	UAnimSequence* ChooseMantleClip() const;
 
 	float Phase = 0.f;
 	float MoveAlpha = 0.f;

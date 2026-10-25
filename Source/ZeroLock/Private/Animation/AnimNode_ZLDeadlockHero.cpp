@@ -59,6 +59,9 @@ void FAnimNode_ZLDeadlockHero::Initialize_AnyThread(const FAnimationInitializeCo
 		SeenJumpCount = Instance->State.JumpCount;
 		SeenLandCount = Instance->State.LandCount;
 		SeenDashCount = Instance->State.DashCount;
+		SeenWallJumpCount = Instance->State.WallJumpCount;
+		SeenMantleCount = Instance->State.MantleCount;
+		SeenHeavyMeleeEndCount = Instance->State.HeavyMeleeEndCount;
 	}
 
 	if (!SlotNodeInitializationCounter.IsSynchronized_Counter(Context.AnimInstanceProxy->GetSlotNodeInitializationCounter()))
@@ -191,6 +194,22 @@ UAnimSequence* FAnimNode_ZLDeadlockHero::ChooseDashClip() const
 	return Clip ? Clip : (Set->DashForward ? Set->DashForward.Get() : Set->DashGround.Get());
 }
 
+UAnimSequence* FAnimNode_ZLDeadlockHero::ChooseMantleClip() const
+{
+	UAnimSequence* Best = nullptr;
+	float BestError = TNumericLimits<float>::Max();
+	for (const FZLMantleAnim& Mantle : Set->Mantles)
+	{
+		const float Error = FMath::Abs(Mantle.LedgeHeight - State.MantleHeight);
+		if (Mantle.Clip && Error < BestError)
+		{
+			Best = Mantle.Clip;
+			BestError = Error;
+		}
+	}
+	return Best;
+}
+
 float FAnimNode_ZLDeadlockHero::GetLayerHoldTime(const FLayer& Layer) const
 {
 	return FMath::Min(ZLDeadlockHero::Length(Layer.Clip), Set->LandHoldTime);
@@ -228,10 +247,12 @@ void FAnimNode_ZLDeadlockHero::UpdateLocomotion(float InDeltaTime)
 	const FVector2D Velocity(State.LocalVelocity.X, State.LocalVelocity.Y);
 	if (State.GroundSpeed > 10.f)
 	{
-		// Smooth the move direction so diagonal changes blend instead of popping.
-		const FVector2D Target = Velocity.GetSafeNormal();
-		const FVector2D Blended = MoveDir + (Target - MoveDir) * FMath::Clamp(InDeltaTime * 12.f, 0.f, 1.f);
-		MoveDir = Blended.IsNearlyZero() ? Target : Blended.GetSafeNormal();
+		// Smooth the move direction so diagonal changes blend instead of popping. Ease the angle, not the vector:
+		// lerping toward the opposite direction and renormalizing never leaves the old one (right->left stuck on right).
+		const float Current = FMath::Atan2(MoveDir.Y, MoveDir.X);
+		const float Target = FMath::Atan2(Velocity.Y, Velocity.X);
+		const float Angle = Current + FMath::FindDeltaAngleRadians(Current, Target) * FMath::Clamp(InDeltaTime * 12.f, 0.f, 1.f);
+		MoveDir = FVector2D(FMath::Cos(Angle), FMath::Sin(Angle));
 	}
 
 	MoveAlpha = FMath::FInterpTo(MoveAlpha, FMath::Clamp(State.GroundSpeed / Set->MoveBlendSpeed, 0.f, 1.f), InDeltaTime, 10.f);
@@ -265,9 +286,15 @@ void FAnimNode_ZLDeadlockHero::Update_AnyThread(const FAnimationUpdateContext& C
 		const bool bJumped = State.JumpCount != SeenJumpCount;
 		const bool bLanded = State.LandCount != SeenLandCount;
 		const bool bDashed = State.DashCount != SeenDashCount;
+		const bool bWallJumped = State.WallJumpCount != SeenWallJumpCount;
+		const bool bMantled = State.MantleCount != SeenMantleCount;
+		const bool bMeleeEnded = State.HeavyMeleeEndCount != SeenHeavyMeleeEndCount;
 		SeenJumpCount = State.JumpCount;
 		SeenLandCount = State.LandCount;
 		SeenDashCount = State.DashCount;
+		SeenWallJumpCount = State.WallJumpCount;
+		SeenMantleCount = State.MantleCount;
+		SeenHeavyMeleeEndCount = State.HeavyMeleeEndCount;
 
 		const bool bAirborne = !State.bOnGround && !State.bSliding && !State.bZiplining;
 		TimeSinceAirborne = bAirborne ? 0.f : TimeSinceAirborne + DeltaTime;
@@ -280,17 +307,56 @@ void FAnimNode_ZLDeadlockHero::Update_AnyThread(const FAnimationUpdateContext& C
 				PushLayer(EZLDeadlockPoseState::Dash, ZLDeadlockHero::DashBlendTime, DashClip);
 			}
 		}
+		// Mantles, wall bounces and the end of a heavy melee lunge are one-shot clips over whatever state follows.
+		if (bMantled && !State.bStunned && !State.bHeavyMelee && !State.bZiplining)
+		{
+			if (UAnimSequence* MantleClip = ChooseMantleClip())
+			{
+				PushLayer(EZLDeadlockPoseState::Mantle, Set->JumpBlendTime, MantleClip);
+			}
+		}
+		if (bWallJumped && !State.bStunned && !State.bHeavyMelee)
+		{
+			UAnimSequence* WallClip = Set->WallJump ? Set->WallJump.Get() : (Set->AirJumpStart ? Set->AirJumpStart.Get() : Set->JumpStart.Get());
+			PushLayer(EZLDeadlockPoseState::WallJump, Set->JumpBlendTime, WallClip);
+		}
+		if (bMeleeEnded && !State.bStunned && !State.bHeavyMelee && !State.bSliding && !State.bZiplining)
+		{
+			UAnimSequence* HitClip = State.bHeavyMeleeInAir && Set->HeavyMeleeAirHit ? Set->HeavyMeleeAirHit.Get() : Set->HeavyMeleeHit.Get();
+			if (HitClip)
+			{
+				PushLayer(EZLDeadlockPoseState::HeavyMeleeHit, Set->JumpBlendTime, HitClip);
+			}
+		}
+
 		const FLayer& TopLayer = Layers.Last();
 		const bool bHoldingDash = TopLayer.State == EZLDeadlockPoseState::Dash
 			&& (TopLayer.Time < Set->DashHoldTime || State.bDashing) && !bJumped && !State.bStunned && !State.bHeavyMelee;
 
-		const EZLDeadlockPoseState Desired = bHoldingDash ? EZLDeadlockPoseState::Dash : ChooseState();
+		// A one-shot clip holds until it finishes; moving on the ground cuts it short, anything else at once.
+		const bool bInterrupted = bJumped || bDashed || State.bStunned || State.bHeavyMelee || State.bSliding || State.bZiplining;
+		const bool bMovingOnGround = State.bOnGround && State.GroundSpeed > Set->MoveBlendSpeed;
+		bool bHoldingOneShot = false;
+		if (TopLayer.State == EZLDeadlockPoseState::Mantle)
+		{
+			const float Played = TopLayer.Time * Set->MantlePlayRate;
+			const float ClipLength = ZLDeadlockHero::Length(TopLayer.Clip);
+			bHoldingOneShot = !bInterrupted && Played < ClipLength && !(bMovingOnGround && Played > ClipLength * Set->MantleMoveExitFraction);
+		}
+		else if (TopLayer.State == EZLDeadlockPoseState::HeavyMeleeHit)
+		{
+			bHoldingOneShot = !bInterrupted && TopLayer.Time < ZLDeadlockHero::Length(TopLayer.Clip)
+				&& !(bMovingOnGround && TopLayer.Time > Set->HeavyMeleeHitMoveExitTime);
+		}
+
+		const EZLDeadlockPoseState Desired = bHoldingDash ? EZLDeadlockPoseState::Dash : (bHoldingOneShot ? TopLayer.State : ChooseState());
 		const EZLDeadlockPoseState Current = TopLayer.State;
 
 		switch (Desired)
 		{
 		case EZLDeadlockPoseState::Air:
-			if (bJumped || Current != EZLDeadlockPoseState::Air)
+			// A wall bounce's layer already runs into the in-air loops.
+			if (bJumped || (Current != EZLDeadlockPoseState::Air && Current != EZLDeadlockPoseState::WallJump))
 			{
 				// Walking off a ledge has no jump clip; a jump (or another jump mid-air) restarts it.
 				UAnimSequence* Clip = nullptr;
@@ -311,6 +377,8 @@ void FAnimNode_ZLDeadlockHero::Update_AnyThread(const FAnimationUpdateContext& C
 			break;
 
 		case EZLDeadlockPoseState::Dash:
+		case EZLDeadlockPoseState::Mantle:
+		case EZLDeadlockPoseState::HeavyMeleeHit:
 			break;
 
 		case EZLDeadlockPoseState::Slide:
@@ -354,6 +422,7 @@ void FAnimNode_ZLDeadlockHero::Update_AnyThread(const FAnimationUpdateContext& C
 			if (Current != Desired)
 			{
 				PushLayer(Desired, Set->JumpBlendTime);
+				Layers.Last().bAir = State.bHeavyMeleeInAir;
 			}
 			break;
 
@@ -463,16 +532,17 @@ void FAnimNode_ZLDeadlockHero::EvaluateLocomotion(FPoseContext& Output, UAnimSeq
 	}
 }
 
-void FAnimNode_ZLDeadlockHero::EvaluateIntoLoop(FPoseContext& Output, UAnimSequence* Intro, UAnimSequence* LoopA, UAnimSequence* LoopB, float LoopBAlpha, float Time) const
+void FAnimNode_ZLDeadlockHero::EvaluateIntoLoop(FPoseContext& Output, UAnimSequence* Intro, UAnimSequence* LoopA, UAnimSequence* LoopB, float LoopBAlpha, float Time, float IntroRate) const
 {
 	// Play Intro once, crossfading into the loop over its last 0.2s.
-	const float IntroLength = ZLDeadlockHero::Length(Intro);
+	const float IntroLength = ZLDeadlockHero::Length(Intro) / FMath::Max(IntroRate, KINDA_SMALL_NUMBER);
+	const float IntroTime = Time * IntroRate;
 	const float Crossfade = FMath::Min(0.2f, IntroLength * 0.5f);
 	const float IntroWeight = Intro ? 1.f - FMath::Clamp((Time - (IntroLength - Crossfade)) / FMath::Max(Crossfade, KINDA_SMALL_NUMBER), 0.f, 1.f) : 0.f;
 
 	if (IntroWeight >= 0.999f || (!LoopA && !LoopB))
 	{
-		if (!SamplePose(Output, Intro, Time, false) && !SamplePose(Output, Set->StandIdle, Time, true))
+		if (!SamplePose(Output, Intro, IntroTime, false) && !SamplePose(Output, Set->StandIdle, Time, true))
 		{
 			Output.ResetToRefPose();
 		}
@@ -492,7 +562,7 @@ void FAnimNode_ZLDeadlockHero::EvaluateIntoLoop(FPoseContext& Output, UAnimSeque
 	if (IntroWeight > ZLDeadlockHero::MinWeight)
 	{
 		FPoseContext IntroPose(Output);
-		SamplePose(IntroPose, Intro, Time, false);
+		SamplePose(IntroPose, Intro, IntroTime, false);
 		FAnimationRuntime::LerpPoses(Output.Pose, IntroPose.Pose, Output.Curve, IntroPose.Curve, IntroWeight);
 	}
 }
@@ -519,8 +589,12 @@ void FAnimNode_ZLDeadlockHero::EvaluateLayer(const FLayer& Layer, FPoseContext& 
 
 	case EZLDeadlockPoseState::Land:
 	case EZLDeadlockPoseState::Dash:
+	case EZLDeadlockPoseState::Mantle:
+	case EZLDeadlockPoseState::HeavyMeleeHit:
 	{
-		const float Time = Layer.State == EZLDeadlockPoseState::Dash ? Layer.Time * Set->DashPlayRate : Layer.Time;
+		const float Rate = Layer.State == EZLDeadlockPoseState::Dash ? Set->DashPlayRate
+			: (Layer.State == EZLDeadlockPoseState::Mantle ? Set->MantlePlayRate : 1.f);
+		const float Time = Layer.Time * Rate;
 		if (!SamplePose(Output, Layer.Clip, Time, false) && !SamplePose(Output, Set->StandIdle, Layer.Time, true))
 		{
 			Output.ResetToRefPose();
@@ -541,8 +615,14 @@ void FAnimNode_ZLDeadlockHero::EvaluateLayer(const FLayer& Layer, FPoseContext& 
 		break;
 
 	case EZLDeadlockPoseState::HeavyMelee:
-		EvaluateIntoLoop(Output, Set->HeavyMeleeStart, Set->HeavyMeleeLoop, nullptr, 0.f, Layer.Time);
+	{
+		// The wind-up is squeezed into HeavyMeleeStartTime (never slowed down), then the dash loops until the lunge ends.
+		UAnimSequence* Start = Layer.bAir && Set->HeavyMeleeAirStart ? Set->HeavyMeleeAirStart.Get() : Set->HeavyMeleeStart.Get();
+		UAnimSequence* Loop = Layer.bAir && Set->HeavyMeleeAirLoop ? Set->HeavyMeleeAirLoop.Get() : Set->HeavyMeleeLoop.Get();
+		const float StartRate = FMath::Max(1.f, ZLDeadlockHero::Length(Start) / FMath::Max(Set->HeavyMeleeStartTime, 0.01f));
+		EvaluateIntoLoop(Output, Start, Loop, nullptr, 0.f, Layer.Time, StartRate);
 		break;
+	}
 	}
 }
 

@@ -7,6 +7,15 @@
 
   "normal_flip_green": true,
 
+  "hero_setup": {
+    "_help": "A new hero gets BP_Deadlock_<Hero> (duplicate of template_bp, abilities kept), DA_<Hero>_Hero (duplicate of template_data: icon, colour, preview settings) and a row in hero_list. Existing BPs/data assets are never overwritten.",
+    "template_bp": "/Game/Developers/rpm86/Deadlock/Lash/BP_Deadlock_Lash",
+    "template_data": "/Game/Developers/rpm86/Deadlock/Lash/DA_Lash_Hero",
+    "anim_blueprint": "/Game/ZERO/Animation/Deadlock/ABP_DeadlockHero",
+    "hero_list": "/Game/ZERO/UI/BP/CharacterSelector/DT_HeroList",
+    "display_anims": ["ui_hero_select", "ui_pose", "hero_pose", "stand_idle", "weapon_stand_idle"]
+  },
+
   "animations": {
     "mode": "filtered",
     "_mode_help": "filtered = use include/exclude below, all = every clip, none = mesh only",

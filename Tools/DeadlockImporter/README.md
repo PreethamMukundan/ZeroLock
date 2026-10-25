@@ -19,6 +19,8 @@ deadlock_import.bat lash --anims all   # all clips instead of the filtered set (
 py "E:/Repo/ZeroLock/ZeroLock/Tools/DeadlockImporter/ue_import.py" Lash Apollo
 py ".../ue_import.py" Lash --no-anims     # mesh + materials only (fast)
 py ".../ue_import.py" Lash --anims-only   # just (re)import animations
+py ".../ue_import.py" Lash --anim-set-only   # just (re)build DA_<Hero>_AnimSet (resets hand edits)
+py ".../ue_import.py" Lash --hero-only    # just BP_Deadlock_<Hero> + DA_<Hero>_Hero + DT_HeroList row
 ```
 
 Result, per hero, in `/Game/Developers/rpm86/Deadlock/<Hero>/`:
@@ -63,6 +65,19 @@ read from the game data (`heroes.vdata` bound abilities + English localization):
 Folder names match the ZeroLock ability classes (`ZL_Lash_DeathSlam` -> `DeathSlam`, `ZL_Apollo_ItaniLoSahn` -> `ItaniLoSahn`).
 For the `UpperBody` layered slot (legs keep moving), change a montage's slot to `UpperBody`.
 Re-run just this step with `--montages-only`.
+
+## Playable hero + hero select
+
+A full import also makes the hero playable and pickable (`config.json` → `hero_setup`). Existing assets are never overwritten,
+so re-importing keeps your edits:
+
+- `BP_Deadlock_<Hero>`: a copy of `BP_Deadlock_Lash` (Mover setup, weapon, **Lash's abilities** until you give it its own)
+  with this hero's mesh, `ABP_DeadlockHero`, `DA_<Hero>_AnimSet` and `AM_<Hero>_Melee_Quick1` / `_Hit` melee montages.
+- `DA_<Hero>_Hero`: hero select data (name, class, mesh, `ui_hero_select`-style pose). Icon, icon colour and preview
+  framing are copied from `DA_Lash_Hero`: change them on the asset.
+- A `<Hero>` row in `DT_HeroList`.
+
+For a hero that's already imported: `py ".../ue_import.py" Solomon --hero-only`.
 
 ## Config (`config.json`)
 

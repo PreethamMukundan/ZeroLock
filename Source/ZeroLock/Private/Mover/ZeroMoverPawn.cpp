@@ -56,6 +56,42 @@ void AZeroMoverPawn::BeginPlay()
     }
 }
 
+void AZeroMoverPawn::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+    UpdateSmoothedCamera();
+}
+
+void AZeroMoverPawn::UpdateSmoothedCamera()
+{
+    if (!SpringArmComponent || !MeshComponent || !MoverComponent || !IsLocallyControlled())
+    {
+        return;
+    }
+    if (!bHasSpringArmBaseLocation)
+    {
+        SpringArmBaseLocation = SpringArmComponent->GetRelativeLocation();
+        bHasSpringArmBaseLocation = true;
+    }
+
+    /* The sim moves the capsule in fixed 60 Hz steps; Mover's VisualComponentOffset smoothing (applied before actor ticks)
+     * moves only the mesh between them. Shift the camera boom by the same offset, or the camera steps with the capsule
+     * and the smoothly moving hero shakes on screen. The spring arm ticks after us (PostPhysics). */
+    FVector Offset = FVector::ZeroVector;
+    if (MoverComponent->SmoothingMode == EMoverSmoothingMode::VisualComponentOffset && MoverComponent->GetPrimaryVisualComponent() == MeshComponent)
+    {
+        const FTransform& ActorTransform = GetActorTransform();
+        const FVector UnsmoothedMeshLocation = ActorTransform.TransformPosition(MoverComponent->GetBaseVisualComponentTransform().GetLocation());
+        Offset = ActorTransform.InverseTransformVector(MeshComponent->GetComponentLocation() - UnsmoothedMeshLocation);
+        // A teleport or big correction isn't smoothing: don't drag the camera across the map.
+        if (Offset.SizeSquared() > FMath::Square(MaxSmoothedCameraOffset))
+        {
+            Offset = FVector::ZeroVector;
+        }
+    }
+    SpringArmComponent->SetRelativeLocation(SpringArmBaseLocation + Offset);
+}
+
 
 
 void AZeroMoverPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -143,7 +179,8 @@ void AZeroMoverPawn::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmd
     if (Controller)
     {
         DefaultInputs.ControlRotation = Controller->GetControlRotation();
-        DefaultInputs.OrientationIntent = DefaultInputs.ControlRotation.Vector().GetSafeNormal();
+        // Yaw only: the body turns with the camera but never pitches (looking straight up would leave no direction).
+        DefaultInputs.OrientationIntent = FRotator(0.0f, DefaultInputs.ControlRotation.Yaw, 0.0f).Vector();
     }
     else
     {

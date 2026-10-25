@@ -49,6 +49,7 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual void Tick(float DeltaSeconds) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
     virtual void ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult) override;
 
@@ -122,6 +123,15 @@ public:
     int32 GetHeavyMeleeTriggerCount() const { return HeavyMeleeTriggerCount; }
 
 private:
+    /** Moves the camera boom with Mover's smoothed mesh offset (locally controlled only). */
+    void UpdateSmoothedCamera();
+
+    /** Smoothing offsets above this (cm) are teleports or corrections; the camera doesn't follow them. */
+    static constexpr float MaxSmoothedCameraOffset = 150.0f;
+
+    FVector SpringArmBaseLocation = FVector::ZeroVector;
+    bool bHasSpringArmBaseLocation = false;
+
     int32 HeavyMeleeTriggerCount = 0;
 
     FVector2D CachedMoveInput = FVector2D::ZeroVector;

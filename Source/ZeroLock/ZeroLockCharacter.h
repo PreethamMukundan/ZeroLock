@@ -10,6 +10,7 @@
 #include "GameplayAbilitySpec.h"
 #include "ZeroLock.h"
 #include "GAS/BaseGameplayAbility.h"
+#include "Weapon/ZL_WeaponStats.h"
 #include "ZeroLockCharacter.generated.h"
 
 class UZL_AbilityUIManagerComponent;
@@ -256,6 +257,13 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
 	TSubclassOf<class UBaseGameplayAbility> ReloadAbility;
+
+	/** Primary weapon shape: pellets, burst, damage falloff (UZL_GA_WeaponFire, AProjectile with bUseShooterWeaponStats). */
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS|Weapon")
+	FZL_HeroWeaponStats WeaponStats;
+
+	/** Attribute value if the hero has the attribute set and it is above 0, else Fallback (the ability/C++ default). */
+	float GetAttributeOr(const FGameplayAttribute& Attribute, float Fallback) const;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS/Melee")
 	TSubclassOf<class UBaseGameplayAbility> LightMeleeAbility;

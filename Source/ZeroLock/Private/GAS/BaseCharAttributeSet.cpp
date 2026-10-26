@@ -34,6 +34,10 @@ UBaseCharAttributeSet::UBaseCharAttributeSet()
 	WeaponDamage = 0.0f;
 	CurrentAmmo = 0.0f;
 	MaxAmmo = 0.0f;
+	BulletDamage = 0.0f;
+	ReloadTime = 0.0f;
+	LightMeleeDamage = 0.0f;
+	HeavyMeleeDamage = 0.0f;
 	WeaponResistance=0.0f;
 	WeaponResistanceReduction =0.0f;
 	FlatWeapon =0.0f;
@@ -61,6 +65,10 @@ void UBaseCharAttributeSet::PreAttributeChange(const FGameplayAttribute & Attrib
 	else if (Attribute == GetMoveSpeedMultiplierAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue, 0.1f, 1.0f);
+	}
+	else if (Attribute == GetCurrentAmmoAttribute())
+	{
+		NewValue = FMath::Max(NewValue, 0.0f);
 	}
 
 }
@@ -281,9 +289,11 @@ void UBaseCharAttributeSet::PostAttributeChange(const FGameplayAttribute& Attrib
 	}
 	else if (Attribute == GetCurrentAmmoAttribute())
 	{
-		if (GetCurrentAmmo() <= 0.0f)
+		// Auto reload when the clip runs dry. Only the controlling machine presses the (predicted) reload: the server
+		// starting it as well for a remote player raced the client's own activation.
+		if (NewValue <= 0.0f && OldValue > 0.0f && TargetChar->IsLocallyControlled())
 		{
-			TargetChar->Reload();	
+			TargetChar->Reload();
 		}
 	}
 	
@@ -313,6 +323,10 @@ void UBaseCharAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, FlatWeapon,COND_None,REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, CurrentAmmo, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, MaxAmmo, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, BulletDamage, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, ReloadTime, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, LightMeleeDamage, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, HeavyMeleeDamage, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, WeaponResistance, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, WeaponResistanceReduction, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet,WeaponLifeSteal, COND_None, REPNOTIFY_OnChanged);
@@ -482,6 +496,26 @@ void UBaseCharAttributeSet::OnRep_CurrentAmmo(const FGameplayAttributeData& OldV
 void UBaseCharAttributeSet::OnRep_MaxAmmo(const FGameplayAttributeData& OldValue)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, MaxAmmo, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_BulletDamage(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, BulletDamage, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_ReloadTime(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, ReloadTime, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_LightMeleeDamage(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, LightMeleeDamage, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_HeavyMeleeDamage(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, HeavyMeleeDamage, OldValue);
 }
 
 void UBaseCharAttributeSet::OnRep_WeaponResistance(const FGameplayAttributeData& OldValue)

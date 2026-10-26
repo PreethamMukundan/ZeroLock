@@ -11,6 +11,7 @@ Valve assets: keep them in `/Game/Developers/...` and never ship them.
 deadlock_import.bat lash apollo        # by display name or codename
 deadlock_import.bat --list             # every hero: display name, codename, model path
 deadlock_import.bat lash --anims all   # all clips instead of the filtered set (or: none)
+deadlock_import.bat lash --data-only   # just refresh camera + stats in an existing export (seconds)
 ```
 
 **2. Import** in the Unreal editor console (`` ` `` key, Cmd mode). The export prints this line for you:
@@ -21,6 +22,8 @@ py ".../ue_import.py" Lash --no-anims     # mesh + materials only (fast)
 py ".../ue_import.py" Lash --anims-only   # just (re)import animations
 py ".../ue_import.py" Lash --anim-set-only   # just (re)build DA_<Hero>_AnimSet (resets hand edits)
 py ".../ue_import.py" Lash --hero-only    # just BP_Deadlock_<Hero> + DA_<Hero>_Hero + DT_HeroList row
+py ".../ue_import.py" Lash --camera-only  # existing BP: spring arm + camera from Deadlock's camera settings
+py ".../ue_import.py" Lash --stats-only   # (re)write GE_<Hero>_DefaultStats from Deadlock's stats, set it on the BP
 ```
 
 Result, per hero, in `/Game/Developers/rpm86/Deadlock/<Hero>/`:
@@ -68,14 +71,37 @@ Re-run just this step with `--montages-only`.
 
 ## Playable hero + hero select
 
-A full import also makes the hero playable and pickable (`config.json` → `hero_setup`). Existing assets are never overwritten,
-so re-importing keeps your edits:
+A full import also makes the hero playable and pickable (`config.json` → `hero_setup`). Existing assets are kept, so
+re-importing keeps your edits, except that an existing BP's camera, movement, `WeaponStats` and stats GE are refreshed
+from the Deadlock data:
 
 - `BP_Deadlock_<Hero>`: a copy of `BP_Deadlock_Lash` (Mover setup, weapon, **Lash's abilities** until you give it its own)
   with this hero's mesh, `ABP_DeadlockHero`, `DA_<Hero>_AnimSet` and `AM_<Hero>_Melee_Quick1` / `_Hit` melee montages.
 - `DA_<Hero>_Hero`: hero select data (name, class, mesh, `ui_hero_select`-style pose). Icon, icon colour and preview
   framing are copied from `DA_Lash_Hero`: change them on the asset.
 - A `<Hero>` row in `DT_HeroList`.
+- Camera: spring arm length, shoulder offset and pivot height from the hero's own Deadlock camera settings, FOV 106.26
+  (Deadlock's 90 at 4:3 = 106.26 at 16:9).
+- `GE_<Hero>_DefaultStats` (copy of `_Shared/GE_Deadlock_DefaultStats`) with the hero's Deadlock health, regen,
+  stamina, resistances, bullet damage, fire rate, clip size, reload time and light/heavy melee damage, set as the BP's
+  Default Gameplay Effect. The log lists the Deadlock values that have no ZeroLock attribute yet.
+- `BP_<Hero>_Projectile` (copy of `BP_ProjectileTest`) with Deadlock's bullet speed, gravity and range, set as the
+  BP's `WeaponStats.ProjectileClass`. Made once: later imports keep your edits, so tune the bullet on that asset.
+- Weapon profile on the BP (`WeaponStats`): muzzle bone, pellets, burst, damage falloff. Mover walk/crouch/dash speed scaled by the
+  hero's Deadlock speed (`movement_reference` in `config.json`).
+- `Montages/Reload/AM_<Hero>_Reload` and `Montages/Shoot/AM_<Hero>_Shoot` (UpperBody slot), played by the reload and
+  fire abilities through the anim set.
+
+Already-imported hero, after a `--data-only` export:
+`py ".../ue_import.py" Lash --montages-only --camera-only --stats-only` (the `--*-only` flags combine). Use the flags:
+a plain run re-imports the mesh and every animation (minutes per hero).
+
+Additive clips (e.g. `shoot_idle`, `landing_impact`) come out of S2V composed over the bind pose and look like a T-pose.
+The export lists them in the manifest (`additive_clips`; refresh with `--data-only`); the Unreal step makes montage clips
+additive to the ref pose and keeps them out of full-pose anim set slots. Details in `Docs/Claude/Animation.md`.
+
+GE modifiers and `WeaponStats` are edited with `set_struct_fields` (struct `export_text`/`import_text`):
+`set_editor_property` refuses `EditDefaultsOnly` fields inside a struct ("cannot be edited on instances"), even on a CDO.
 
 For a hero that's already imported: `py ".../ue_import.py" Solomon --hero-only`.
 

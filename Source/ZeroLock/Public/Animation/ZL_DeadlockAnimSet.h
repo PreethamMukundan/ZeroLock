@@ -214,6 +214,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Melee")
 	TObjectPtr<UAnimMontage> LightMeleeMontage;
 
+	/** Reload montage (UZero_BaseReloadAbility uses it when the ability sets none), on the UpperBody slot so the legs
+	 * keep running; played stretched to the hero's reload time. The importer makes AM_<Hero>_Reload from reload_idle. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TObjectPtr<UAnimMontage> ReloadMontage;
+
+	/** Played once per trigger pull by UZL_GA_WeaponFire when the ability sets none (UpperBody slot). The importer makes
+	 * AM_<Hero>_Shoot from shoot_idle. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TObjectPtr<UAnimMontage> ShootMontage;
+
 	// --- Status ---
 	/** Optional intro played once when the stun starts, then StunLoop. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Status")

@@ -9,6 +9,7 @@
 #include "NiagaraComponent.h"
 #include "TimerManager.h"
 #include "GAS/BaseCharAbilitySystemComponent.h"
+#include "GAS/BaseCharAttributeSet.h"
 #include "Components/ArrowComponent.h"
 #include "Components/AudioComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -1064,9 +1065,17 @@ void AProjectile::ApplyEffectToTarget(const bool bDirectImpact, const AActor* Ta
 		return;
 	}
 
+	float Damage = WeaponDamage;
+	if (bUseShooterWeaponStats)
+	{
+		const FVector HitPoint = Hit.bBlockingHit ? FVector(Hit.ImpactPoint) : Victim->GetActorLocation();
+		Damage = Shooter->GetAttributeOr(UBaseCharAttributeSet::GetBulletDamageAttribute(), WeaponDamage)
+			* Shooter->WeaponStats.GetFalloffScale(FVector::Dist(SpawnTransform.GetLocation(), HitPoint));
+	}
+
 	if (UBaseCharAbilitySystemComponent* SourceASC = Shooter->GetMyAbilitySystemComp())
 	{
-		SourceASC->ApplyWeaponDamage(Victim->GetMyAbilitySystemComp(), WeaponDamage, this);
+		SourceASC->ApplyWeaponDamage(Victim->GetMyAbilitySystemComp(), Damage, this);
 	}
 }
 

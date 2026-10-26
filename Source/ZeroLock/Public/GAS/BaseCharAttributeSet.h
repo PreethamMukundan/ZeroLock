@@ -133,6 +133,17 @@ public:
 	FGameplayAttributeData MaxAmmo;
 	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, MaxAmmo)
 
+	/** Base damage of one primary-fire bullet (Deadlock m_flBulletDamage), before falloff and WeaponDamage %. 0 = the
+	 * projectile's own WeaponDamage. Only read by projectiles with bUseShooterWeaponStats. */
+	UPROPERTY(BlueprintReadOnly,Category = "Weapon Attribute Set", ReplicatedUsing= OnRep_BulletDamage)
+	FGameplayAttributeData BulletDamage;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, BulletDamage)
+
+	/** Seconds a reload takes (UZero_BaseReloadAbility). 0 = the ability's ReloadTime. */
+	UPROPERTY(BlueprintReadOnly,Category = "Weapon Attribute Set", ReplicatedUsing= OnRep_ReloadTime)
+	FGameplayAttributeData ReloadTime;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, ReloadTime)
+
 	UPROPERTY(BlueprintReadOnly,Category = "Spirit Attribute Set", ReplicatedUsing= OnRep_SpiritDamage)
 	FGameplayAttributeData SpiritDamage;
 	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, SpiritDamage)
@@ -154,6 +165,16 @@ public:
 	UPROPERTY(BlueprintReadOnly,Category = "Spirit Attribute Set", ReplicatedUsing= OnRep_SpiritLifeSteal)
 	FGameplayAttributeData SpiritLifeSteal;
 	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, SpiritLifeSteal)
+
+	/** Base damage of a light (tap) melee strike, before MeleeDamage %. 0 = UZeroBase_LightMelee::StrikeDamage. */
+	UPROPERTY(BlueprintReadOnly,Category = "Melee Attribute Set", ReplicatedUsing= OnRep_LightMeleeDamage)
+	FGameplayAttributeData LightMeleeDamage;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, LightMeleeDamage)
+
+	/** Base damage of the heavy (lunge) melee strike. 0 = AZeroLockCharacter::MeleeStrikeDamage. */
+	UPROPERTY(BlueprintReadOnly,Category = "Melee Attribute Set", ReplicatedUsing= OnRep_HeavyMeleeDamage)
+	FGameplayAttributeData HeavyMeleeDamage;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, HeavyMeleeDamage)
 
 	UPROPERTY(BlueprintReadOnly,Category = "Melee Attribute Set", ReplicatedUsing= OnRep_MeleeDamage)
 	FGameplayAttributeData MeleeDamage;
@@ -296,6 +317,18 @@ protected:
 	
 	UFUNCTION()
 	virtual void OnRep_MaxAmmo(const FGameplayAttributeData& OldValue);
+
+	UFUNCTION()
+	virtual void OnRep_BulletDamage(const FGameplayAttributeData& OldValue);
+
+	UFUNCTION()
+	virtual void OnRep_ReloadTime(const FGameplayAttributeData& OldValue);
+
+	UFUNCTION()
+	virtual void OnRep_LightMeleeDamage(const FGameplayAttributeData& OldValue);
+
+	UFUNCTION()
+	virtual void OnRep_HeavyMeleeDamage(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
 	virtual void OnRep_WeaponResistance(const FGameplayAttributeData& OldValue);

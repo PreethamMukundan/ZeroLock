@@ -7,6 +7,10 @@ Deadlock hero importer (step 2 of 2): runs inside the Unreal editor.
     py ".../ue_import.py" Lash --anim-set-only   just (re)build DA_<Hero>_AnimSet for ABP_DeadlockHero
     py ".../ue_import.py" Lash --montages-only   just create Montages/<AbilityName>/AM_<Hero>_<AbilityName>_* (existing ones are kept)
     py ".../ue_import.py" Lash --hero-only       just BP_Deadlock_<Hero> + DA_<Hero>_Hero + hero list row (existing ones are kept)
+    py ".../ue_import.py" Lash --camera-only     set the existing BP's spring arm/camera from Deadlock's camera settings
+    py ".../ue_import.py" Lash --stats-only      (re)write GE_<Hero>_DefaultStats from Deadlock's stats, set it on the BP
+    The --*-only flags combine. A full run on a hero that already has a BP also refreshes its camera, movement, weapon
+    and stats GE (other BP edits are kept) - but it re-imports the mesh and every animation, which takes minutes.
     py ".../ue_import.py"                        every hero exported by deadlock_import.bat
 
 Reads Saved/DeadlockImporter/<Hero>/manifest.json written by deadlock_import.py and creates:
@@ -16,6 +20,7 @@ Reads Saved/DeadlockImporter/<Hero>/manifest.json written by deadlock_import.py 
     <dest_root>/_Shared/M_DeadlockHero[_Additive|_Translucent|_Masked]   (master materials, built once)
 """
 import json
+import math
 import os
 import re
 import sys
@@ -42,6 +47,30 @@ def warn(msg):
 
 def load(path):
     return eal.load_asset(path) if eal.does_asset_exist(path) else None
+
+
+def _text_value(value):
+    if isinstance(value, bool):
+        return "True" if value else "False"
+    if isinstance(value, str):
+        return f'"{value}"'
+    return repr(float(value)) if isinstance(value, float) else str(value)
+
+
+def set_struct_fields(struct, fields):
+    """Sets struct fields through the struct's text form. set_editor_property refuses EditDefaultsOnly fields on a
+    struct ("cannot be edited on instances"), even when the struct lives on a CDO; import_text has no such check.
+    fields: {"ExportedFieldName": value}, or {"Outer.Inner": value} for one level of nesting."""
+    text = struct.export_text()
+    for key, value in fields.items():
+        *outer, name = key.split(".")
+        prefix = "".join(rf"{o}=\((?:[^()]|\([^()]*\))*?" for o in outer)
+        pattern = rf"([(,]{prefix}(?<=[(,]){name}=)(\"[^\"]*\"|[^,)]*)"
+        text, hits = re.subn(pattern, lambda mt: mt.group(1) + _text_value(value), text, count=1)
+        if not hits:
+            raise RuntimeError(f"{type(struct).__name__} has no field {key} in: {text[:300]}")
+    struct.import_text(text)
+    return struct
 
 
 # --------------------------------------------------------------------------- master materials
@@ -346,6 +375,8 @@ MANTLE_CLIPS = [("mantle_32", 60.0), ("mantle_64", 110.0), ("mantle_96", 160.0),
 
 ANIM_SET_MONTAGES = {
     "light_melee_montage": ["Melee/AM_{hero}_Melee_Quick1", "Melee/AM_{hero}_Melee_Quick2"],
+    "reload_montage": ["Reload/AM_{hero}_Reload"],
+    "shoot_montage": ["Shoot/AM_{hero}_Shoot"],
 }
 DIRECTIONAL_SLOTS = {
     "run": ["weapon_run_{d}", "primary_run_{d}", "out_of_combat_run_{d}"],
@@ -362,8 +393,14 @@ def build_anim_set(m, dest):
     anim_dir = f"{dest}/Animations"
     hero = m["hero"]
 
-    def clip(names):
+    additive = set(m.get("additive_clips", []))
+
+    def clip(names, full_pose=True):
+        """First existing clip. Full-pose slots skip Deadlock additive clips (e.g. landing_impact): composed over the
+        bind pose they play as a T-pose flash. The aim slots take them (the node only uses Up/Down minus Center)."""
         for n in names:
+            if full_pose and n in additive:
+                continue
             seq = load(f"{anim_dir}/A_{hero}_{n}")
             if seq:
                 return seq
@@ -415,7 +452,7 @@ def build_anim_set(m, dest):
     for prop, bases in AIM_SLOTS.items():
         aim = aset.get_editor_property(prop)
         for field, suffix in (("center", ""), ("up", "_up"), ("down", "_down")):
-            aim.set_editor_property(field, clip([b + suffix for b in bases]))
+            aim.set_editor_property(field, clip([b + suffix for b in bases], full_pose=False))
         aset.set_editor_property(prop, aim)
         if aim.get_editor_property("center") is None:
             missing.append(prop)
@@ -431,6 +468,12 @@ GENERIC_TOKENS = {"citadel", "ability", "the", "and", "of", "up", "down", "left"
                   "loop", "in", "air", "aim", "hit", "dash", "n", "e", "s", "w", "x"}
 MELEE_CLIPS = ["melee_quick_1", "melee_quick_2", "melee_start", "melee_dash", "melee_hit",
                "melee_in_air_start", "melee_in_air_dash", "melee_in_air_hit"]
+# Upper-body weapon montages: (name, first clip found, anim set property). UpperBody slot, legs keep running.
+WEAPON_MONTAGES = [
+    ("Reload", ["reload_idle", "reload_stand_idle", "reload_quick_idle", "reload_run", "primary_stand_reload"], "reload_montage"),
+    ("Shoot", ["shoot_idle", "shoot_run", "primary_stand_shoot"], "shoot_montage"),
+]
+WEAPON_MONTAGE_SLOT = "UpperBody"
 PARRY_CLIPS = ["parry", "parry_idle", "parry_success", "parry_in_air", "parry_in_air_success"]
 
 
@@ -479,7 +522,25 @@ def create_montage(seq, folder, name):
     return montage, True
 
 
+def make_additive(m, seq):
+    """Deadlock additive clips (manifest additive_clips, e.g. shoot_idle) come out of S2V composed over the bind pose,
+    which plays as a near T-pose. Additive to the ref pose subtracts the bind pose again, so the montage layers just
+    the delta over the live pose, as in Deadlock. Only for montage clips: the anim node samples its clips directly."""
+    short = seq.get_name()[len(f"A_{m['hero']}_"):]
+    if short not in m.get("additive_clips", []):
+        return False
+    if seq.get_editor_property("additive_anim_type") != unreal.AdditiveAnimationType.AAT_LOCAL_SPACE_BASE \
+            or seq.get_editor_property("ref_pose_type") != unreal.AdditiveBasePoseType.ABPT_REF_POSE:
+        seq.set_editor_property("additive_anim_type", unreal.AdditiveAnimationType.AAT_LOCAL_SPACE_BASE)
+        seq.set_editor_property("ref_pose_type", unreal.AdditiveBasePoseType.ABPT_REF_POSE)
+        eal.save_loaded_asset(seq)
+    return True
+
+
 def build_montages(m, dest):
+    if "additive_clips" not in m:
+        warn(f"  manifest has no additive_clips - run: deadlock_import.bat {m['hero']} --data-only "
+             f"(else additive clips such as shoot_idle play as a T-pose)")
     hero = m["hero"]
     anim_dir, root = f"{dest}/Animations", f"{dest}/Montages"
     clips = {a["name"]: load(f"{anim_dir}/A_{hero}_{a['name']}") for a in m["animations"]}
@@ -502,14 +563,45 @@ def build_montages(m, dest):
 
     created = 0
     summary = {}
+    additive = []
     for seq, folder, name in plan:
         montage, is_new = create_montage(seq, folder, name)
         created += is_new
         summary.setdefault(folder.rsplit("/", 1)[-1], []).append(name)
+        if make_additive(m, seq):
+            additive.append(name)
     for group, names in summary.items():
         log(f"  Montages/{group}: {', '.join(n.split('_', 2)[-1] for n in names)}")
     log(f"  {len(plan)} montages ({created} new) in {root}")
+    if additive:
+        log(f"  additive (Deadlock layers, ref pose base): {', '.join(additive)}")
+    for name, names, prop in WEAPON_MONTAGES:
+        build_weapon_montage(m, dest, clips, name, names, prop)
     return summary
+
+
+def build_weapon_montage(m, dest, clips, name, names, prop):
+    """Montages/<Name>/AM_<Hero>_<Name> on the UpperBody slot, also set on the existing anim set (prop)."""
+    hero = m["hero"]
+    seq = next((clips[c] for c in names if c in clips), None)
+    if seq is None:
+        warn(f"  no {name.lower()} clip (tried {names})")
+        return None
+    montage, _ = create_montage(seq, f"{dest}/Montages/{name}", f"AM_{hero}_{name}")
+    if montage is None:
+        return None
+    additive = make_additive(m, seq)
+    if hasattr(unreal, "ZL_EditorAssetLibrary"):
+        unreal.ZL_EditorAssetLibrary.set_montage_slot(montage, WEAPON_MONTAGE_SLOT)
+        eal.save_loaded_asset(montage)
+    else:
+        warn(f"  ZL_EditorAssetLibrary missing (rebuild the editor): set AM_{hero}_{name}'s slot to {WEAPON_MONTAGE_SLOT} by hand")
+    aset = load(f"{dest}/DA_{hero}_AnimSet")
+    if aset:
+        aset.set_editor_property(prop, montage)
+        eal.save_loaded_asset(aset)
+    log(f"  {name.lower()} montage AM_{hero}_{name} ({seq.get_name()}{', additive' if additive else ''}, slot {WEAPON_MONTAGE_SLOT})")
+    return montage
 
 
 # --------------------------------------------------------------------------- hero BP, hero data, hero list
@@ -524,9 +616,219 @@ def duplicate_template(template, path, what):
     return eal.duplicate_asset(template, path)
 
 
-def build_hero_bp(m, dest, aset):
+SOURCE_UNIT_CM = 2.54  # S2V exports Source units (inches) as cm; the hero mesh scale shrinks them further
+# Deadlock's citadel_camera_hero_fov 90 is a 4:3 horizontal FOV (Source convention). UE keeps the horizontal FOV,
+# so the same view at 16:9 is wider.
+DEADLOCK_FOV = 90.0
+DEADLOCK_FOV_16_9 = math.degrees(2 * math.atan(math.tan(math.radians(DEADLOCK_FOV / 2)) * (16 / 9) / (4 / 3)))
+
+
+def apply_camera(m, cdo):
+    """Spring arm + camera from the model's CitadelCameraSettings_t: pivot at the camera height above the feet, arm
+    length = back offset, side offset on the arm's socket (so the arm's collision probe covers it)."""
+    cam = m.get("camera") or {}
+    if "m_flCameraBackOffset" not in cam:
+        warn(f"  no camera data in the manifest - run: deadlock_import.bat {m['hero']} --data-only")
+        return False
+    k = unit_scale(cdo)
+    half_height = cdo.get_editor_property("capsule_component").get_unscaled_capsule_half_height()
+
+    arm = cdo.get_editor_property("spring_arm_component")
+    arm.set_editor_property("target_arm_length", round(cam["m_flCameraBackOffset"] * k, 1))
+    arm.set_editor_property("socket_offset", unreal.Vector(0, round(-cam.get("m_flCameraSideOffset", 0) * k, 1), 0))
+    arm.set_editor_property("relative_location",
+                            unreal.Vector(0, 0, round(cam.get("m_flCameraHeightStanding", 0) * k - half_height, 1)))
+    camera = cdo.get_editor_property("camera_component")
+    camera.set_editor_property("relative_location", unreal.Vector(0, 0, 0))
+    camera.set_editor_property("field_of_view", round(DEADLOCK_FOV_16_9, 2))
+    log(f"  camera: arm {arm.get_editor_property('target_arm_length')} cm, side "
+        f"{arm.get_editor_property('socket_offset').y}, pivot z {arm.get_editor_property('relative_location').z}, "
+        f"FOV {round(DEADLOCK_FOV_16_9, 2)}")
+    return True
+
+
+# Deadlock starting stat / weapon field -> UBaseCharAttributeSet attributes it overrides in GE_<Hero>_DefaultStats.
+STAT_ATTRIBUTES = {
+    "EMaxHealth": ["CurrentHealth", "MaximumHealth"],
+    "EBaseHealthRegen": ["HealthRegeneration"],
+    "EStamina": ["MaxStamina"],
+    "EStaminaRegenPerSecond": ["StaminaRegenRate"],
+    "EBulletArmorDamageReduction": ["WeaponResistance"],
+    "ETechArmorDamageReduction": ["SpiritResistance"],
+    "ELightMeleeDamage": ["LightMeleeDamage"],
+    "EHeavyMeleeDamage": ["HeavyMeleeDamage"],
+}
+WEAPON_ATTRIBUTES = {
+    "m_flBulletDamage": ["BulletDamage"],
+    "m_flCycleTime": ["FireRate"],
+    "m_iClipSize": ["MaxAmmo", "CurrentAmmo"],
+    "m_reloadDuration": ["ReloadTime"],
+}
+# Applied outside the GE (apply_movement, apply_weapon_stats), so not reported as missing.
+HANDLED_STATS = {"EMaxMoveSpeed", "ECrouchSpeed", "EGroundDashDistanceInMeters"}
+HANDLED_WEAPON = {"m_iBullets", "m_iBurstShotCount", "m_flIntraBurstCycleTime", "m_flDamageFalloffStartRange",
+                  "m_flDamageFalloffEndRange", "m_flDamageFalloffEndScale"}
+
+
+def unit_scale(cdo):
+    """cm per Deadlock unit on this hero: S2V's inches->cm times the mesh scale."""
+    return SOURCE_UNIT_CM * cdo.get_editor_property("mesh_component").get_editor_property("relative_scale3d").z
+
+
+def apply_movement(m, cdo):
+    """Mover walk / crouch / dash speed: our tuned values scaled by the hero's Deadlock stat over the base hero's
+    (config hero_setup.movement_reference)."""
+    stats = (m.get("stats") or {}).get("starting", {})
+    ref = HERO_SETUP.get("movement_reference", {})
+
+    def scaled(stat, ours):
+        if stat in stats and ref.get(stat) and ours in ref:
+            return round(ref[ours] * stats[stat] / ref[stat], 1)
+        return None
+
+    walk = scaled("EMaxMoveSpeed", "MaxSpeed")
+    crouch = scaled("ECrouchSpeed", "CrouchingMaxSpeed")
+    dash = scaled("EGroundDashDistanceInMeters", "DashSpeed")
+    mover = cdo.get_editor_property("mover_component")
+    for settings in mover.get_editor_property("shared_settings"):
+        kind = settings.get_class().get_name() if settings else ""
+        if kind == "CommonLegacyMovementSettings" and walk:
+            settings.set_editor_property("max_speed", walk)
+        elif kind == "StanceSettings" and crouch:
+            settings.set_editor_property("crouching_max_speed", crouch)
+    if dash:
+        mover.set_editor_property("dash_speed", dash)
+    log(f"  movement: walk {walk}, crouch {crouch}, dash {dash} cm/s")
+
+
+UE_GRAVITY = 980.0
+
+
+def build_projectile(m, dest, k):
+    """BP_<Hero>_Projectile: a copy of template_projectile (tracer, damage from the shooter's stats) with the hero's
+    Deadlock bullet speed, gravity and range. Made once, so speed and the rest can be tuned on the asset afterwards."""
+    hero = m["hero"]
+    path = f"{dest}/BP_{hero}_Projectile"
+    if eal.does_asset_exist(path):
+        return eal.load_blueprint_class(path)
+    bp = duplicate_template(HERO_SETUP.get("template_projectile", ""), path, "projectile")
+    if bp is None:
+        return None
+    unreal.BlueprintEditorLibrary.compile_blueprint(bp)
+    cls = eal.load_blueprint_class(path)
+    cdo = unreal.get_default_object(cls)
+
+    weapon = (m.get("stats") or {}).get("weapon", {})
+    speed = weapon.get("m_flBulletSpeed", 0) * k
+    gravity = weapon.get("m_flBulletGravityScale", 0) * HERO_SETUP.get("deadlock_gravity", 800) * k / UE_GRAVITY
+    move = cdo.get_editor_property("projectile_movement")
+    if speed > 0:
+        move.set_editor_property("initial_speed", round(speed))
+        move.set_editor_property("max_speed", round(speed))
+    move.set_editor_property("projectile_gravity_scale", round(gravity, 3))
+    if speed > 0 and weapon.get("m_flRange", 0) > 0:
+        cdo.set_editor_property("initial_life_span", round(max(0.1, weapon["m_flRange"] * k / speed), 3))
+    eal.save_loaded_asset(bp)
+    log(f"  projectile {path}: {round(speed)} cm/s, gravity x{round(gravity, 3)}, "
+        f"life {cdo.get_editor_property('initial_life_span')} s")
+    return cls
+
+
+def apply_weapon_stats(m, dest, cdo):
+    """AZeroLockCharacter::WeaponStats: pellets, burst and damage falloff (ranges in cm) from the Deadlock weapon."""
+    weapon = (m.get("stats") or {}).get("weapon", {})
+    if not weapon:
+        return
+    k = unit_scale(cdo)
+    stats = cdo.get_editor_property("weapon_stats")
+    bone = (m["stats"].get("muzzle") or {}).get("bone", "")
+    mesh = cdo.get_editor_property("mesh_component").get_editor_property("skeletal_mesh_asset")
+    bones = [str(b) for b in mesh.skeleton.get_reference_pose().get_bone_names()] if mesh and mesh.skeleton else []
+    fields = {
+        "bOverrideFireMode": True,
+        "Pellets": max(1, int(weapon.get("m_iBullets", 1))),
+        "BurstShots": max(1, int(weapon.get("m_iBurstShotCount", 1))),
+        "FalloffStartRange": round(weapon.get("m_flDamageFalloffStartRange", 0) * k, 1),
+        "FalloffEndRange": round(weapon.get("m_flDamageFalloffEndRange", 0) * k, 1),
+        "FalloffEndScale": float(weapon.get("m_flDamageFalloffEndScale", 1.0)),
+    }
+    if bone and bone in bones:
+        fields["MuzzleSocket"] = bone
+    else:
+        warn(f"  muzzle bone '{bone}' not on the mesh - shots keep leaving from in front of the hero")
+    if weapon.get("m_flIntraBurstCycleTime", 0) > 0:
+        fields["BurstInterval"] = float(weapon["m_flIntraBurstCycleTime"])
+    if "ProjectileClass=" in stats.export_text():
+        projectile = build_projectile(m, dest, k)
+        if projectile:
+            fields["ProjectileClass"] = projectile.get_path_name()
+    else:
+        warn("  WeaponStats has no ProjectileClass yet (rebuild the editor): no per-hero projectile")
+    set_struct_fields(stats, fields)
+    cdo.set_editor_property("weapon_stats", stats)
+    stats = cdo.get_editor_property("weapon_stats")
+    log(f"  weapon: muzzle {stats.get_editor_property('muzzle_socket')}, {stats.get_editor_property('pellets')} pellet(s), burst {stats.get_editor_property('burst_shots')}, "
+        f"falloff {stats.get_editor_property('falloff_start_range')}-{stats.get_editor_property('falloff_end_range')} cm "
+        f"to x{stats.get_editor_property('falloff_end_scale')}")
+
+
+def stat_values(m):
+    """{attribute: value} for the stats GE. Resistances default to 0 (Deadlock omits them when the hero has none)."""
+    stats = m.get("stats") or {}
+    values = {"WeaponResistance": 0.0, "SpiritResistance": 0.0}
+    for source, mapping in ((stats.get("starting", {}), STAT_ATTRIBUTES), (stats.get("weapon", {}), WEAPON_ATTRIBUTES)):
+        for key, attrs in mapping.items():
+            if key in source:
+                values.update({a: float(source[key]) for a in attrs})
+    unmapped = {k: v for k, v in stats.get("starting", {}).items() if k not in STAT_ATTRIBUTES and k not in HANDLED_STATS}
+    unmapped.update({k: v for k, v in stats.get("weapon", {}).items() if k not in WEAPON_ATTRIBUTES and k not in HANDLED_WEAPON})
+    return values, unmapped
+
+
+def build_stats_ge(m, dest, refresh):
+    """GE_<Hero>_DefaultStats: a copy of the shared template (Instant, Override per attribute) with this hero's
+    Deadlock values. An existing one is only rewritten with refresh (--stats-only)."""
+    hero = m["hero"]
+    path = f"{dest}/GE_{hero}_DefaultStats"
+    if not (m.get("stats") or {}).get("starting"):
+        warn(f"  no stats in the manifest - run: deadlock_import.bat {hero} --data-only")
+        return eal.load_blueprint_class(path) if eal.does_asset_exist(path) else None
+    exists = eal.does_asset_exist(path)
+    if exists and not refresh:
+        log(f"  {path} exists, kept")
+        return eal.load_blueprint_class(path)
+
+    bp = load(path) if exists else duplicate_template(HERO_SETUP.get("template_stats_ge", ""), path, "stats GE")
+    if bp is None:
+        return None
+    unreal.BlueprintEditorLibrary.compile_blueprint(bp)
+    cls = eal.load_blueprint_class(path)
+    cdo = unreal.get_default_object(cls)
+
+    values, unmapped = stat_values(m)
+    # Struct elements read from an unreal.Array are copies, so build a new list and write it back.
+    mods, written = [], set()
+    for mod in cdo.get_editor_property("modifiers"):
+        attr = str(mod.get_editor_property("attribute").get_editor_property("attribute_name"))
+        if attr in values and attr not in written:
+            set_struct_fields(mod, {"ModifierMagnitude.ScalableFloatMagnitude.Value": values[attr]})
+            written.add(attr)
+        mods.append(mod)
+    cdo.set_editor_property("modifiers", mods)
+    eal.save_loaded_asset(bp)
+
+    log(f"  stats GE {path}: " + ", ".join(f"{a} {values[a]:g}" for a in sorted(written)))
+    if set(values) - written:
+        warn(f"  template has no modifier for: {sorted(set(values) - written)}")
+    if unmapped:
+        log(f"  Deadlock values with no attribute (not applied): " + ", ".join(f"{k} {v:g}" for k, v in unmapped.items()))
+    return cls
+
+
+def build_hero_bp(m, dest, aset, stats_ge=None):
     """BP_Deadlock_<Hero>: a copy of the template hero (Mover setup, weapon, abilities) with this hero's mesh,
-    anim blueprint, anim set and melee montages. An existing BP is left alone (it may have hand edits)."""
+    anim blueprint, anim set, melee montages, Deadlock camera and default stats GE. An existing BP is left alone
+    (it may have hand edits)."""
     hero = m["hero"]
     path = f"{dest}/BP_Deadlock_{hero}"
     if eal.does_asset_exist(path):
@@ -549,6 +851,11 @@ def build_hero_bp(m, dest, aset):
     # A duplicate keeps the template's montages, which win over the anim set's: point them at this hero's.
     cdo.set_editor_property("light_melee_montage", load(f"{dest}/Montages/Melee/AM_{hero}_Melee_Quick1"))
     cdo.set_editor_property("heavy_melee_montage", load(f"{dest}/Montages/Melee/AM_{hero}_Melee_Hit"))
+    apply_camera(m, cdo)
+    apply_movement(m, cdo)
+    apply_weapon_stats(m, dest, cdo)
+    if stats_ge:
+        cdo.set_editor_property("default_gameplay_effect", stats_ge)
 
     eal.save_loaded_asset(bp)
     log(f"  hero BP {path} (abilities copied from {HERO_SETUP.get('template_bp')})")
@@ -600,16 +907,39 @@ def add_to_hero_list(m, data):
 
 
 def setup_hero(m, dest):
+    if eal.does_asset_exist(f"{dest}/BP_Deadlock_{m['hero']}"):
+        # Existing BP: keep its hand edits but refresh what the importer owns (camera, movement, weapon, stats GE).
+        update_existing_bp(m, dest, camera=True, stats=True)
     aset = load(f"{dest}/DA_{m['hero']}_AnimSet")
-    hero_class = build_hero_bp(m, dest, aset)
+    hero_class = build_hero_bp(m, dest, aset, build_stats_ge(m, dest, refresh=False))
     if hero_class is None:
         return
     add_to_hero_list(m, build_hero_data(m, dest, hero_class))
 
 
+def update_existing_bp(m, dest, camera, stats):
+    """--camera-only / --stats-only on a BP that already exists."""
+    path = f"{dest}/BP_Deadlock_{m['hero']}"
+    bp = load(path)
+    if bp is None:
+        warn(f"  {path} not found - run a full import or --hero-only first")
+        return
+    stats_ge = build_stats_ge(m, dest, refresh=True) if stats else None
+    cdo = unreal.get_default_object(eal.load_blueprint_class(path))
+    if camera:
+        apply_camera(m, cdo)
+    if stats:
+        apply_movement(m, cdo)
+        apply_weapon_stats(m, dest, cdo)
+    if stats_ge:
+        cdo.set_editor_property("default_gameplay_effect", stats_ge)
+    eal.save_loaded_asset(bp)
+
+
 # --------------------------------------------------------------------------- main
 
-def import_hero(hero, no_anims=False, anims_only=False, anim_set_only=False, montages_only=False, hero_only=False):
+def import_hero(hero, no_anims=False, anims_only=False, anim_set_only=False, montages_only=False, hero_only=False,
+                camera_only=False, stats_only=False):
     path = os.path.join(CFG["output_dir"], hero, "manifest.json")
     if not os.path.exists(path):
         raise RuntimeError(f"No export for '{hero}' - run: deadlock_import.bat {hero}")
@@ -617,14 +947,16 @@ def import_hero(hero, no_anims=False, anims_only=False, anim_set_only=False, mon
         m = json.load(f)
     dest = m["ue_dest"]
     log(f"=== {m['display']} -> {dest}")
-    if hero_only:
-        setup_hero(m, dest)
-        return
-    if anim_set_only:
-        build_anim_set(m, dest)
-        return
-    if montages_only:
-        build_montages(m, dest)
+    # The --*-only steps combine (e.g. --montages-only --camera-only --stats-only).
+    if montages_only or anim_set_only or hero_only or camera_only or stats_only:
+        if montages_only:
+            build_montages(m, dest)
+        if anim_set_only:
+            build_anim_set(m, dest)
+        if hero_only:
+            setup_hero(m, dest)
+        if camera_only or stats_only:
+            update_existing_bp(m, dest, camera_only, stats_only)
         return
 
     if anims_only:
@@ -657,6 +989,8 @@ def main(argv):
     anim_set_only = "--anim-set-only" in argv
     montages_only = "--montages-only" in argv
     hero_only = "--hero-only" in argv
+    camera_only = "--camera-only" in argv
+    stats_only = "--stats-only" in argv
     heroes = [a for a in argv if not a.startswith("--")]
     if not heroes:
         out = CFG["output_dir"]
@@ -664,7 +998,7 @@ def main(argv):
         log(f"Importing all exported heroes: {heroes}")
     for h in heroes:
         match = next((d for d in os.listdir(CFG["output_dir"]) if d.lower() == h.lower().replace(" ", "")), h)
-        import_hero(match, no_anims, anims_only, anim_set_only, montages_only, hero_only)
+        import_hero(match, no_anims, anims_only, anim_set_only, montages_only, hero_only, camera_only, stats_only)
 
 
 if __name__ == "__main__":

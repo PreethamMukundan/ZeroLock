@@ -528,6 +528,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile|Damage", Meta = (EditCondition = "bApplyWeaponDamage"))
 	float WeaponDamage;
 
+	/** Primary-fire bullets: damage = the shooter's BulletDamage attribute (WeaponDamage if that's 0) × the shooter's
+	 * WeaponStats falloff for the distance from SpawnTransform to the hit. Leave off for ability projectiles. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile|Damage", Meta = (EditCondition = "bApplyWeaponDamage"))
+	bool bUseShooterWeaponStats = false;
+
 	/** Cascade particle spawned when this projectile hits a character. */
 	UPROPERTY(EditDefaultsOnly, Category = "Projectile|FX")
 	TObjectPtr<UParticleSystem> HitCharacterParticle;

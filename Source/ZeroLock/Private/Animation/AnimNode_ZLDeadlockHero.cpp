@@ -15,6 +15,50 @@ namespace ZLDeadlockHero
 	constexpr float DashBlendTime = 0.08f;
 	/** A slide starting within this long after being airborne counts as landing into the slide. */
 	constexpr float SlideFromAirWindow = 0.25f;
+	/** Apollo, Solomon and Doorman hang the weapon off root_motion (root_motion > weaponPivot > weapon), not a hand.
+	 *  Deadlock snaps it onto the hand's target bone at runtime: in every full clip the two coincide, and additive
+	 *  clips (shoot) move only the hand. */
+	const FName WeaponBone = TEXT("weapon");
+	const FName WeaponTargetBone = TEXT("weapon_target_hand_R");
+
+	FCompactPoseBoneIndex FindCompactBone(const FBoneContainer& Bones, FName Name)
+	{
+		const int32 MeshIndex = Bones.GetPoseBoneIndexForBoneName(Name);
+		return MeshIndex == INDEX_NONE ? FCompactPoseBoneIndex(INDEX_NONE) : Bones.MakeCompactPoseIndex(FMeshPoseBoneIndex(MeshIndex));
+	}
+
+	FTransform ComponentTransform(const FCompactPose& Pose, FCompactPoseBoneIndex Bone)
+	{
+		FTransform Result = FTransform::Identity;
+		for (; Bone.IsValid(); Bone = Pose.GetParentBoneIndex(Bone))
+		{
+			Result = Result * Pose[Bone];
+		}
+		return Result;
+	}
+
+	/** Puts WeaponBone on WeaponTargetBone, unless the weapon already hangs below the target's hand. */
+	void SnapWeaponToHand(FCompactPose& Pose)
+	{
+		const FBoneContainer& Bones = Pose.GetBoneContainer();
+		const FCompactPoseBoneIndex Weapon = FindCompactBone(Bones, WeaponBone);
+		const FCompactPoseBoneIndex Target = FindCompactBone(Bones, WeaponTargetBone);
+		if (!Weapon.IsValid() || !Target.IsValid())
+		{
+			return;
+		}
+		const FCompactPoseBoneIndex Hand = Pose.GetParentBoneIndex(Target);
+		const FCompactPoseBoneIndex WeaponParent = Pose.GetParentBoneIndex(Weapon);
+		for (FCompactPoseBoneIndex Bone = WeaponParent; Bone.IsValid(); Bone = Pose.GetParentBoneIndex(Bone))
+		{
+			if (Bone == Hand)
+			{
+				return;
+			}
+		}
+		Pose[Weapon] = ComponentTransform(Pose, Target).GetRelativeTransform(ComponentTransform(Pose, WeaponParent));
+		Pose[Weapon].NormalizeRotation();
+	}
 
 	float Length(const UAnimSequence* Seq)
 	{
@@ -768,6 +812,7 @@ void FAnimNode_ZLDeadlockHero::Evaluate_AnyThread(FPoseContext& Output)
 
 	ApplySlots(Output);
 	StripRootMotion(Output);
+	ZLDeadlockHero::SnapWeaponToHand(Output.Pose);
 }
 
 void FAnimNode_ZLDeadlockHero::GatherDebugData(FNodeDebugData& DebugData)

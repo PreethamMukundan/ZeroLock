@@ -31,6 +31,12 @@ namespace ZerolockGameplayTagsForBinding
 	/** SetByCaller tag for a cooldown GE's duration (UBaseGameplayAbility::ApplyCooldown sets it, UZL_GE_BaseCooldown reads it). */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SETBYCALLER_COOLDOWN_DURATION)
 
+	/** SetByCaller tag for UZL_GE_AmmoCost: ammo added to CurrentAmmo (negative = spent). */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SETBYCALLER_AMMO)
+
+	/** Granted while UZero_BaseReloadAbility runs (ActivationOwnedTags): blocks primary fire (UZL_GA_WeaponFire). */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_WEAPON_RELOADING)
+
 	/** SetByCaller tag for UZL_GE_MoveSlow: the MoveSpeedMultiplier the slow sets (e.g. 0.6 = 40% slower). */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SETBYCALLER_MOVE_SPEED_MULTIPLIER)
 

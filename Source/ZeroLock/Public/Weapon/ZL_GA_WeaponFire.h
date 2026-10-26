@@ -8,6 +8,7 @@
 
 class AProjectile;
 class AZeroLockCharacter;
+class UAnimMontage;
 
 UENUM(BlueprintType)
 enum class EZLWeaponFireMode : uint8
@@ -40,7 +41,21 @@ public:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
+	/** With bConsumeAmmo: needs at least one CurrentAmmo. */
+	virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
+	/** With bConsumeAmmo: UZL_GE_AmmoCost for one ammo per shot (a burst costs BurstCount, pellets cost nothing extra),
+	 * capped at the ammo left. Predicted with the activation. */
+	virtual void ApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
+
 protected:
+	/** Spend CurrentAmmo per shot. An empty clip auto-reloads (UBaseCharAttributeSet::PostAttributeChange). */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	bool bConsumeAmmo = true;
+
+	/** Takes the projectile class from the hero's WeaponStats when set, and FireMode, BurstCount/Interval and
+	 * PelletCount/SpreadAngle when it has bOverrideFireMode. Runs before the commit, on the client and the server alike. */
+	void ApplyHeroWeaponStats(const AZeroLockCharacter* Hero);
+
 	/** Fake (client predicted) projectile class. */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Projectile")
 	TSubclassOf<AProjectile> ProjectileClass;
@@ -70,9 +85,16 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon", Meta = (ClampMin = "0.0"))
 	float BulletSpreadAngle = 0.0f;
 
-	/** Socket on the character mesh to fire from. Falls back to the actor location + SpawnForwardOffset if missing. */
+	/** Socket on the character mesh to fire from when the hero's WeaponStats.MuzzleSocket is None. Falls back to the
+	 * actor location + SpawnForwardOffset if the mesh has neither. */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Aim")
 	FName MuzzleSocketName = NAME_None;
+
+	/** Played once per trigger pull (predicted, replicated to other players). Empty = the hero's DeadlockAnimSet->ShootMontage. */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
+	TObjectPtr<UAnimMontage> ShootMontage;
+
+	void PlayShootMontage(const AZeroLockCharacter* Hero, const FGameplayAbilityActivationInfo& ActivationInfo);
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Aim")
 	float SpawnForwardOffset = 100.0f;

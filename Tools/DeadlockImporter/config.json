@@ -11,6 +11,16 @@
     "_help": "A new hero gets BP_Deadlock_<Hero> (duplicate of template_bp, abilities kept), DA_<Hero>_Hero (duplicate of template_data: icon, colour, preview settings) and a row in hero_list. Existing BPs/data assets are never overwritten.",
     "template_bp": "/Game/Developers/rpm86/Deadlock/Lash/BP_Deadlock_Lash",
     "template_data": "/Game/Developers/rpm86/Deadlock/Lash/DA_Lash_Hero",
+    "template_stats_ge": "/Game/Developers/rpm86/Deadlock/_Shared/GE_Deadlock_DefaultStats",
+    "template_projectile": "/Game/ZERO/UI/BP/Weapon/BP_ProjectileTest",
+    "deadlock_gravity": 800,
+    "_projectile_help": "BP_<Hero>_Projectile = copy of template_projectile with Deadlock's m_flBulletSpeed, m_flBulletGravityScale (x deadlock_gravity units/s^2, assumed Source's 800, over UE's 980 cm/s^2) and lifespan m_flRange / speed. Made once; later imports keep your edits.",
+    "movement_reference": {
+      "_help": "Our tuned Mover values for Deadlock's base hero (hero_base). Each hero's Mover value = ours x (hero stat / base stat), so heroes keep Deadlock's differences without changing the game's overall speed.",
+      "EMaxMoveSpeed": 7.2, "MaxSpeed": 800,
+      "ECrouchSpeed": 4.75, "CrouchingMaxSpeed": 200,
+      "EGroundDashDistanceInMeters": 10.0, "DashSpeed": 1500
+    },
     "anim_blueprint": "/Game/ZERO/Animation/Deadlock/ABP_DeadlockHero",
     "hero_list": "/Game/ZERO/UI/BP/CharacterSelector/DT_HeroList",
     "display_anims": ["ui_hero_select", "ui_pose", "hero_pose", "stand_idle", "weapon_stand_idle"]

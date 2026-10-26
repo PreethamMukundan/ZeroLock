@@ -4,12 +4,16 @@
 #include "Weapon/ZL_GA_WeaponFire.h"
 
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
+#include "Animation/AnimMontage.h"
+#include "Animation/ZL_DeadlockAnimSet.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "AbilitySystemComponent.h"
 #include "Engine/World.h"
+#include "GAS/BaseCharAttributeSet.h"
 #include "GAS/ZL_GameplayTags.h"
 #include "Weapon/Projectile.h"
+#include "Weapon/ZL_GE_AmmoCost.h"
 #include "Weapon/ZL_Task_SpawnPredictedProjectile.h"
 #include "ZeroLock/ZeroLockCharacter.h"
 
@@ -19,22 +23,92 @@ UZL_GA_WeaponFire::UZL_GA_WeaponFire()
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerExecution;
 
-	FGameplayTag ReloadTag = FGameplayTag::RequestGameplayTag(FName("ZeroLock.Weapon.Reloading"), false);
-	if (ReloadTag.IsValid())
-	{
-		ActivationBlockedTags.AddTag(ReloadTag);
-	}
+	// Native tag: a RequestGameplayTag here ran before the ini tags loaded, so the BP CDO ended up without it.
+	ActivationBlockedTags.AddTag(ZerolockGameplayTagsForBinding::TAG_WEAPON_RELOADING);
 }
 
 bool UZL_GA_WeaponFire::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
+	// Reloading is checked here as well: BP subclasses can replace ActivationBlockedTags.
 	if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid()
-		&& ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_GOOBALL))
+		&& (ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_GOOBALL)
+			|| ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_WEAPON_RELOADING)))
 	{
 		return false;
 	}
 	return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
+}
+
+bool UZL_GA_WeaponFire::CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	FGameplayTagContainer* OptionalRelevantTags) const
+{
+	if (bConsumeAmmo && ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
+	{
+		bool bFound = false;
+		const float Ammo = ActorInfo->AbilitySystemComponent->GetGameplayAttributeValue(UBaseCharAttributeSet::GetCurrentAmmoAttribute(), bFound);
+		if (bFound && Ammo < 1.f)
+		{
+			return false;
+		}
+	}
+	return Super::CheckCost(Handle, ActorInfo, OptionalRelevantTags);
+}
+
+void UZL_GA_WeaponFire::ApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo) const
+{
+	Super::ApplyCost(Handle, ActorInfo, ActivationInfo);
+
+	if (!bConsumeAmmo || !ActorInfo || !ActorInfo->AbilitySystemComponent.IsValid())
+	{
+		return;
+	}
+	bool bFound = false;
+	const float Ammo = ActorInfo->AbilitySystemComponent->GetGameplayAttributeValue(UBaseCharAttributeSet::GetCurrentAmmoAttribute(), bFound);
+	const float Cost = FMath::Min(Ammo, static_cast<float>(FireMode == EZLWeaponFireMode::Burst ? FMath::Max(1, BurstCount) : 1));
+	if (!bFound || Cost <= 0.f)
+	{
+		return;
+	}
+
+	FGameplayEffectSpecHandle Spec = MakeOutgoingGameplayEffectSpec(Handle, ActorInfo, ActivationInfo, UZL_GE_AmmoCost::StaticClass(), 1.f);
+	if (Spec.IsValid())
+	{
+		Spec.Data->SetSetByCallerMagnitude(ZerolockGameplayTagsForBinding::TAG_SETBYCALLER_AMMO, -Cost);
+		ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, Spec);
+	}
+}
+
+void UZL_GA_WeaponFire::ApplyHeroWeaponStats(const AZeroLockCharacter* Hero)
+{
+	const FZL_HeroWeaponStats& Stats = Hero->WeaponStats;
+	// InstancedPerExecution, so overriding the instance's classes only affects this shot.
+	if (Stats.ProjectileClass)
+	{
+		ProjectileClass = Stats.ProjectileClass;
+		ServerProjectileClass = Stats.ProjectileClass;
+	}
+	if (!Stats.bOverrideFireMode)
+	{
+		return;
+	}
+	if (Stats.Pellets > 1)
+	{
+		FireMode = EZLWeaponFireMode::Shotgun;
+		PelletCount = Stats.Pellets;
+		SpreadAngle = Stats.PelletSpread;
+	}
+	else if (Stats.BurstShots > 1)
+	{
+		FireMode = EZLWeaponFireMode::Burst;
+		BurstCount = Stats.BurstShots;
+		BurstInterval = Stats.BurstInterval;
+	}
+	else
+	{
+		FireMode = EZLWeaponFireMode::Single;
+	}
 }
 
 void UZL_GA_WeaponFire::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -43,6 +117,11 @@ void UZL_GA_WeaponFire::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                         const FGameplayEventData* TriggerEventData)
 {
 	AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
+	if (Hero)
+	{
+		// Before the commit: the ammo cost depends on the burst size.
+		ApplyHeroWeaponStats(Hero);
+	}
 	if (!Hero || !ProjectileClass || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -52,6 +131,8 @@ void UZL_GA_WeaponFire::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	const int32 NumProjectiles = GetProjectilesPerActivation();
 	PendingSpawns = NumProjectiles;
 	BurstShotsFired = 0;
+
+	PlayShootMontage(Hero, ActivationInfo);
 
 	if (!IsLocallyControlled())
 	{
@@ -81,6 +162,19 @@ void UZL_GA_WeaponFire::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		FireProjectile(BulletSpreadAngle);
 		break;
 	}
+}
+
+void UZL_GA_WeaponFire::PlayShootMontage(const AZeroLockCharacter* Hero, const FGameplayAbilityActivationInfo& ActivationInfo)
+{
+	UAnimMontage* Montage = ShootMontage ? ShootMontage.Get() : (Hero->DeadlockAnimSet ? Hero->DeadlockAnimSet->ShootMontage.Get() : nullptr);
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	if (!Montage || !ASC)
+	{
+		return;
+	}
+	// Straight on the ASC, not a PlayMontageAndWait task: the ability ends as soon as the projectiles spawn, and the task
+	// would stop the montage with it. A new shot restarts it.
+	ASC->PlayMontage(this, ActivationInfo, Montage, 1.f);
 }
 
 int32 UZL_GA_WeaponFire::GetProjectilesPerActivation() const
@@ -158,12 +252,13 @@ void UZL_GA_WeaponFire::GetAimData(const AZeroLockCharacter* Hero, FVector& OutS
 
 	// Fire from the muzzle if the mesh has one, otherwise from just in front of the character.
 	OutSpawnLocation = Hero->GetActorLocation() + CameraDirection * SpawnForwardOffset;
-	if (MuzzleSocketName != NAME_None)
+	const FName Muzzle = Hero->WeaponStats.MuzzleSocket.IsNone() ? MuzzleSocketName : Hero->WeaponStats.MuzzleSocket;
+	if (Muzzle != NAME_None)
 	{
-		const USkeletalMeshComponent* Mesh = Hero->FindComponentByClass<USkeletalMeshComponent>();
-		if (Mesh && Mesh->DoesSocketExist(MuzzleSocketName))
+		const USkeletalMeshComponent* Mesh = Hero->GetMesh();
+		if (Mesh && Mesh->DoesSocketExist(Muzzle))
 		{
-			OutSpawnLocation = Mesh->GetSocketLocation(MuzzleSocketName);
+			OutSpawnLocation = Mesh->GetSocketLocation(Muzzle);
 		}
 	}
 

@@ -4,10 +4,12 @@ Deadlock hero importer (step 1 of 2): game files -> FBX + textures + manifest.
     deadlock_import.bat lash apollo        export heroes
     deadlock_import.bat --list             list every hero (display name -> codename)
     deadlock_import.bat lash --anims all   override the animation mode (filtered | all | none)
+    deadlock_import.bat lash --data-only   only refresh camera + stats in an existing manifest (seconds)
 
 Pipeline per hero:
     Source2Viewer-CLI  -> <Hero>.glb (mesh, skeleton, filtered anims, base color/ORM textures)
     Source2Viewer-CLI  -> normal / self-illum textures (not wired into the glTF by S2V)
+    Source2Viewer-CLI  -> camera settings (model keyvalues), starting stats (heroes.vdata), weapon (abilities.vdata)
     Blender (this file runs inside it, headless) -> SK_<Hero>.fbx + one A_<Hero>_<anim>.fbx per clip
     manifest.json      -> consumed by ue_import.py inside the Unreal editor (step 2)
 """
@@ -58,7 +60,7 @@ def load_heroes():
     if not is_stale(cache):
         with open(cache, encoding="utf-8") as f:
             heroes = json.load(f)
-        if all("abilities" in h for h in heroes.values()):
+        if all("abilities" in h and "weapon" in h for h in heroes.values()):
             return heroes
 
     log("Reading hero list from game files...")
@@ -94,8 +96,9 @@ def load_heroes():
         bound = re.search(r"m_mapBoundAbilities\s*=\s*\{(.*?)\}", block, re.S)
         for slot, ability in re.findall(r'(ESlot_(?:Signature_\d|Weapon_Melee))\s*=\s*"([^"]+)"', bound.group(1) if bound else ""):
             abilities.append({"slot": slot, "key": ability, "name": ability_names.get(ability, ability)})
+        weapon = re.search(r'ESlot_Weapon_Primary\s*=\s*"([^"]+)"', bound.group(1) if bound else "")
         heroes[codename] = {"key": key, "codename": codename, "display": names.get(key, codename.title()),
-                            "model": m.group(1), "abilities": abilities}
+                            "model": m.group(1), "abilities": abilities, "weapon": weapon.group(1) if weapon else ""}
 
     with open(cache, "w", encoding="utf-8") as f:
         json.dump(heroes, f, indent=1)
@@ -114,6 +117,101 @@ def resolve_hero(heroes, query):
 
 def asset_name(hero):
     return re.sub(r"[^A-Za-z0-9]", "", hero["display"].title())
+
+
+# --------------------------------------------------------------------------- camera + stats (game data)
+
+# Weapon fields copied to the manifest (first value in the weapon's block, else hero_weapon_base's).
+WEAPON_KEYS = ["m_flBulletDamage", "m_flCycleTime", "m_iClipSize", "m_reloadDuration", "m_iBullets",
+               "m_iBurstShotCount", "m_flIntraBurstCycleTime", "m_flBulletSpeed", "m_flBulletGravityScale",
+               "m_flDamageFalloffStartRange", "m_flDamageFalloffEndRange", "m_flDamageFalloffEndScale",
+               "m_flCritBonusStart", "m_flRange"]
+
+
+def read_vdata(name):
+    """Decompiled scripts/<name>.vdata text, cached until the VPK changes."""
+    path = os.path.join(CACHE, f"{name}.vdata")
+    if is_stale(path):
+        s2v(["-f", f"scripts/{name}.vdata_c", "-d", "-o", path])
+    with open(path, encoding="utf-8") as f:
+        return f.read()
+
+
+def vdata_block(text, key):
+    """Text of the top-level entry `key = { ... }` (up to the next top-level entry)."""
+    m = re.search(rf"(?m)^\t{re.escape(key)}\s*=", text)
+    if not m:
+        return ""
+    end = re.compile(r"(?m)^\t\w+\s*=").search(text, m.end())
+    return text[m.end():end.start() if end else len(text)]
+
+
+def numbers(block):
+    return {k: float(v) for k, v in re.findall(r"\b(\w+)\s*=\s*(-?[0-9.]+)\s*$", block, re.M)}
+
+
+def read_camera(dump):
+    """CitadelCameraSettings_t from the model's keyvalues (Source units, side offset negative = right)."""
+    m = re.search(r"CitadelCameraSettings_t\s*=\s*\{(.*?)\}", dump, re.S)
+    if not m:
+        log("  WARNING: no CitadelCameraSettings_t on the model, camera not set")
+        return {}
+    return {k: v for k, v in numbers(m.group(1)).items() if k.startswith("m_fl")}
+
+
+def read_muzzle(dump):
+    """The primary weapon's muzzle attachment and the bone it sits on (offsets are ignored: they're a few units at
+    most). Attachments live in the embedded meshes' MDAT blocks, hence the full dump."""
+    primary = re.search(r"m_vecPrimaryMuzzles\s*=\s*\[(.*?)\]", dump, re.S)
+    names = re.findall(r'm_strAttachmentName\s*=\s*"([^"]+)"', primary.group(1)) if primary else []
+    for name in names + ["muzzle_flash", "muzzle_fx"]:
+        m = re.search(rf'key = "{re.escape(name)}"\s*value =\s*\{{\s*m_name = "{re.escape(name)}"\s*'
+                      r'm_influenceNames =\s*\[\s*"([^"]*)"', dump)
+        if m and m.group(1):
+            return {"attachment": name, "bone": m.group(1)}
+    log("  WARNING: no muzzle attachment found")
+    return {}
+
+
+def read_stats(hero):
+    """m_mapStartingStats (over hero_base's) from heroes.vdata, and the primary weapon's numbers from abilities.vdata."""
+    heroes = read_vdata("heroes")
+
+    def starting(key):
+        m = re.search(r"m_mapStartingStats\s*=\s*\{(.*?)\}", vdata_block(heroes, key), re.S)
+        return numbers(m.group(1)) if m else {}
+
+    stats = {**starting("hero_base"), **starting(hero["key"])}
+
+    weapon = {}
+    if hero.get("weapon"):
+        abilities = read_vdata("abilities")
+        blocks = [vdata_block(abilities, hero["weapon"]), vdata_block(abilities, "hero_weapon_base")]
+        for key in WEAPON_KEYS:
+            for block in blocks:
+                v = re.search(rf"\b{key}\s*=\s*(-?[0-9.]+)", block)
+                if v:
+                    weapon[key] = float(v.group(1))
+                    break
+    return {"starting": stats, "weapon_name": hero.get("weapon", ""), "weapon": weapon}
+
+
+def read_additive_clips(selected):
+    """Short names of the selected AnimGraph2 clips that are additive (deltas over the live pose, e.g. shoot_idle).
+    --gltf_compose_additive bakes those over the bind pose, so Unreal has to treat them as additive to the ref pose.
+    The clip has no readable flag, but the compiler leaves a '<clip>.vnmclip+non_additive.vnmclip_c' beside it."""
+    dirs = sorted({full.rsplit("/", 1)[0] + "/" for full in selected.values() if "/" in full})
+    found = set()
+    for d in dirs:
+        listing = s2v(["--vpk_list", "--vpk_filepath", d])
+        found.update(f"{d}{n}" for n in re.findall(r"([\w]+)\.vnmclip\+non_additive\.vnmclip_c", listing))
+    return sorted(short for short, full in selected.items() if full in found)
+
+
+def read_game_data(hero):
+    log("Reading camera, muzzle + stats from game data...")
+    dump = s2v(["-f", hero["model"] + "_c", "-a"])
+    return {"camera": read_camera(dump), "stats": {**read_stats(hero), "muzzle": read_muzzle(dump)}}
 
 
 # --------------------------------------------------------------------------- glTF helpers
@@ -388,8 +486,10 @@ def process_hero(heroes, query, anim_mode):
         "ue_dest": f"{CFG['ue_dest_root'].rstrip('/')}/{name}",
         "normal_flip_green": CFG.get("normal_flip_green", True),
         "abilities": hero.get("abilities", []),
+        **read_game_data(hero),
         "skeletal_mesh_fbx": sk_fbx,
         "animations": anim_files,
+        "additive_clips": read_additive_clips(selected),
         "materials": materials,
         "blend": blend.replace("\\", "/"),
         "exported_at": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -398,6 +498,26 @@ def process_hero(heroes, query, anim_mode):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
     log(f"Done: {len(anim_files)} animations, {len(materials)} materials -> {hero_dir}")
+    return name
+
+
+def refresh_game_data(heroes, query):
+    """--data-only: rewrite camera + stats in an existing manifest without re-exporting the model."""
+    hero = resolve_hero(heroes, query)
+    name = asset_name(hero)
+    path = os.path.join(OUT, name, "manifest.json")
+    if not os.path.exists(path):
+        raise SystemExit(f"No export for {name} yet - run without --data-only first")
+    log(f"=== {hero['display']} ({hero['codename']}) -> {name}")
+    with open(path, encoding="utf-8") as f:
+        manifest = json.load(f)
+    manifest.update(read_game_data(hero))
+    exported = {a["name"] for a in manifest.get("animations", [])}
+    selected = {s: f for s, f in select_animations(list_animations(hero, name)).items() if s in exported}
+    manifest["additive_clips"] = read_additive_clips(selected)
+    log(f"Additive clips: {', '.join(manifest['additive_clips']) or 'none'}")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, indent=2)
     return name
 
 
@@ -417,11 +537,16 @@ def main(argv):
         anim_mode = argv[i + 1]
         del argv[i:i + 2]
 
-    done = [process_hero(heroes, q, anim_mode) for q in argv]
+    data_only = "--data-only" in argv
+    argv = [a for a in argv if a != "--data-only"]
+    if data_only:
+        done = [refresh_game_data(heroes, q) for q in argv]
+    else:
+        done = [process_hero(heroes, q, anim_mode) for q in argv]
     ue_script = os.path.join(HERE, "ue_import.py").replace("\\", "/")
     print("\n" + "=" * 70)
     print("Now run this in the Unreal editor console (` key), or Tools > Execute Python Script:")
-    print(f'    py "{ue_script}" {" ".join(done)}')
+    print(f'    py "{ue_script}" {" ".join(done)}{" --camera-only --stats-only" if data_only else ""}')
     print("=" * 70)
 
 

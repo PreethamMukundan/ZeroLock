@@ -4,6 +4,7 @@
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Animation/ZL_DeadlockAnimSet.h"
 #include "Components/CapsuleComponent.h"
+#include "GAS/BaseCharAttributeSet.h"
 #include "GAS/ZL_GameplayTags.h"
 #include "GAS/Tasks/GAST_PlayMontageAndWaitForEvent.h"
 #include "ZeroLock/ZeroLockCharacter.h"
@@ -99,7 +100,8 @@ void UZeroBase_LightMelee::Strike()
 
     const float CapsuleRadius = Hero->GetCapsuleComponent() ? Hero->GetCapsuleComponent()->GetScaledCapsuleRadius() : 40.f;
     const FVector Start = Hero->GetActorLocation();
-    Hero->PerformMeleeStrike(Start, Start + Forward * (CapsuleRadius + StrikeRange), StrikeRadius, StrikeDamage, nullptr, TEXT("LightMelee"));
+    const float Damage = Hero->GetAttributeOr(UBaseCharAttributeSet::GetLightMeleeDamageAttribute(), StrikeDamage);
+    Hero->PerformMeleeStrike(Start, Start + Forward * (CapsuleRadius + StrikeRange), StrikeRadius, Damage, nullptr, TEXT("LightMelee"));
 }
 
 void UZeroBase_LightMelee::OnMontageEnded(FGameplayTag EventTag, FGameplayEventData EventData)

@@ -9,7 +9,7 @@ Main branch `main`; feature branches `feature/Hero/<Hero>`.
 |---|---|
 | `Docs/Claude/Movement.md` | Mover pawn/component, modes, transitions, the `RequestSafe*` latch API, input, network prediction, controller/player state/camera |
 | `Docs/Claude/GAS.md` | ASC setup, attribute set, damage/heal pipeline, base ability classes, tasks, tags, items/shop, new-ability recipe |
-| `Docs/Claude/Heroes.md` | Every hero ability (Apollo, Lash, Pocket, Drifter, Xayah, Seven, Doorman), status, patterns to copy |
+| `Docs/Claude/Heroes.md` | Every hero ability (Apollo, Lash, Pocket, Drifter, Xayah, Seven, Doorman, Viscous, Solomon), status, patterns to copy |
 | `Docs/Claude/Weapons.md` | Primary fire, predicted projectiles (`AProjectile`, spawn task), prediction tuning |
 | `Docs/Claude/GameFlow.md` | Game mode/state, teams, death/respawn, hero select, online (CommonUser sessions, EOS config split, console commands) |
 | `Docs/Claude/UI.md` | CommonUI layers, MVVM viewmodels/resolvers, HUD, shop, menus |
@@ -58,5 +58,5 @@ Main branch `main`; feature branches `feature/Hero/<Hero>`.
 - GAS: `Damage` meta attribute not reset on friendly hits; lifesteal before team check; melee mitigation precedence bug; `"ZeroLLock.Abilities"` typo (GAS.md).
 - Items: selling deducts souls instead of refunding; upgrade path broken (GAS.md).
 - Riposte can hang; Itani leaves client time dilation (Heroes.md).
-- Mover: slide landing buffer unreachable, slide has no ground tag/ledge check; `GetSyncedAimRotation` always returns actor rotation; zipline sync state not reset (Movement.md).
+- Mover: slide landing buffer unreachable, slide has no ground tag/ledge check; `GetSyncedAimRotation` always returns actor rotation (Movement.md).
 - `Config/DefaultEngine.ini:43` malformed `GameViewportClientClassName` line (UI.md, GameFlow.md).

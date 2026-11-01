@@ -96,6 +96,10 @@ struct FZeroMovementInputs : public FMoverDataStructBase
 	UPROPERTY(BlueprintReadWrite, Category="Zero")
 	bool bIsGooBall = false;
 
+	// Sampled from Zerolock.Status.Floating (Solomon's Move Piece): fading float in the air (UZeroMoverComponent::HandleFloat).
+	UPROPERTY(BlueprintReadWrite, Category="Zero")
+	bool bIsFloating = false;
+
     virtual UScriptStruct* GetScriptStruct() const override { return FZeroMovementInputs::StaticStruct(); }
     virtual FMoverDataStructBase* Clone() const override { return new FZeroMovementInputs(*this); }
 
@@ -133,6 +137,7 @@ struct FZeroMovementInputs : public FMoverDataStructBase
     	Ar << bIsRooted;
     	Ar << bIsCubed;
     	Ar << bIsGooBall;
+    	Ar << bIsFloating;
 
     	Map->SerializeObject(Ar, AActor::StaticClass(), (UObject*&)DynamicTargetActor);
     
@@ -183,6 +188,10 @@ struct FZeroMoverSimState : public FMoverDataStructBase
 	UPROPERTY(BlueprintReadOnly, Category = "Zero|State")
 	uint8 WallJumpCount = 0;
 
+	// Air time spent floating since he last stood on the ground (ms): the float fades with it.
+	UPROPERTY(BlueprintReadOnly, Category = "Zero|State")
+	float FloatElapsedMs = 0.0f;
+
 	virtual UScriptStruct* GetScriptStruct() const override { return FZeroMoverSimState::StaticStruct(); }
 	virtual FMoverDataStructBase* Clone() const override { return new FZeroMoverSimState(*this); }
 
@@ -198,6 +207,7 @@ struct FZeroMoverSimState : public FMoverDataStructBase
 		Ar << MantleCount;
 		Ar << MantleHeight;
 		Ar << WallJumpCount;
+		Ar << FloatElapsedMs;
 		bOutSuccess = true;
 		return true;
 	}
@@ -210,7 +220,8 @@ struct FZeroMoverSimState : public FMoverDataStructBase
 			AirDashesUsed != AuthState->AirDashesUsed ||
 			!FMath::IsNearlyEqual(DashRemainingMs, AuthState->DashRemainingMs, 1.0f) ||
 			bWasRooted != AuthState->bWasRooted ||
-			bWasSliding != AuthState->bWasSliding;
+			bWasSliding != AuthState->bWasSliding ||
+			!FMath::IsNearlyEqual(FloatElapsedMs, AuthState->FloatElapsedMs, 50.0f);
 	}
 
 	virtual void Interpolate(const FMoverDataStructBase& From, const FMoverDataStructBase& To, float Pct) override
@@ -226,6 +237,7 @@ struct FZeroMoverSimState : public FMoverDataStructBase
 		MantleCount = ToState->MantleCount;
 		MantleHeight = ToState->MantleHeight;
 		WallJumpCount = ToState->WallJumpCount;
+		FloatElapsedMs = ToState->FloatElapsedMs;
 	}
 };
 

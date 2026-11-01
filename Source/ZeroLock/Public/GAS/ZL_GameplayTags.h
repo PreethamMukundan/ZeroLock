@@ -50,6 +50,14 @@ namespace ZerolockGameplayTagsForBinding
 	/** Viscous is a Goo Ball (UZL_Viscous_GooBall's ActivationOwnedTags, predicted): Mover GooBall mode + sphere capsule, no weapon. */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_GOOBALL)
 
+	/** Solomon floats (UZL_Solomon_MovePiece's ActivationOwnedTags, predicted): in the air the Mover caps his fall and air speed and
+	 * cancels part of gravity, fading over UZeroMoverComponent::FloatFadeDuration of air time (FZeroMovementInputs::bIsFloating). */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_FLOATING)
+
+	/** Promoted by Solomon's Kingside Knight (UZL_Solomon_KnightEffect): an ally knight, or Solomon himself as king. */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_KNIGHT)
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_KING)
+
 	/** SetByCaller tags for UZL_Viscous_GooBallEffect: added WeaponResistance / SpiritResistance (percent). */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SETBYCALLER_BULLET_RESIST)
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SETBYCALLER_SPIRIT_RESIST)

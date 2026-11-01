@@ -100,6 +100,10 @@ protected:
 	/** Light melee (LightMeleeAbility, InputID LightMelee). Defaults to IA_LightMelee. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* EI_LightMelee;
+
+	/** Alt fire (AltFireAbility, InputID AltFire). Defaults to IA_AltFire (right mouse). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* EI_AltFire;
 	
 public:
 	AZeroLockCharacter();
@@ -159,6 +163,7 @@ public:
 protected:
 
 	void HealthAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData);
+	void BarrierAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void AmmoAttributeChange(const FOnAttributeChangeData& OnAttributeChangeData);
 	void SpeedAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void StaminaAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData);
@@ -223,6 +228,9 @@ public:
 	void SecondryFirePressed();
 	void SecondryFireReleased();
 
+	void AltFirePressed();
+	void AltFireReleased();
+
 	void Ability_1Pressed();
 	void Ability_1Released();
 
@@ -245,6 +253,10 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
 	TSubclassOf<class UBaseGameplayAbility> SecondryFireAbility;
+
+	/** Right mouse. Defaults to UZL_GA_AimZoom (Deadlock's zoom); heroes with an alt-fire weapon set their own. */
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
+	TSubclassOf<class UBaseGameplayAbility> AltFireAbility;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
 	TSubclassOf<class UBaseGameplayAbility> Ability_1;

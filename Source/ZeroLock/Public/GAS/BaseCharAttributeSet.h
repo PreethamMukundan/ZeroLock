@@ -90,6 +90,12 @@ public:
 	FGameplayAttributeData MaxStamina;
 	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, MaxStamina)
 
+	// Temporary shield that takes damage before health (all damage types). Base value only: add it with
+	// UBaseCharAbilitySystemComponent::AddCombatBarrier, which takes back what's left when it expires.
+	UPROPERTY(BlueprintReadOnly, Category = "Health Attribute Set", ReplicatedUsing = OnRep_CombatBarrier)
+	FGameplayAttributeData CombatBarrier;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, CombatBarrier)
+
 	// Stamina regained per second.
 	UPROPERTY(BlueprintReadOnly, Category = "Stamina Attribute Set", ReplicatedUsing = OnRep_StaminaRegenRate)
 	FGameplayAttributeData StaminaRegenRate;
@@ -297,6 +303,8 @@ protected:
 
 	UFUNCTION()
 	virtual void OnRep_MaxStamina(const FGameplayAttributeData& OldValue);
+	UFUNCTION()
+	virtual void OnRep_CombatBarrier(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
 	virtual void OnRep_StaminaRegenRate(const FGameplayAttributeData& OldValue);

@@ -14,6 +14,9 @@
     "template_stats_ge": "/Game/Developers/rpm86/Deadlock/_Shared/GE_Deadlock_DefaultStats",
     "template_projectile": "/Game/ZERO/UI/BP/Weapon/BP_ProjectileTest",
     "deadlock_gravity": 800,
+    "template_weapon": "/Game/ZERO/UI/BP/Weapon/BP_BaseFireAbility",
+    "weapon_bullet_spread": 2.0,
+    "_weapon_help": "BP_<Hero>_Weapon = copy of template_weapon (UZL_GA_WeaponFire) firing BP_<Hero>_Projectile (client and server), BulletSpreadAngle weapon_bullet_spread; set as the BP's PrimaryFireAbility. BP_<Hero>_AltFire = Blueprint child of UZL_GA_AimZoom with Deadlock's m_flZoomFOV_Relative; set as AltFireAbility. Both made once (later imports keep your edits); a slot holding anything but a default (empty, the C++ zoom, template_weapon, another Deadlock hero's asset) is kept, e.g. Solomon's Move Piece.",
     "_projectile_help": "BP_<Hero>_Projectile = copy of template_projectile with Deadlock's m_flBulletSpeed, m_flBulletGravityScale (x deadlock_gravity units/s^2, assumed Source's 800, over UE's 980 cm/s^2) and lifespan m_flRange / speed. Made once; later imports keep your edits.",
     "movement_reference": {
       "_help": "Our tuned Mover values for Deadlock's base hero (hero_base). Each hero's Mover value = ours x (hero stat / base stat), so heroes keep Deadlock's differences without changing the game's overall speed.",

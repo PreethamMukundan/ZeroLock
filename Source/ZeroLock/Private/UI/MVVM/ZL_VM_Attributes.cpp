@@ -18,6 +18,15 @@ void UZL_VM_Attributes::SetMaxHealth(const float& maxhealth)
 	if (UE_MVVM_SET_PROPERTY_VALUE(MaxHealth,maxhealth))
 	{
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetHealthPercentage);
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetBarrierPercentage);
+	}
+}
+
+void UZL_VM_Attributes::SetBarrier(const float& barrier)
+{
+	if (UE_MVVM_SET_PROPERTY_VALUE(Barrier,barrier))
+	{
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetBarrierPercentage);
 	}
 }
 

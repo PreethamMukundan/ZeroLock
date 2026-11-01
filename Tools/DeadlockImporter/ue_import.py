@@ -9,6 +9,8 @@ Deadlock hero importer (step 2 of 2): runs inside the Unreal editor.
     py ".../ue_import.py" Lash --hero-only       just BP_Deadlock_<Hero> + DA_<Hero>_Hero + hero list row (existing ones are kept)
     py ".../ue_import.py" Lash --camera-only     set the existing BP's spring arm/camera from Deadlock's camera settings
     py ".../ue_import.py" Lash --stats-only      (re)write GE_<Hero>_DefaultStats from Deadlock's stats, set it on the BP
+    py ".../ue_import.py" Lash --weapons-only    BP_<Hero>_Weapon (fires BP_<Hero>_Projectile) + BP_<Hero>_AltFire (zoom),
+                                                 set as PrimaryFireAbility / AltFireAbility (existing ones are kept)
     The --*-only flags combine. A full run on a hero that already has a BP also refreshes its camera, movement, weapon
     and stats GE (other BP edits are kept) - but it re-imports the mesh and every animation, which takes minutes.
     py ".../ue_import.py"                        every hero exported by deadlock_import.bat
@@ -50,6 +52,8 @@ def load(path):
 
 
 def _text_value(value):
+    if value is None:
+        return "None"
     if isinstance(value, bool):
         return "True" if value else "False"
     if isinstance(value, str):
@@ -641,6 +645,9 @@ def apply_camera(m, cdo):
     camera = cdo.get_editor_property("camera_component")
     camera.set_editor_property("relative_location", unreal.Vector(0, 0, 0))
     camera.set_editor_property("field_of_view", round(DEADLOCK_FOV_16_9, 2))
+    # Aim zoom (alt fire UZL_GA_AimZoom) pulls the arm in to Deadlock's aiming back offset.
+    if "m_flCameraBackOffsetAiming" in cam:
+        cdo.set_editor_property("aim_zoom_arm_length", round(cam["m_flCameraBackOffsetAiming"] * k, 1))
     log(f"  camera: arm {arm.get_editor_property('target_arm_length')} cm, side "
         f"{arm.get_editor_property('socket_offset').y}, pivot z {arm.get_editor_property('relative_location').z}, "
         f"FOV {round(DEADLOCK_FOV_16_9, 2)}")
@@ -666,7 +673,9 @@ WEAPON_ATTRIBUTES = {
 }
 # Applied outside the GE (apply_movement, apply_weapon_stats), so not reported as missing.
 HANDLED_STATS = {"EMaxMoveSpeed", "ECrouchSpeed", "EGroundDashDistanceInMeters"}
-HANDLED_WEAPON = {"m_iBullets", "m_iBurstShotCount", "m_flIntraBurstCycleTime", "m_flDamageFalloffStartRange",
+HANDLED_WEAPON = {"m_flBulletSpeed", "m_flBulletGravityScale", "m_flRange",  # projectile
+                  "m_flZoomFOV_Relative", "m_flZoomMoveSpeedPercent", "m_bCanZoom",  # alt fire
+                  "m_iBullets", "m_iBurstShotCount", "m_flIntraBurstCycleTime", "m_flDamageFalloffStartRange",
                   "m_flDamageFalloffEndRange", "m_flDamageFalloffEndScale"}
 
 
@@ -759,17 +768,117 @@ def apply_weapon_stats(m, dest, cdo):
     if weapon.get("m_flIntraBurstCycleTime", 0) > 0:
         fields["BurstInterval"] = float(weapon["m_flIntraBurstCycleTime"])
     if "ProjectileClass=" in stats.export_text():
-        projectile = build_projectile(m, dest, k)
-        if projectile:
-            fields["ProjectileClass"] = projectile.get_path_name()
-    else:
-        warn("  WeaponStats has no ProjectileClass yet (rebuild the editor): no per-hero projectile")
+        # The hero's bullet is set on BP_<Hero>_Weapon (apply_weapon_abilities); an override here would win over it.
+        fields["ProjectileClass"] = None
     set_struct_fields(stats, fields)
     cdo.set_editor_property("weapon_stats", stats)
     stats = cdo.get_editor_property("weapon_stats")
     log(f"  weapon: muzzle {stats.get_editor_property('muzzle_socket')}, {stats.get_editor_property('pellets')} pellet(s), burst {stats.get_editor_property('burst_shots')}, "
         f"falloff {stats.get_editor_property('falloff_start_range')}-{stats.get_editor_property('falloff_end_range')} cm "
         f"to x{stats.get_editor_property('falloff_end_scale')}")
+
+
+def hero_owned_ability(cdo, prop, dest):
+    """The class in the BP's ability slot if it's this hero's own: anything except empty, the C++ defaults
+    (UZL_GA_AimZoom), template_weapon, or another Deadlock hero's asset (copied in with template_bp)."""
+    cls = cdo.get_editor_property(prop)
+    if not cls:
+        return None
+    path = cls.get_path_name()
+    root = CFG["ue_dest_root"].rstrip("/") + "/"
+    template_weapon = HERO_SETUP.get("template_weapon", "")
+    if path.startswith("/Script/") or (template_weapon and path.startswith(template_weapon + ".")):
+        return None
+    if path.startswith(root) and not path.startswith(dest + "/"):
+        return None
+    return cls
+
+
+def fire_mode(weapon):
+    if weapon.get("m_iBullets", 1) > 1:
+        return unreal.ZLWeaponFireMode.SHOTGUN
+    if weapon.get("m_iBurstShotCount", 1) > 1:
+        return unreal.ZLWeaponFireMode.BURST
+    return unreal.ZLWeaponFireMode.SINGLE
+
+
+def build_weapon(m, dest, k):
+    """BP_<Hero>_Weapon: a copy of template_weapon (UZL_GA_WeaponFire) that fires BP_<Hero>_Projectile on the client
+    and the server. Made once. Fire mode is informational: WeaponStats.bOverrideFireMode picks it per shot."""
+    hero = m["hero"]
+    path = f"{dest}/BP_{hero}_Weapon"
+    if eal.does_asset_exist(path):
+        return eal.load_blueprint_class(path)
+    projectile = build_projectile(m, dest, k)
+    if projectile is None:
+        return None
+    bp = duplicate_template(HERO_SETUP.get("template_weapon", ""), path, "weapon")
+    if bp is None:
+        return None
+    unreal.BlueprintEditorLibrary.compile_blueprint(bp)
+    cls = eal.load_blueprint_class(path)
+    cdo = unreal.get_default_object(cls)
+    cdo.set_editor_property("projectile_class", projectile)
+    cdo.set_editor_property("server_projectile_class", projectile)
+    cdo.set_editor_property("bullet_spread_angle", float(HERO_SETUP.get("weapon_bullet_spread", 0.0)))
+    try:
+        cdo.set_editor_property("fire_mode", fire_mode((m.get("stats") or {}).get("weapon", {})))
+    except AttributeError:
+        pass
+    eal.save_loaded_asset(bp)
+    log(f"  weapon {path}: fires {projectile.get_name()}, spread {cdo.get_editor_property('bullet_spread_angle')}")
+    return cls
+
+
+def build_alt_fire(m, dest):
+    """BP_<Hero>_AltFire: Blueprint child of UZL_GA_AimZoom with the weapon's Deadlock zoom. Made once."""
+    hero = m["hero"]
+    path = f"{dest}/BP_{hero}_AltFire"
+    weapon = (m.get("stats") or {}).get("weapon", {})
+    if "m_bCanZoom" not in weapon:
+        warn(f"  no zoom data in the manifest (default -40 zoom used) - run: deadlock_import.bat {hero} --data-only")
+    elif not weapon["m_bCanZoom"]:
+        warn(f"  Deadlock's {(m.get('stats') or {}).get('weapon_name', 'weapon')} can't zoom: {hero} has an alt-fire "
+             f"weapon there. BP_{hero}_AltFire is a zoom placeholder - point AltFireAbility at the hero's real alt fire")
+    if eal.does_asset_exist(path):
+        return eal.load_blueprint_class(path)
+    parent = getattr(unreal, "ZL_GA_AimZoom", None)
+    if parent is None:
+        warn("  UZL_GA_AimZoom not in this editor build (rebuild the editor): no alt fire")
+        return None
+    factory = unreal.BlueprintFactory()
+    factory.set_editor_property("parent_class", parent)
+    bp = asset_tools.create_asset(f"BP_{hero}_AltFire", dest, unreal.Blueprint, factory)
+    if bp is None:
+        warn(f"  could not create {path}")
+        return None
+    unreal.BlueprintEditorLibrary.compile_blueprint(bp)
+    cls = eal.load_blueprint_class(path)
+    cdo = unreal.get_default_object(cls)
+    zoom = float(weapon.get("m_flZoomFOV_Relative", -40.0))
+    cdo.set_editor_property("zoom_fov_relative", zoom)
+    eal.save_loaded_asset(bp)
+    log(f"  alt fire {path}: zoom {zoom:g} (Deadlock 4:3 FOV)")
+    return cls
+
+
+def apply_weapon_abilities(m, dest, cdo):
+    """PrimaryFireAbility = BP_<Hero>_Weapon, AltFireAbility = BP_<Hero>_AltFire, unless the slot already points at
+    another ability in the hero's folder (e.g. a hand-made weapon or the hero's real alt fire)."""
+    for prop, build in (("primary_fire_ability", lambda: build_weapon(m, dest, unit_scale(cdo))),
+                        ("alt_fire_ability", lambda: build_alt_fire(m, dest))):
+        try:
+            owned = hero_owned_ability(cdo, prop, dest)
+        except Exception:
+            warn(f"  hero BP has no {prop} (rebuild the editor)")
+            continue
+        if owned:
+            log(f"  {prop}: keeps {owned.get_name()}")
+            continue
+        cls = build()
+        if cls:
+            cdo.set_editor_property(prop, cls)
+            log(f"  {prop} = {cls.get_name()}")
 
 
 def stat_values(m):
@@ -854,6 +963,7 @@ def build_hero_bp(m, dest, aset, stats_ge=None):
     apply_camera(m, cdo)
     apply_movement(m, cdo)
     apply_weapon_stats(m, dest, cdo)
+    apply_weapon_abilities(m, dest, cdo)
     if stats_ge:
         cdo.set_editor_property("default_gameplay_effect", stats_ge)
 
@@ -909,7 +1019,7 @@ def add_to_hero_list(m, data):
 def setup_hero(m, dest):
     if eal.does_asset_exist(f"{dest}/BP_Deadlock_{m['hero']}"):
         # Existing BP: keep its hand edits but refresh what the importer owns (camera, movement, weapon, stats GE).
-        update_existing_bp(m, dest, camera=True, stats=True)
+        update_existing_bp(m, dest, camera=True, stats=True, weapons=True)
     aset = load(f"{dest}/DA_{m['hero']}_AnimSet")
     hero_class = build_hero_bp(m, dest, aset, build_stats_ge(m, dest, refresh=False))
     if hero_class is None:
@@ -917,8 +1027,8 @@ def setup_hero(m, dest):
     add_to_hero_list(m, build_hero_data(m, dest, hero_class))
 
 
-def update_existing_bp(m, dest, camera, stats):
-    """--camera-only / --stats-only on a BP that already exists."""
+def update_existing_bp(m, dest, camera, stats, weapons=False):
+    """--camera-only / --stats-only / --weapons-only on a BP that already exists."""
     path = f"{dest}/BP_Deadlock_{m['hero']}"
     bp = load(path)
     if bp is None:
@@ -931,6 +1041,8 @@ def update_existing_bp(m, dest, camera, stats):
     if stats:
         apply_movement(m, cdo)
         apply_weapon_stats(m, dest, cdo)
+    if weapons:
+        apply_weapon_abilities(m, dest, cdo)
     if stats_ge:
         cdo.set_editor_property("default_gameplay_effect", stats_ge)
     eal.save_loaded_asset(bp)
@@ -939,7 +1051,7 @@ def update_existing_bp(m, dest, camera, stats):
 # --------------------------------------------------------------------------- main
 
 def import_hero(hero, no_anims=False, anims_only=False, anim_set_only=False, montages_only=False, hero_only=False,
-                camera_only=False, stats_only=False):
+                camera_only=False, stats_only=False, weapons_only=False):
     path = os.path.join(CFG["output_dir"], hero, "manifest.json")
     if not os.path.exists(path):
         raise RuntimeError(f"No export for '{hero}' - run: deadlock_import.bat {hero}")
@@ -948,15 +1060,15 @@ def import_hero(hero, no_anims=False, anims_only=False, anim_set_only=False, mon
     dest = m["ue_dest"]
     log(f"=== {m['display']} -> {dest}")
     # The --*-only steps combine (e.g. --montages-only --camera-only --stats-only).
-    if montages_only or anim_set_only or hero_only or camera_only or stats_only:
+    if montages_only or anim_set_only or hero_only or camera_only or stats_only or weapons_only:
         if montages_only:
             build_montages(m, dest)
         if anim_set_only:
             build_anim_set(m, dest)
         if hero_only:
             setup_hero(m, dest)
-        if camera_only or stats_only:
-            update_existing_bp(m, dest, camera_only, stats_only)
+        if camera_only or stats_only or weapons_only:
+            update_existing_bp(m, dest, camera_only, stats_only, weapons_only)
         return
 
     if anims_only:
@@ -991,6 +1103,7 @@ def main(argv):
     hero_only = "--hero-only" in argv
     camera_only = "--camera-only" in argv
     stats_only = "--stats-only" in argv
+    weapons_only = "--weapons-only" in argv
     heroes = [a for a in argv if not a.startswith("--")]
     if not heroes:
         out = CFG["output_dir"]
@@ -998,7 +1111,8 @@ def main(argv):
         log(f"Importing all exported heroes: {heroes}")
     for h in heroes:
         match = next((d for d in os.listdir(CFG["output_dir"]) if d.lower() == h.lower().replace(" ", "")), h)
-        import_hero(match, no_anims, anims_only, anim_set_only, montages_only, hero_only, camera_only, stats_only)
+        import_hero(match, no_anims, anims_only, anim_set_only, montages_only, hero_only, camera_only, stats_only,
+                    weapons_only)
 
 
 if __name__ == "__main__":

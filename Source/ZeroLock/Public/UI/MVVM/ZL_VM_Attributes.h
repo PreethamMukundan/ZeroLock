@@ -27,12 +27,22 @@ public:
 	UFUNCTION(BlueprintPure,FieldNotify)
 	const float GetHealthPercentage()const { return Health/MaxHealth;}
 
+	float GetBarrier() const {return Barrier;}
+	void SetBarrier(const float& barrier);
+
+	/** Combat barrier as a fraction of max health (0 = none), for an overlay on the health bar. */
+	UFUNCTION(BlueprintPure,FieldNotify)
+	const float GetBarrierPercentage()const { return MaxHealth > 0.0f ? Barrier/MaxHealth : 0.0f;}
+
 private:
 	UPROPERTY(BlueprintReadOnly,FieldNotify,Getter,Setter,meta=(AllowPrivateAccess=true))
 	float Health;
 
 	UPROPERTY(BlueprintReadOnly,FieldNotify,Getter,Setter,meta=(AllowPrivateAccess=true))
 	float MaxHealth;
+
+	UPROPERTY(BlueprintReadOnly,FieldNotify,Getter,Setter,meta=(AllowPrivateAccess=true))
+	float Barrier = 0.0f;
 
 
 

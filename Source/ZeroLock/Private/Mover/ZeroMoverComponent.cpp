@@ -26,6 +26,7 @@
 #include "Mover/ZeroInstantMovementEffects.h"
 #include "Mover/ZeroMovementData.h"
 #include "Mover/ZeroMoverPawn.h"
+#include "Mover/ZeroZiplineMode.h"
 
 UZeroMoverComponent::UZeroMoverComponent()
 {
@@ -35,6 +36,8 @@ UZeroMoverComponent::UZeroMoverComponent()
     bHandleJump = false;
 
     PersistentSyncStateDataTypes.Add(FMoverDataPersistence(FZeroMoverSimState::StaticStruct(), true));
+    // Non-persistent sync structs are dropped every frame; the zipline ride (cable, distance, speed) must carry over.
+    PersistentSyncStateDataTypes.Add(FMoverDataPersistence(FZeroZipliningState::StaticStruct(), true));
 }
 
 void UZeroMoverComponent::InitializeComponent()
@@ -56,14 +59,17 @@ void UZeroMoverComponent::InitializeComponent()
 
     }
 
-    // A Blueprint that saved its own persistence list wouldn't have the entry added in the constructor.
-    const bool bHasSimState = PersistentSyncStateDataTypes.ContainsByPredicate([](const FMoverDataPersistence& Entry)
+    // A Blueprint that saved its own persistence list wouldn't have the entries added in the constructor.
+    for (UScriptStruct* Required : { FZeroMoverSimState::StaticStruct(), FZeroZipliningState::StaticStruct() })
     {
-        return Entry.RequiredType == FZeroMoverSimState::StaticStruct();
-    });
-    if (!bHasSimState)
-    {
-        PersistentSyncStateDataTypes.Add(FMoverDataPersistence(FZeroMoverSimState::StaticStruct(), true));
+        const bool bHas = PersistentSyncStateDataTypes.ContainsByPredicate([Required](const FMoverDataPersistence& Entry)
+        {
+            return Entry.RequiredType == Required;
+        });
+        if (!bHas)
+        {
+            PersistentSyncStateDataTypes.Add(FMoverDataPersistence(Required, true));
+        }
     }
 
     OnPostMovement.AddUniqueDynamic(this, &UZeroMoverComponent::HandlePostMovement);
@@ -136,8 +142,10 @@ void UZeroMoverComponent::OnMoverPreSimulationTick(const FMoverTimeStep& TimeSte
     const bool bSliding = CurrentMode == TEXT("Sliding");
     bPendingSliding = bSliding;
 
-    // Air dash counter lives in the sync state (rolls back) and refills on the ground.
-    const bool bOnGround = CurrentMode == DefaultModeNames::Walking || bSliding;
+    // Air dash counter lives in the sync state (rolls back) and refills on the ground. A zipline counts as ground for
+    // the counters, and anything that moves the pawn itself (dash, ability moves, pulls) takes it off the cable.
+    const bool bOnZipline = CurrentMode == ZipliningModeName;
+    const bool bOnGround = CurrentMode == DefaultModeNames::Walking || bSliding || bOnZipline;
     if (bOnGround)
     {
         PendingAirDashesUsed = 0;
@@ -161,11 +169,17 @@ void UZeroMoverComponent::OnMoverPreSimulationTick(const FMoverTimeStep& TimeSte
             }
             PendingDashRemainingMs = HandleDashInputs(*FoundDefaults, *FoundZeroInputs, CurrentMode);
             bDashing = true;
+            if (bOnZipline)
+            {
+                QueueNextMode(DefaultModeNames::Falling);
+            }
         }
     }
 
     // Always runs so the jump counter still resets on the ground.
     HandleAirJumpTracking(CurrentMode, *FoundZeroInputs, !bInMelee && !bMantled && !bDashing);
+
+    HandleFloat(*FoundZeroInputs, CurrentMode, bOnGround);
 
     // After the dash, so a dash started this frame suppresses the slide-exit ease.
     HandleSlideExit(CurrentMode, *FoundDefaults);
@@ -246,6 +260,7 @@ void UZeroMoverComponent::BeginSimStep(const FMoverTimeStep& TimeStep)
     PendingMantleCount = SimStartState.MantleCount;
     PendingMantleHeight = SimStartState.MantleHeight;
     PendingWallJumpCount = SimStartState.WallJumpCount;
+    PendingFloatElapsedMs = SimStartState.FloatElapsedMs;
 
     StepMaxStamina = DefaultMaxStamina;
     StepStaminaRegenRate = DefaultStaminaRegenRate;
@@ -263,7 +278,8 @@ void UZeroMoverComponent::HandlePostMovement(const FMoverTimeStep& TimeStep, FMo
 {
     FZeroMoverSimState& OutSimState = SyncState.SyncStateCollection.FindOrAddMutableDataByType<FZeroMoverSimState>();
 
-    float NewStamina = bPendingStaminaRefill ? StepMaxStamina : GetStartStamina() - PendingStaminaSpend;
+    float NewStamina = bPendingStaminaRefill ? StepMaxStamina : GetStartStamina() - PendingStaminaSpend + PendingStaminaGrant;
+    PendingStaminaGrant = 0.0f;
     bPendingStaminaRefill = false;
     NewStamina = FMath::Clamp(NewStamina + StepStaminaRegenRate * StepSeconds, 0.0f, StepMaxStamina);
 
@@ -276,6 +292,7 @@ void UZeroMoverComponent::HandlePostMovement(const FMoverTimeStep& TimeStep, FMo
     OutSimState.MantleCount = PendingMantleCount;
     OutSimState.MantleHeight = PendingMantleHeight;
     OutSimState.WallJumpCount = PendingWallJumpCount;
+    OutSimState.FloatElapsedMs = PendingFloatElapsedMs;
 
     CacheSimStartState(SyncState);
     NewestSimTimeMs = FMath::Max(NewestSimTimeMs, TimeStep.BaseSimTimeMs);
@@ -371,6 +388,52 @@ bool UZeroMoverComponent::IsGooBall() const
 {
     const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
     return ASC && ASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_GOOBALL);
+}
+
+bool UZeroMoverComponent::IsFloating() const
+{
+    const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+    return ASC && ASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_FLOATING);
+}
+
+void UZeroMoverComponent::HandleFloat(const FZeroMovementInputs& ZeroInputs, const FName& CurrentMode, bool bOnGround)
+{
+    if (bOnGround)
+    {
+        PendingFloatElapsedMs = 0.0f;
+        return;
+    }
+    if (!ZeroInputs.bIsFloating || CurrentMode != DefaultModeNames::Falling)
+    {
+        return;
+    }
+    const float FadeMs = FMath::Max(FloatFadeDuration, 0.1f) * 1000.0f;
+    const float Strength = 1.0f - PendingFloatElapsedMs / FadeMs;
+    PendingFloatElapsedMs = FMath::Min(PendingFloatElapsedMs + StepSeconds * 1000.0f, FadeMs);
+    if (Strength <= 0.0f)
+    {
+        return;
+    }
+
+    // Falling adds gravity after this: pre-add Strength of it back, then cap the fall. Caps loosen as the strength fades.
+    FVector Velocity = GetSimStartVelocity();
+    Velocity.Z -= GetGravityAcceleration().Z * Strength * StepSeconds;
+    Velocity.Z = FMath::Max(Velocity.Z, -FloatFallSpeed / Strength);
+
+    FVector Flat(Velocity.X, Velocity.Y, 0.0f);
+    const float FlatCap = FloatAirSpeed / Strength;
+    const float FlatSpeed = Flat.Size();
+    if (FlatSpeed > FlatCap)
+    {
+        Flat *= FMath::Max(FlatCap, FlatSpeed - FloatAirBraking * StepSeconds) / FlatSpeed;
+        Velocity.X = Flat.X;
+        Velocity.Y = Flat.Y;
+    }
+
+    TSharedPtr<FApplyVelocityEffect> Float = MakeShared<FApplyVelocityEffect>();
+    Float->VelocityToApply = Velocity;
+    Float->bAdditiveVelocity = false;
+    QueueInstantMovementEffect(Float);
 }
 
 bool UZeroMoverComponent::IsCubed() const
@@ -564,7 +627,7 @@ void UZeroMoverComponent::HandleAirJumpTracking(const FName& CurrentMode, const 
 {
     // The ground jump counts toward MaxAirJumps; the counter lives in the sync state so it rolls back.
     int32 JumpsUsed = SimStartState.AirJumpsUsed;
-    if (CurrentMode == DefaultModeNames::Walking || CurrentMode == TEXT("Sliding"))
+    if (CurrentMode == DefaultModeNames::Walking || CurrentMode == TEXT("Sliding") || CurrentMode == ZipliningModeName)
     {
         JumpsUsed = 0;
     }

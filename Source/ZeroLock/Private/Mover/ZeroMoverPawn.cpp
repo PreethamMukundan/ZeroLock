@@ -60,6 +60,58 @@ void AZeroMoverPawn::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     UpdateSmoothedCamera();
+    UpdateAimZoom(DeltaSeconds);
+}
+
+void AZeroMoverPawn::SetAimZoom(bool bZoom, float FOVRelative, float BlendTime)
+{
+    bWantsAimZoom = bZoom;
+    if (bZoom)
+    {
+        AimZoomFOVRelative = FOVRelative;
+    }
+    AimZoomBlendTime = BlendTime;
+}
+
+void AZeroMoverPawn::UpdateAimZoom(float DeltaSeconds)
+{
+    if (!SpringArmComponent || !CameraComponent || !IsLocallyControlled())
+    {
+        return;
+    }
+    if (!bWantsAimZoom && AimZoomAlpha <= 0.0f)
+    {
+        return;
+    }
+    if (!bHasAimZoomBase)
+    {
+        AimZoomBaseFOV = CameraComponent->FieldOfView;
+        AimZoomBaseArmLength = SpringArmComponent->TargetArmLength;
+        bHasAimZoomBase = true;
+    }
+
+    const float Step = AimZoomBlendTime > 0.0f ? DeltaSeconds / AimZoomBlendTime : 1.0f;
+    AimZoomAlpha = FMath::Clamp(AimZoomAlpha + (bWantsAimZoom ? Step : -Step), 0.0f, 1.0f);
+
+    if (!bWantsAimZoom && AimZoomAlpha <= 0.0f)
+    {
+        CameraComponent->SetFieldOfView(AimZoomBaseFOV);
+        SpringArmComponent->TargetArmLength = AimZoomBaseArmLength;
+        bHasAimZoomBase = false;
+        return;
+    }
+
+    /* Deadlock's FOV is horizontal at 4:3 (hero 90 = our 106.26 at 16:9, Movement.md). Convert the base to 4:3, add the
+     * relative zoom there, and convert back, so the zoom matches Deadlock's and scales with non-Deadlock FOVs too. */
+    constexpr float To4x3 = (4.0f / 3.0f) / (16.0f / 9.0f);
+    const float Base4x3 = 2.0f * FMath::RadiansToDegrees(FMath::Atan(FMath::Tan(FMath::DegreesToRadians(AimZoomBaseFOV * 0.5f)) * To4x3));
+    const float Zoomed4x3 = FMath::Clamp(Base4x3 + AimZoomFOVRelative, 5.0f, 170.0f);
+    const float ZoomedFOV = 2.0f * FMath::RadiansToDegrees(FMath::Atan(FMath::Tan(FMath::DegreesToRadians(Zoomed4x3 * 0.5f)) / To4x3));
+    const float ZoomedArmLength = AimZoomArmLength > 0.0f ? AimZoomArmLength : AimZoomBaseArmLength * AimZoomArmLengthScale;
+
+    const float Alpha = FMath::SmoothStep(0.0f, 1.0f, AimZoomAlpha);
+    CameraComponent->SetFieldOfView(FMath::Lerp(AimZoomBaseFOV, ZoomedFOV, Alpha));
+    SpringArmComponent->TargetArmLength = FMath::Lerp(AimZoomBaseArmLength, ZoomedArmLength, Alpha);
 }
 
 void AZeroMoverPawn::UpdateSmoothedCamera()
@@ -207,6 +259,7 @@ void AZeroMoverPawn::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmd
     ZeroInputs.bIsCubed = bCubed;
     // Goo Ball: steer and jump only; no dash, crouch/slide, melee lunge or zipline.
     ZeroInputs.bIsGooBall = MoverComponent && MoverComponent->IsGooBall();
+    ZeroInputs.bIsFloating = MoverComponent && MoverComponent->IsFloating();
     if (ZeroInputs.bIsGooBall)
     {
         ZeroInputs.bWantsToCrouch = false;

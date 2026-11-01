@@ -20,6 +20,7 @@
 #include "GAS/BaseCharAttributeSet.h"
 #include "GAS/BaseGameplayAbility.h"
 #include "GAS/ZL_GameplayTags.h"
+#include "GAS/ZL_GA_AimZoom.h"
 #include "Input/KeybindManagerSubsystem.h"
 #include "Items/Zero_Item_Inventory_Component.h"
 #include "Kismet/GameplayStatics.h"
@@ -81,6 +82,12 @@ AZeroLockCharacter::AZeroLockCharacter()
 	if (LightMeleeAction.Succeeded())
 	{
 		EI_LightMelee = LightMeleeAction.Object;
+	}
+	AltFireAbility = UZL_GA_AimZoom::StaticClass();
+	static ConstructorHelpers::FObjectFinder<UInputAction> AltFireAction(TEXT("/Game/ThirdPerson/Input/Actions/IA_AltFire"));
+	if (AltFireAction.Succeeded())
+	{
+		EI_AltFire = AltFireAction.Object;
 	}
 
 	if (GetMesh()) 
@@ -224,6 +231,7 @@ void AZeroLockCharacter::InitializeAttributes()
 		
 		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCurrentHealthAttribute()).AddUObject(this, &AZeroLockCharacter::HealthAttributeChanged);
 		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaximumHealthAttribute()).AddUObject(this, &AZeroLockCharacter::HealthAttributeChanged);
+		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCombatBarrierAttribute()).AddUObject(this, &AZeroLockCharacter::BarrierAttributeChanged);
 		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCurrentSpeedAttribute()).AddUObject(this, &AZeroLockCharacter::SpeedAttributeChanged);
 		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxAmmoAttribute()).AddUObject(this, &AZeroLockCharacter::AmmoAttributeChange);
 		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCurrentAmmoAttribute()).AddUObject(this, &AZeroLockCharacter::AmmoAttributeChange);
@@ -265,6 +273,7 @@ void AZeroLockCharacter::GiveAbilities()
 		}
 		
 		GrantAbilityOfClassX(SecondryFireAbility, EGASAbilityInputID::Secondry_Attack, true);
+		GrantAbilityOfClassX(AltFireAbility, EGASAbilityInputID::AltFire);
 		GrantAbilityOfClassX(Ability_1, EGASAbilityInputID::Ability_1, true);
 		GrantAbilityOfClassX(Ability_2, EGASAbilityInputID::Ability_2, true);
 		GrantAbilityOfClassX(UltimateAbility, EGASAbilityInputID::Ultimate, true);
@@ -433,6 +442,18 @@ void AZeroLockCharacter::SecondryFireReleased()
 	GetAbilitySystemComponent()->AbilityLocalInputReleased(static_cast<int32>(EGASAbilityInputID::Secondry_Attack));
 }
 
+void AZeroLockCharacter::AltFirePressed()
+{
+	// Right mouse is also IA_Cancel: while a targeted cast waits for confirm/cancel, the press only cancels it.
+	if (AbilitySystemComp->GenericLocalCancelCallbacks.IsBound()) return;
+	GetAbilitySystemComponent()->AbilityLocalInputPressed(static_cast<int32>(EGASAbilityInputID::AltFire));
+}
+
+void AZeroLockCharacter::AltFireReleased()
+{
+	GetAbilitySystemComponent()->AbilityLocalInputReleased(static_cast<int32>(EGASAbilityInputID::AltFire));
+}
+
 void AZeroLockCharacter::Ability_1Pressed()
 {
 	GetAbilitySystemComponent()->AbilityLocalInputPressed(static_cast<int32>(EGASAbilityInputID::Ability_1));
@@ -558,6 +579,7 @@ void AZeroLockCharacter::ResetCharacter()
 
 	float Max = AttributeSet->GetMaximumHealth();
 	AttributeSet->SetCurrentHealth(Max);
+	AbilitySystemComp->ClearCombatBarrier();
 
 	if (UZeroMoverComponent* MoverComp = GetZeroMoverComponent())
 	{
@@ -579,6 +601,7 @@ void AZeroLockCharacter::PassiveAbilityRestart(TSubclassOf<class UBaseGameplayAb
 void AZeroLockCharacter::ResetAllAbilities()
 {
 	PassiveAbilityRestart(SecondryFireAbility);
+	PassiveAbilityRestart(AltFireAbility);
 	PassiveAbilityRestart(Ability_1);
 	PassiveAbilityRestart(Ability_2);
 	PassiveAbilityRestart(UltimateAbility);
@@ -751,6 +774,12 @@ void AZeroLockCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		{
 			EnhancedInputComponent->BindAction(EI_LightMelee, ETriggerEvent::Started, this, &AZeroLockCharacter::LightMeleePressed);
 			EnhancedInputComponent->BindAction(EI_LightMelee, ETriggerEvent::Completed, this, &AZeroLockCharacter::LightMeleeReleased);
+		}
+
+		if (EI_AltFire)
+		{
+			EnhancedInputComponent->BindAction(EI_AltFire, ETriggerEvent::Started, this, &AZeroLockCharacter::AltFirePressed);
+			EnhancedInputComponent->BindAction(EI_AltFire, ETriggerEvent::Completed, this, &AZeroLockCharacter::AltFireReleased);
 		}
 
 		EnhancedInputComponent->BindAction(EI_Confirm, ETriggerEvent::Completed, AbilitySystemComp, &UAbilitySystemComponent::LocalInputConfirm);
@@ -1001,6 +1030,7 @@ void AZeroLockCharacter::HealthAttributeChanged(const FOnAttributeChangeData& On
 	{
 		VM->SetHealth(currentH);
 		VM->SetMaxHealth(MaxH);
+		VM->SetBarrier(AttributeSet->GetCombatBarrier());
 	}
 	
 	if (OverHeadDisplay && !OverHeadDisplayRef)
@@ -1117,5 +1147,13 @@ void AZeroLockCharacter::UIInfoReleased()
 	{
 		PC->bShowMouseCursor = false;
 		PC->SetInputMode(FInputModeGameOnly());
+	}
+}
+
+void AZeroLockCharacter::BarrierAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData)
+{
+	if (UZL_VM_Attributes* VM = GetVM_Attributes())
+	{
+		VM->SetBarrier(OnAttributeChangeData.NewValue);
 	}
 }

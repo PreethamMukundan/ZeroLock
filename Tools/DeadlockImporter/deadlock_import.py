@@ -125,7 +125,9 @@ def asset_name(hero):
 WEAPON_KEYS = ["m_flBulletDamage", "m_flCycleTime", "m_iClipSize", "m_reloadDuration", "m_iBullets",
                "m_iBurstShotCount", "m_flIntraBurstCycleTime", "m_flBulletSpeed", "m_flBulletGravityScale",
                "m_flDamageFalloffStartRange", "m_flDamageFalloffEndRange", "m_flDamageFalloffEndScale",
-               "m_flCritBonusStart", "m_flRange"]
+               "m_flCritBonusStart", "m_flRange", "m_flZoomFOV_Relative", "m_flZoomMoveSpeedPercent"]
+# true/false weapon fields (same lookup). m_bCanZoom false = the hero has an alt-fire weapon instead of the zoom.
+WEAPON_BOOL_KEYS = ["m_bCanZoom"]
 
 
 def read_vdata(name):
@@ -192,6 +194,12 @@ def read_stats(hero):
                 v = re.search(rf"\b{key}\s*=\s*(-?[0-9.]+)", block)
                 if v:
                     weapon[key] = float(v.group(1))
+                    break
+        for key in WEAPON_BOOL_KEYS:
+            for block in blocks:
+                v = re.search(rf"\b{key}\s*=\s*(true|false)\b", block)
+                if v:
+                    weapon[key] = v.group(1) == "true"
                     break
     return {"starting": stats, "weapon_name": hero.get("weapon", ""), "weapon": weapon}
 
@@ -546,7 +554,7 @@ def main(argv):
     ue_script = os.path.join(HERE, "ue_import.py").replace("\\", "/")
     print("\n" + "=" * 70)
     print("Now run this in the Unreal editor console (` key), or Tools > Execute Python Script:")
-    print(f'    py "{ue_script}" {" ".join(done)}{" --camera-only --stats-only" if data_only else ""}')
+    print(f'    py "{ue_script}" {" ".join(done)}{" --camera-only --stats-only --weapons-only" if data_only else ""}')
     print("=" * 70)
 
 

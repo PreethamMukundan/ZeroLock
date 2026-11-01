@@ -25,6 +25,7 @@ UBaseCharAttributeSet::UBaseCharAttributeSet()
 	CurrentSpeed = 0.0f;
 	CurrentJump = 0.0f;
 	MoveSpeedMultiplier = 1.0f;
+	CombatBarrier = 0.0f;
 	// Deadlock-style defaults: 3 stamina, one back every 5 seconds. Override them in the hero's DefaultGameplayEffect.
 	MaxStamina = 3.0f;
 	Stamina = 3.0f;
@@ -66,7 +67,7 @@ void UBaseCharAttributeSet::PreAttributeChange(const FGameplayAttribute & Attrib
 	{
 		NewValue = FMath::Clamp(NewValue, 0.1f, 1.0f);
 	}
-	else if (Attribute == GetCurrentAmmoAttribute())
+	else if (Attribute == GetCurrentAmmoAttribute() || Attribute == GetCombatBarrierAttribute())
 	{
 		NewValue = FMath::Max(NewValue, 0.0f);
 	}
@@ -189,8 +190,14 @@ void UBaseCharAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 						{
 							MyPC->ShowDamageNumber(LocalDamageDone,TargetCharacter,Data.EffectSpec.GetDynamicAssetTags());
 						}
+						// Combat barrier soaks the hit first.
+						const float Absorbed = FMath::Min(GetCombatBarrier(), LocalDamageDone);
+						if (Absorbed > 0.0f)
+						{
+							SetCombatBarrier(GetCombatBarrier() - Absorbed);
+						}
 						const float OldHealth = GetCurrentHealth();
-						const float NewHealth = GetCurrentHealth() - LocalDamageDone;
+						const float NewHealth = GetCurrentHealth() - (LocalDamageDone - Absorbed);
 						SetCurrentHealth(FMath::Clamp(NewHealth, 0.0f, GetMaximumHealth()));
 						TargetCharacter->AddLastHit(SourceCharacter);
 						RecordDamageTelemetry(Data, Source, SourceCharacter, TargetCharacter, OldHealth - GetCurrentHealth(), !TargetCharacter->IsAlive());
@@ -314,6 +321,7 @@ void UBaseCharAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, Stamina, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, MaxStamina, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, CombatBarrier, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, StaminaRegenRate, COND_None, REPNOTIFY_OnChanged);
 
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, Soul, COND_None, REPNOTIFY_OnChanged);
@@ -466,6 +474,11 @@ void UBaseCharAttributeSet::OnRep_Stamina(const FGameplayAttributeData& OldValue
 void UBaseCharAttributeSet::OnRep_MaxStamina(const FGameplayAttributeData& OldValue)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, MaxStamina, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_CombatBarrier(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, CombatBarrier, OldValue);
 }
 
 void UBaseCharAttributeSet::OnRep_StaminaRegenRate(const FGameplayAttributeData& OldValue)

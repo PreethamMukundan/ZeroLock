@@ -58,6 +58,19 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ApplyHeal(UAbilitySystemComponent* TargetASC,float HealValue);
 
+	/** Server. Adds Amount to this ASC's CombatBarrier; after Duration takes back whatever of it damage hasn't eaten. */
+	UFUNCTION(BlueprintCallable)
+	void AddCombatBarrier(float Amount, float Duration);
+
+	/** Server. Barrier to 0; pending AddCombatBarrier expiries no longer touch it (respawn). */
+	void ClearCombatBarrier();
+
+private:
+	/** Bumped by ClearCombatBarrier so older expiry timers do nothing. */
+	int32 CombatBarrierGeneration = 0;
+
+public:
+
 	UFUNCTION(BlueprintCallable)
 	void ApplyGameplayEffect(UAbilitySystemComponent* TargetASC,TSubclassOf<UGameplayEffect> EffectClass,int32 level);
 

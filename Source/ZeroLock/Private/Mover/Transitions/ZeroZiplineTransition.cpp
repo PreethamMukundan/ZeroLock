@@ -3,16 +3,8 @@
 
 #include "Mover/Transitions/ZeroZiplineTransition.h"
 
-#include "CollisionQueryParams.h"
-#include "CollisionShape.h"
-#include "DrawDebugHelpers.h"
-#include "MoverComponent.h"
-#include "ColorManagement/TransferFunctions.h"
-#include "Components/SplineComponent.h"
-#include "Engine/HitResult.h"
-#include "Engine/World.h"
 #include "GameFramework/Actor.h"
-#include "Movement/Zero_ZiplineActor.h"
+#include "MoverComponent.h"
 #include "Mover/ZeroMovementData.h"
 #include "Mover/ZeroZiplineMode.h"
 
@@ -20,33 +12,32 @@ FTransitionEvalResult UZeroZiplineTransition::Evaluate_Implementation(const FSim
 {
 	FTransitionEvalResult EvalResult = FTransitionEvalResult::NoTransition;
 	UMoverComponent* MoverComp = Params.MovingComps.MoverComponent.Get();
-	AActor* OwnerActor = MoverComp->GetOwner();
-	
-	if (Params.StartState.SyncState.MovementMode == ZipliningModeName) return EvalResult;
-
-	if (const FZeroMovementInputs* ZeroInputs = Params.StartState.InputCmd.InputCollection.FindDataByType<FZeroMovementInputs>())
+	if (!MoverComp || Params.StartState.SyncState.MovementMode == ZipliningModeName)
 	{
-		// Component-level transitions run in every mode, including the rooted one; mounting would break the root.
-		if (ZeroInputs->bWantsToZipline && !ZeroInputs->bIsRooted && !ZeroInputs->bIsCubed && !ZeroInputs->bIsGooBall)
-		{
-			FVector CamLocation = OwnerActor->GetActorLocation();
-			FVector CamForward = ZeroInputs->LookDir.Vector();
+		return EvalResult;
+	}
 
-			FCollisionShape ZipCap = FCollisionShape::MakeSphere(ZiplineCheckSphereRadius);
-			FVector TraceStart = CamLocation + (CamForward * ZiplineCheckSphereRadius);
-			FVector TraceEnd = CamLocation + (CamForward * ZiplineCheckMaxDistance);
-            
-			FHitResult ZipHit;
-			FCollisionQueryParams TraceParams(SCENE_QUERY_STAT(ZiplineSweep), true, OwnerActor);
-          
-			if (GetWorld()->SweepSingleByObjectType(ZipHit, TraceStart, TraceEnd, ZeroInputs->LookDir.Quaternion(), ECC_Vehicle, ZipCap, TraceParams))
-			{
-				if (Cast<AZero_ZiplineActor>(ZipHit.GetActor()))
-				{
-					EvalResult.NextMode = ZipliningModeName;
-				}
-			}
+	const FZeroMovementInputs* ZeroInputs = Params.StartState.InputCmd.InputCollection.FindDataByType<FZeroMovementInputs>();
+	// Component-level transitions run in every mode, including the rooted one; mounting would break the root.
+	if (!ZeroInputs || !ZeroInputs->bWantsToZipline || ZeroInputs->bIsRooted || ZeroInputs->bIsCubed || ZeroInputs->bIsGooBall)
+	{
+		return EvalResult;
+	}
+
+	if (const FZeroZipliningState* ZipState = Params.StartState.SyncState.SyncStateCollection.FindDataByType<FZeroZipliningState>())
+	{
+		if (ZipState->LastZipSimTimeMs >= 0.0 && Params.TimeStep.BaseSimTimeMs - ZipState->LastZipSimTimeMs < RegrabCooldownMs)
+		{
+			return EvalResult;
 		}
+	}
+
+	AActor* OwnerActor = MoverComp->GetOwner();
+	float Distance = 0.0f;
+	if (UZeroZiplineMode::FindZiplineInView(GetWorld(), OwnerActor->GetActorLocation() + FVector::UpVector * EyeHeight,
+		ZeroInputs->LookDir.Vector(), GrabMaxDistance, GrabTraceRadius, OwnerActor, Distance))
+	{
+		EvalResult.NextMode = ZipliningModeName;
 	}
 	return EvalResult;
 }

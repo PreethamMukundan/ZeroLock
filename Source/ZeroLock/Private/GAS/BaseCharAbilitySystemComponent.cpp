@@ -4,7 +4,9 @@
 #include "GAS/BaseCharAbilitySystemComponent.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
+#include "TimerManager.h"
 #include "GameFramework/Pawn.h"
+#include "GAS/BaseCharAttributeSet.h"
 #include "GAS/BaseGameplayAbility.h"
 #include "GAS/ZL_GameplayTags.h"
 #include "GAS/ZL_GE_BaseCooldown.h"
@@ -155,6 +157,42 @@ void UBaseCharAbilitySystemComponent::ApplyMeleeDamage(UAbilitySystemComponent* 
 	SendGameplayEventToSelf(TagToSend, TargetASC);
 	TagToSend = FGameplayTag::RequestGameplayTag("Event.MeleeRecieved",false);
 	SendGameplayEventToTarget(TagToSend, TargetASC);
+}
+
+void UBaseCharAbilitySystemComponent::AddCombatBarrier(float Amount, float Duration)
+{
+	if (!IsOwnerActorAuthoritative() || Amount <= 0.0f)
+	{
+		return;
+	}
+	const FGameplayAttribute Barrier = UBaseCharAttributeSet::GetCombatBarrierAttribute();
+	SetNumericAttributeBase(Barrier, GetNumericAttributeBase(Barrier) + Amount);
+	if (Duration <= 0.0f || !GetWorld())
+	{
+		return;
+	}
+	// Damage eats the newest and oldest barrier alike, so on expiry take back up to Amount of what's left.
+	FTimerHandle Timer;
+	GetWorld()->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateWeakLambda(this, [this, Amount, Generation = CombatBarrierGeneration]()
+	{
+		if (Generation != CombatBarrierGeneration)
+		{
+			return;
+		}
+		const FGameplayAttribute Barrier = UBaseCharAttributeSet::GetCombatBarrierAttribute();
+		const float Current = GetNumericAttributeBase(Barrier);
+		SetNumericAttributeBase(Barrier, Current - FMath::Min(Current, Amount));
+	}), Duration, false);
+}
+
+void UBaseCharAbilitySystemComponent::ClearCombatBarrier()
+{
+	if (!IsOwnerActorAuthoritative())
+	{
+		return;
+	}
+	++CombatBarrierGeneration;
+	SetNumericAttributeBase(UBaseCharAttributeSet::GetCombatBarrierAttribute(), 0.0f);
 }
 
 void UBaseCharAbilitySystemComponent::ApplyHeal(UAbilitySystemComponent* TargetASC, float HealValue)

@@ -109,6 +109,9 @@ public:
 	/** Server: fill stamina on the next sim step (respawn). The client is corrected to match. */
 	void RequestStaminaRefill() { bPendingStaminaRefill = true; }
 
+	/** Server: add Amount stamina (clamped to max) on the next sim step (Kingside Knight). The client is corrected to match. */
+	void RequestStaminaGrant(float Amount) { PendingStaminaGrant += Amount; }
+
 	FOnZeroStaminaChanged OnStaminaChanged;
 
 	void RequestSafePullTo(const FVector& Target, float Duration);
@@ -165,6 +168,10 @@ public:
 	 */
 	float GetMoveSpeedMultiplier() const;
 
+	/** The zipline mode's name in the mode map (UZeroZiplineMode); counts as ground for the jump/air-dash counters. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Zipline")
+	FName ZipliningModeName = FName("Ziplining");
+
 	/** Mode the pawn slides in while cubed (Viscous's Cube). Added at runtime from CubedModeClass if the mode map doesn't have it. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Cubed")
 	FName CubedModeName = FName("Cubed");
@@ -205,6 +212,24 @@ public:
 	/** True while the owner has Zerolock.Status.GooBall. Only read when producing input (FZeroMovementInputs::bIsGooBall). */
 	bool IsGooBall() const;
 
+	/** Float (Solomon's Move Piece, Deadlock movechesspiece): fall speed cap at full strength (cm/s; Deadlock FallSpeedMax 10 u/s). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Float", meta = (ForceUnits = "cm/s"))
+	float FloatFallSpeed = 18.0f;
+
+	/** Flat air speed cap at full strength (cm/s; Deadlock AirSpeedMax 100 u/s). Faster is braked toward it at FloatAirBraking. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Float", meta = (ForceUnits = "cm/s"))
+	float FloatAirSpeed = 178.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Float", meta = (ForceUnits = "cm/s^2"))
+	float FloatAirBraking = 1500.0f;
+
+	/** Air time over which the float fades from full to nothing (s). Resets on the ground, not on re-press. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Float", meta = (ClampMin = 0.1))
+	float FloatFadeDuration = 3.0f;
+
+	/** True while the owner has Zerolock.Status.Floating. Only read when producing input (FZeroMovementInputs::bIsFloating). */
+	bool IsFloating() const;
+
 	/** True while the current sim step re-runs a frame after a correction. Use it to skip cosmetics. */
 	bool IsResimulatingStep() const { return bStepIsResimulating; }
 
@@ -221,6 +246,14 @@ protected:
 	void HandleGooBall(const FCharacterDefaultInputs& DefaultInputs, const FZeroMovementInputs& ZeroInputs, const FName& CurrentMode);
 
 	FMovementModifierHandle GooBallShapeHandle;
+
+	/**
+	 * Float: tracks floating air time (FZeroMoverSimState::FloatElapsedMs, reset on the ground) and, while floating in
+	 * Falling, sets the velocity (instant effect) with strength S = 1 − elapsed / FloatFadeDuration: S of gravity cancelled,
+	 * fall capped at FloatFallSpeed / S, flat speed braked toward FloatAirSpeed / S. S reaches 0 = normal falling.
+	 */
+	void HandleFloat(const FZeroMovementInputs& ZeroInputs, const FName& CurrentMode, bool bOnGround);
+	float PendingFloatElapsedMs = 0.0f;
 
 	/** Ability moves, stops, pulls, teleports as Cubed / GooBall handle them (pushes add velocity once). */
 	void HandleForcedMovesAsImpulses(const FZeroMovementInputs& ZeroInputs);
@@ -310,6 +343,7 @@ private:
 	float PendingMantleHeight = 0.0f;
 	uint8 PendingWallJumpCount = 0;
 	bool bPendingStaminaRefill = false;
+	float PendingStaminaGrant = 0.0f;
 	float StepMaxStamina = 0.0f;
 	float StepStaminaRegenRate = 0.0f;
 	float StepSeconds = 0.0f;

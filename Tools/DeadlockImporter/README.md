@@ -24,6 +24,7 @@ py ".../ue_import.py" Lash --anim-set-only   # just (re)build DA_<Hero>_AnimSet 
 py ".../ue_import.py" Lash --hero-only    # just BP_Deadlock_<Hero> + DA_<Hero>_Hero + DT_HeroList row
 py ".../ue_import.py" Lash --camera-only  # existing BP: spring arm + camera from Deadlock's camera settings
 py ".../ue_import.py" Lash --stats-only   # (re)write GE_<Hero>_DefaultStats from Deadlock's stats, set it on the BP
+py ".../ue_import.py" Lash --weapons-only # BP_<Hero>_Weapon + BP_<Hero>_AltFire, set as PrimaryFireAbility / AltFireAbility
 ```
 
 Result, per hero, in `/Game/Developers/rpm86/Deadlock/<Hero>/`:
@@ -91,9 +92,13 @@ from the Deadlock data:
   hero's Deadlock speed (`movement_reference` in `config.json`).
 - `Montages/Reload/AM_<Hero>_Reload` and `Montages/Shoot/AM_<Hero>_Shoot` (UpperBody slot), played by the reload and
   fire abilities through the anim set.
+- `BP_<Hero>_Weapon` (copy of `template_weapon` = `BP_BaseFireAbility`, fires `BP_<Hero>_Projectile` on client and server,
+  `weapon_bullet_spread` 2°) as `PrimaryFireAbility`, and `BP_<Hero>_AltFire` (child of `UZL_GA_AimZoom`, zoom from the
+  weapon's `m_flZoomFOV_Relative`) as `AltFireAbility`. Made once; a slot holding anything but a default (empty, the C++ zoom, `template_weapon`, another hero's asset)
+  is kept. Heroes whose Deadlock weapon has `m_bCanZoom = false` (Solomon, Viscous) get a warning: their alt fire is a weapon.
 
 Already-imported hero, after a `--data-only` export:
-`py ".../ue_import.py" Lash --montages-only --camera-only --stats-only` (the `--*-only` flags combine). Use the flags:
+`py ".../ue_import.py" Lash --montages-only --camera-only --stats-only --weapons-only` (the `--*-only` flags combine). Use the flags:
 a plain run re-imports the mesh and every animation (minutes per hero).
 
 Additive clips (e.g. `shoot_idle`, `landing_impact`) come out of S2V composed over the bind pose and look like a T-pose.

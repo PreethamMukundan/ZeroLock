@@ -122,7 +122,35 @@ public:
      * press to tell a tap from a hold (AZeroLockCharacter::LightMeleeReleased). */
     int32 GetHeavyMeleeTriggerCount() const { return HeavyMeleeTriggerCount; }
 
+    /** Aim zoom (the default alt fire, UZL_GA_AimZoom). Local camera only: blends the camera FOV and the spring arm length
+     * toward the zoomed values over BlendTime. FOVRelative is in Deadlock's 4:3 degrees (m_flZoomFOV_Relative, -40 = hero
+     * FOV 90 → 50), converted to our 16:9 horizontal FOV. */
+    void SetAimZoom(bool bZoom, float FOVRelative, float BlendTime);
+    bool IsAimZooming() const { return bWantsAimZoom; }
+    float GetAimZoomAlpha() const { return AimZoomAlpha; }
+
+    /** Camera arm length while zoomed (Deadlock m_flCameraBackOffsetAiming × 1.778 cm). 0 = TargetArmLength × AimZoomArmLengthScale. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera|Aim Zoom")
+    float AimZoomArmLength = 0.0f;
+
+    /** Used when AimZoomArmLength is 0. Deadlock heroes zoom to 59–82% of the arm (Pocket 0.59, Solomon 0.82). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera|Aim Zoom", meta = (ClampMin = "0.1", ClampMax = "1.0"))
+    float AimZoomArmLengthScale = 0.65f;
+
 private:
+    /** Blends FOV and arm length toward the aim zoom (locally controlled only). */
+    void UpdateAimZoom(float DeltaSeconds);
+
+    bool bWantsAimZoom = false;
+    float AimZoomAlpha = 0.0f;
+    float AimZoomFOVRelative = -40.0f;
+    float AimZoomBlendTime = 0.15f;
+    /** Camera FOV and arm length before the zoom started, restored once it has fully blended out. */
+    bool bHasAimZoomBase = false;
+    float AimZoomBaseFOV = 90.0f;
+    float AimZoomBaseArmLength = 400.0f;
+
+
     /** Moves the camera boom with Mover's smoothed mesh offset (locally controlled only). */
     void UpdateSmoothedCamera();
 

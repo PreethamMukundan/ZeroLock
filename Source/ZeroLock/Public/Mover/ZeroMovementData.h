@@ -100,7 +100,11 @@ struct FZeroMovementInputs : public FMoverDataStructBase
 	UPROPERTY(BlueprintReadWrite, Category="Zero")
 	bool bIsFloating = false;
 
-    virtual UScriptStruct* GetScriptStruct() const override { return FZeroMovementInputs::StaticStruct(); }
+	// Sampled from Zerolock.Cheat.NoClip (UZL_CheatComponent): the sim runs the NoClip mode (UZeroNoClipMode).
+	UPROPERTY(BlueprintReadWrite, Category="Zero")
+	bool bIsNoClip = false;
+
+    virtual UScriptStruct*GetScriptStruct() const override { return FZeroMovementInputs::StaticStruct(); }
     virtual FMoverDataStructBase* Clone() const override { return new FZeroMovementInputs(*this); }
 
     virtual bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess) override
@@ -138,6 +142,7 @@ struct FZeroMovementInputs : public FMoverDataStructBase
     	Ar << bIsCubed;
     	Ar << bIsGooBall;
     	Ar << bIsFloating;
+    	Ar << bIsNoClip;
 
     	Map->SerializeObject(Ar, AActor::StaticClass(), (UObject*&)DynamicTargetActor);
     

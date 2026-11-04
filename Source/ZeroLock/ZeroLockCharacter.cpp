@@ -108,7 +108,8 @@ AZeroLockCharacter::AZeroLockCharacter()
 void AZeroLockCharacter::InitializeFloatingStatusBar()
 {
 	if (IsNetMode(NM_DedicatedServer)) return;
-	if (IsLocallyControlled()) return;
+	// Not for our own hero; target dummies (AZL_DummyController) are locally controlled on the server but need the bar.
+	if (IsLocallyControlled() && IsPlayerControlled()) return;
 
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
 	if (!PC || !OverHeadDisplay) return;
@@ -364,7 +365,7 @@ void AZeroLockCharacter::OnRep_Controller()
 void AZeroLockCharacter::NotifyHUDHeroReady()
 {
 	if (bNotifiedHUDHeroReady || IsNetMode(NM_DedicatedServer)) return;
-	if (!IsLocallyControlled() || !GetPlayerState()) return;
+	if (!IsLocallyControlled() || !IsPlayerControlled()) return;
 
 	// BeginPlay ran before possession for a pawn spawned mid-match (hero swap), so its local-only setup was skipped.
 	if (AbilityUIManager)

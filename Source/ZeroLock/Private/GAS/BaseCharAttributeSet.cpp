@@ -80,6 +80,13 @@ void UBaseCharAttributeSet::RecordDamageTelemetry(const FGameplayEffectModCallba
 	UZL_TelemetrySubsystem* Telemetry = UZL_TelemetrySubsystem::Get(GetOwningActor());
 	if (!Telemetry || !Telemetry->IsInMatch()) return;
 
+	// Cheat target dummies (AZL_DummyController) aren't players.
+	for (const AZeroLockCharacter* Character : { SourceCharacter, TargetCharacter })
+	{
+		const APlayerState* PS = Character ? Character->GetPlayerState() : nullptr;
+		if (PS && PS->IsABot()) return;
+	}
+
 	// weapon / spirit / melee from the Damage.Tag.* the calc adds.
 	FString DamageType = TEXT("other");
 	for (const FGameplayTag& Tag : Data.EffectSpec.GetDynamicAssetTags())
@@ -190,6 +197,13 @@ void UBaseCharAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 						{
 							MyPC->ShowDamageNumber(LocalDamageDone,TargetCharacter,Data.EffectSpec.GetDynamicAssetTags());
 						}
+						// Cheats: god mode shows the number but takes nothing; buddha (target dummies) never drops below 1 health.
+						const UAbilitySystemComponent* TargetASC = TargetCharacter->GetAbilitySystemComponent();
+						if (TargetASC && TargetASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_CHEAT_GODMODE))
+						{
+							return;
+						}
+						const bool bBuddha = TargetASC && TargetASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_CHEAT_BUDDHA);
 						// Combat barrier soaks the hit first.
 						const float Absorbed = FMath::Min(GetCombatBarrier(), LocalDamageDone);
 						if (Absorbed > 0.0f)
@@ -197,7 +211,11 @@ void UBaseCharAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 							SetCombatBarrier(GetCombatBarrier() - Absorbed);
 						}
 						const float OldHealth = GetCurrentHealth();
-						const float NewHealth = GetCurrentHealth() - (LocalDamageDone - Absorbed);
+						float NewHealth = GetCurrentHealth() - (LocalDamageDone - Absorbed);
+						if (bBuddha)
+						{
+							NewHealth = FMath::Max(NewHealth, FMath::Min(OldHealth, 1.0f));
+						}
 						SetCurrentHealth(FMath::Clamp(NewHealth, 0.0f, GetMaximumHealth()));
 						TargetCharacter->AddLastHit(SourceCharacter);
 						RecordDamageTelemetry(Data, Source, SourceCharacter, TargetCharacter, OldHealth - GetCurrentHealth(), !TargetCharacter->IsAlive());

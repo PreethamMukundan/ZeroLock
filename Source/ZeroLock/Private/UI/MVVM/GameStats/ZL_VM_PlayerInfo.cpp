@@ -4,6 +4,17 @@
 #include "UI/MVVM/GameStats/ZL_VM_PlayerInfo.h"
 
 #include "UI/MVVM/ZL_VM_Attributes.h"
+#include "Zero_BasePlayerState.h"
+
+void UZL_VM_PlayerInfo::SetOwningPlayerState(AZero_BasePlayerState* InPlayerState)
+{
+	OwningPlayerState = InPlayerState;
+}
+
+AZero_BasePlayerState* UZL_VM_PlayerInfo::GetOwningPlayerState() const
+{
+	return OwningPlayerState.Get();
+}
 
 void UZL_VM_PlayerInfo::SetVM_Attributes(UZL_VM_Attributes* newAttVM)
 {

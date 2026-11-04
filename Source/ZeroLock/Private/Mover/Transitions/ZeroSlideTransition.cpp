@@ -21,7 +21,7 @@ FTransitionEvalResult UZeroSlideTransition::Evaluate_Implementation(const FSimul
 	
 	if (MoverComp && MoverComp->IsOnGround() && Params.StartState.SyncState.MovementMode != SlidingModeName)
 	{
-		if (Inputs && SyncState && !Inputs->bIsRooted && !Inputs->bIsCubed && !Inputs->bIsGooBall)
+		if (Inputs && SyncState && !Inputs->bIsRooted && !Inputs->bIsCubed && !Inputs->bIsGooBall && !Inputs->bIsNoClip)
 		{
 			const bool bWantsToCrouch = Inputs->bWantsToCrouch;
 			

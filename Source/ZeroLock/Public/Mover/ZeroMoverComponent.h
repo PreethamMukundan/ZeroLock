@@ -230,6 +230,20 @@ public:
 	/** True while the owner has Zerolock.Status.Floating. Only read when producing input (FZeroMovementInputs::bIsFloating). */
 	bool IsFloating() const;
 
+	/** Cheat noclip mode (UZeroNoClipMode). Added at runtime from NoClipModeClass if the mode map doesn't have it. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Cheats")
+	FName NoClipModeName = FName("NoClip");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Cheats")
+	TSubclassOf<UBaseMovementMode> NoClipModeClass;
+
+	/** Mode queued when noclip ends. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Cheats")
+	FName NoClipExitModeName = FName("Falling");
+
+	/** True while the owner has Zerolock.Cheat.NoClip. Only read when producing input (FZeroMovementInputs::bIsNoClip). */
+	bool IsNoClip() const;
+
 	/** True while the current sim step re-runs a frame after a correction. Use it to skip cosmetics. */
 	bool IsResimulatingStep() const { return bStepIsResimulating; }
 
@@ -321,9 +335,14 @@ protected:
 	UFUNCTION()
 	void HandleSimRollback(const FMoverTimeStep& NewBaseTimeStep, const FMoverTimeStep& ExpungedTimeStep);
 
+public:
+	/** Rollbacks (server corrections) this component has applied since play began; the cheat menu's debug readout shows the rate. */
+	int32 GetRollbackCount() const { return RollbackCount; }
+
 private:
 	void BeginSimStep(const FMoverTimeStep& TimeStep);
 	void CacheSimStartState(const FMoverSyncState& SyncState);
+	int32 RollbackCount = 0;
 	float GetStartStamina() const;
 
 	// Start-of-step state, refreshed after every step and on rollback.

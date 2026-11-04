@@ -41,4 +41,9 @@ namespace ZerolockGameplayTagsForBinding
 	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_HOTEL_GUEST, "Zerolock.Status.HotelGuest");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_MOVEMENT_ABILITIES_BLOCKED, "Zerolock.Status.MovementAbilitiesBlocked");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_EVENT_STATUS_TIMER, "Zerolock.Event.StatusTimer");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_CHEAT_GODMODE, "Zerolock.Cheat.GodMode");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_CHEAT_BUDDHA, "Zerolock.Cheat.Buddha");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_CHEAT_NOCLIP, "Zerolock.Cheat.NoClip");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_CHEAT_NO_COOLDOWNS, "Zerolock.Cheat.NoCooldowns");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_CHEAT_INFINITE_AMMO, "Zerolock.Cheat.InfiniteAmmo");
 }

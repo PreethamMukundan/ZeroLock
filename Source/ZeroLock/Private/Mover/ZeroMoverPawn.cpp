@@ -267,6 +267,14 @@ void AZeroMoverPawn::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmd
         ZeroInputs.bWantsToMelee = false;
         ZeroInputs.bWantsToZipline = false;
     }
+    // Cheat noclip: jump held / crouch held fly up / down (UZeroNoClipMode); no dash, melee lunge or zipline.
+    ZeroInputs.bIsNoClip = MoverComponent && MoverComponent->IsNoClip();
+    if (ZeroInputs.bIsNoClip)
+    {
+        ZeroInputs.bWantsToDash = false;
+        ZeroInputs.bWantsToMelee = false;
+        ZeroInputs.bWantsToZipline = false;
+    }
 
     if (MoverComponent && MoverComponent->bLatchedAbilityMove)
     {

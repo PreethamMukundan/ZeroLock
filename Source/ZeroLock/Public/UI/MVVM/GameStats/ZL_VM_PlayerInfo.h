@@ -7,6 +7,7 @@
 #include "ZL_VM_PlayerInfo.generated.h"
 
 class UZL_VM_Attributes;
+class AZero_BasePlayerState;
 /**
  * 
  */
@@ -49,4 +50,11 @@ public:
 	int32 GetAssists()const{return Assists;};
 	UTexture2D* GetIcon()const{return Icon;};
 	UZL_VM_Attributes* GetVM_Attributes()const {return VM_Attributes;};
+
+	/** The player this entry shows. Team bar cards read the live pawn (hero, health) and K/D/A from it. */
+	void SetOwningPlayerState(AZero_BasePlayerState* InPlayerState);
+	AZero_BasePlayerState* GetOwningPlayerState() const;
+
+private:
+	TWeakObjectPtr<AZero_BasePlayerState> OwningPlayerState;
 };

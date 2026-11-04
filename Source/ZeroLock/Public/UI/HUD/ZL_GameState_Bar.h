@@ -34,6 +34,14 @@ public:
 	void OnEnemyTeamChanged(const TArray<UZL_VM_PlayerInfo*>& NewTeam);
 
 
+	/** Card per player; must be a UZL_PlayerInfoBox (the native class builds its own card), else that is used. */
 	UPROPERTY(EditDefaultsOnly,Category="CharacterIcon")
 	TSubclassOf<UUserWidget> PlayerIconClass;
+
+	/** Horizontal space between cards. */
+	UPROPERTY(EditDefaultsOnly,Category="CharacterIcon")
+	float CardSpacing = 6.f;
+
+private:
+	void RebuildTeam(UHorizontalBox* List, const TArray<UZL_VM_PlayerInfo*>& NewTeam, bool bAlly);
 };

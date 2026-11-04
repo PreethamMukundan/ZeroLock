@@ -10,6 +10,7 @@
 #include "InputMappingContext.h"
 #include "TimerManager.h"
 #include "CharacterSelector/ZL_CharacterSelector_Actor.h"
+#include "Cheats/ZL_CheatMenu.h"
 #include "Gamemode/Zero_BaseGameState.h"
 #include "Zero_BasePlayerController.h"
 #include "Engine/LocalPlayer.h"
@@ -46,6 +47,7 @@ void AZL_HUDClass::BeginPlay()
 		}
 
 		SetupHeroSelectInput();
+		SetupCheatMenuInput();
 		GetWorldTimerManager().SetTimer(InitialHeroPickTimer, this, &AZL_HUDClass::UpdateInitialHeroPick, 0.2f, true, 0.f);
 	}
 
@@ -189,6 +191,68 @@ void AZL_HUDClass::HandleHeroReady(APawn* Hero)
 		bWaitingForHeroPick = false;
 		RebuildGameHUD(0);
 	}
+}
+
+void AZL_HUDClass::SetupCheatMenuInput()
+{
+#if !UE_BUILD_SHIPPING
+	APlayerController* PC = GetOwningPlayerController();
+	if (!PC || !CheatMenuKey.IsValid()) return;
+	if (!CheatMenuClass)
+	{
+		CheatMenuClass = UZL_CheatMenu::StaticClass();
+	}
+
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
+	if (!Subsystem) return;
+
+	// Same pattern as the hero select key: runtime action + mapping context on the HUD, so it survives hero swaps.
+	CheatMenuAction = NewObject<UInputAction>(this, TEXT("IA_CheatMenu"));
+	CheatMenuAction->ValueType = EInputActionValueType::Boolean;
+	CheatMenuMappingContext = NewObject<UInputMappingContext>(this, TEXT("IMC_CheatMenu"));
+	CheatMenuMappingContext->MapKey(CheatMenuAction, CheatMenuKey);
+	Subsystem->AddMappingContext(CheatMenuMappingContext, 1);
+
+	EnableInput(PC);
+	if (UEnhancedInputComponent* Input = Cast<UEnhancedInputComponent>(InputComponent))
+	{
+		Input->BindAction(CheatMenuAction, ETriggerEvent::Started, this, &AZL_HUDClass::ToggleCheatMenu);
+	}
+#endif
+}
+
+void AZL_HUDClass::ToggleCheatMenu()
+{
+#if !UE_BUILD_SHIPPING
+	if (UCommonActivatableWidget* Open = CheatMenuWidget.Get())
+	{
+		// Fires HandleCheatMenuDeactivated.
+		Open->DeactivateWidget();
+		return;
+	}
+	if (!CheatMenuClass || !IsValid(RootLayer) || IsHeroSelectOpen()) return;
+
+	const FUITag MenuLayer = FUITag::TryConvert(ZerolockUIGameplayTags::TAG_UI_LAYER_MENU);
+	RootLayer->PushWidgetToLayer(MenuLayer, CheatMenuClass);
+	UCommonActivatableWidget* Widget = RootLayer->GetActivatedWidgetInLayer(MenuLayer);
+	if (!Widget || !Widget->IsA(CheatMenuClass)) return;
+
+	if (UZL_CheatMenu* Menu = Cast<UZL_CheatMenu>(Widget))
+	{
+		Menu->ToggleKey = CheatMenuKey;
+	}
+	CheatMenuWidget = Widget;
+	Widget->OnDeactivated().AddUObject(this, &AZL_HUDClass::HandleCheatMenuDeactivated);
+#endif
+}
+
+void AZL_HUDClass::HandleCheatMenuDeactivated()
+{
+	if (UCommonActivatableWidget* Widget = CheatMenuWidget.Get())
+	{
+		Widget->OnDeactivated().RemoveAll(this);
+	}
+	CheatMenuWidget.Reset();
 }
 
 void AZL_HUDClass::RebuildGameHUD(int32 Attempt)

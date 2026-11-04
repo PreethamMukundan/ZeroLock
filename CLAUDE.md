@@ -11,7 +11,7 @@ Main branch `main`; feature branches `feature/Hero/<Hero>`.
 | `Docs/Claude/GAS.md` | ASC setup, attribute set, damage/heal pipeline, base ability classes, tasks, tags, items/shop, new-ability recipe |
 | `Docs/Claude/Heroes.md` | Every hero ability (Apollo, Lash, Pocket, Drifter, Xayah, Seven, Doorman, Viscous, Solomon), status, patterns to copy |
 | `Docs/Claude/Weapons.md` | Primary fire, predicted projectiles (`AProjectile`, spawn task), prediction tuning |
-| `Docs/Claude/GameFlow.md` | Game mode/state, teams, death/respawn, hero select, online (CommonUser sessions, EOS config split, console commands) |
+| `Docs/Claude/GameFlow.md` | Game mode/state, teams, death/respawn, hero select, online (CommonUser sessions, EOS config split, console commands), cheats (0-key menu, `ZL.Cheat.*`, target dummies) |
 | `Docs/Claude/UI.md` | CommonUI layers, MVVM viewmodels/resolvers, HUD, shop, menus |
 | `Docs/Claude/Animation.md` | `ABP_DeadlockHero` C++ anim node/instance/anim set, Deadlock importer |
 | `Docs/Claude/Telemetry.md` | Stats recording (`UZL_TelemetrySubsystem`), Cloudflare Worker API + D1, dashboard, setup/deploy |

@@ -6,9 +6,15 @@
 #include "Zero_BasePlayerState.h"
 #include "EngineUtils.h"
 #include "CharacterSelector/ZL_HeroSwapPad.h"
+#include "Cheats/ZL_CheatComponent.h"
 #include "Gamemode/Zero_BaseGameModeBase.h"
 #include "Net/UnrealNetwork.h"
 #include "ZeroLock/ZeroLockCharacter.h"
+
+AZero_BasePlayerController::AZero_BasePlayerController()
+{
+	CheatComponent = CreateDefaultSubobject<UZL_CheatComponent>(TEXT("CheatComponent"));
+}
 
 void AZero_BasePlayerController::ServerSetSelectedHero_Implementation(TSubclassOf<AZeroLockCharacter> HeroClass)
 {

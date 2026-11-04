@@ -26,6 +26,7 @@
 #include "Mover/ZeroInstantMovementEffects.h"
 #include "Mover/ZeroMovementData.h"
 #include "Mover/ZeroMoverPawn.h"
+#include "Mover/ZeroNoClipMode.h"
 #include "Mover/ZeroZiplineMode.h"
 
 UZeroMoverComponent::UZeroMoverComponent()
@@ -52,6 +53,10 @@ void UZeroMoverComponent::InitializeComponent()
     if (!MovementModes.Contains(GooBallModeName))
     {
         AddMovementModeFromClass(GooBallModeName, GooBallModeClass ? GooBallModeClass.Get() : UZeroGooBallMode::StaticClass());
+    }
+    if (!MovementModes.Contains(NoClipModeName))
+    {
+        AddMovementModeFromClass(NoClipModeName, NoClipModeClass ? NoClipModeClass.Get() : UZeroNoClipMode::StaticClass());
     }
     if (UStanceSettings* MyStanceSettings = FindSharedSettings_Mutable<UStanceSettings>())
     {
@@ -102,6 +107,21 @@ void UZeroMoverComponent::OnMoverPreSimulationTick(const FMoverTimeStep& TimeSte
     Super::OnMoverPreSimulationTick(TimeStep, InputCmd);
 
     if (!FoundDefaults || !FoundZeroInputs) return;
+
+    // Cheat noclip wins over everything else; only teleports still apply.
+    if (FoundZeroInputs->bIsNoClip)
+    {
+        if (CurrentMode != NoClipModeName)
+        {
+            QueueNextMode(NoClipModeName);
+        }
+        HandleTeleportInput(*FoundZeroInputs);
+        return;
+    }
+    if (CurrentMode == NoClipModeName)
+    {
+        QueueNextMode(NoClipExitModeName);
+    }
 
     if (FoundZeroInputs->bIsRooted)
     {
@@ -305,6 +325,7 @@ void UZeroMoverComponent::HandlePostMovement(const FMoverTimeStep& TimeStep, FMo
 
 void UZeroMoverComponent::HandleSimRollback(const FMoverTimeStep& NewBaseTimeStep, const FMoverTimeStep& ExpungedTimeStep)
 {
+    ++RollbackCount;
     // The restored frame is now the cached sync state; the next steps resimulate from it.
     CacheSimStartState(GetSyncState());
 }
@@ -434,6 +455,12 @@ void UZeroMoverComponent::HandleFloat(const FZeroMovementInputs& ZeroInputs, con
     Float->VelocityToApply = Velocity;
     Float->bAdditiveVelocity = false;
     QueueInstantMovementEffect(Float);
+}
+
+bool UZeroMoverComponent::IsNoClip() const
+{
+    const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+    return ASC && ASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_CHEAT_NOCLIP);
 }
 
 bool UZeroMoverComponent::IsCubed() const

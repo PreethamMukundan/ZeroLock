@@ -23,6 +23,11 @@ class ZEROLOCK_API AZero_BasePlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
+	AZero_BasePlayerController();
+
+	/** Dev cheats (cheat menu, ZL.Cheat.* console commands). Its server RPCs refuse in Shipping. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cheats")
+	TObjectPtr<class UZL_CheatComponent> CheatComponent;
 
 	UPROPERTY(Replicated)
 	TSubclassOf<AZeroLockCharacter> SelectedHeroClass;

@@ -122,6 +122,9 @@ public:
      * press to tell a tap from a hold (AZeroLockCharacter::LightMeleeReleased). */
     int32 GetHeavyMeleeTriggerCount() const { return HeavyMeleeTriggerCount; }
 
+    /** Move input for a pawn without a player (X = right, Y = forward, relative to the controller's yaw), e.g. a strafing target dummy. */
+    void SetBotMoveInput(const FVector2D& MoveInput) { CachedMoveInput = MoveInput; }
+
     /** Aim zoom (the default alt fire, UZL_GA_AimZoom). Local camera only: blends the camera FOV and the spring arm length
      * toward the zoomed values over BlendTime. FOVRelative is in Deadlock's 4:3 degrees (m_flZoomFOV_Relative, -40 = hero
      * FOV 90 → 50), converted to our 16:9 horizontal FOV. */

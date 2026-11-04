@@ -60,7 +60,8 @@ void UZL_GA_WeaponFire::ApplyCost(const FGameplayAbilitySpecHandle Handle, const
 {
 	Super::ApplyCost(Handle, ActorInfo, ActivationInfo);
 
-	if (!bConsumeAmmo || !ActorInfo || !ActorInfo->AbilitySystemComponent.IsValid())
+	if (!bConsumeAmmo || !ActorInfo || !ActorInfo->AbilitySystemComponent.IsValid()
+		|| ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_CHEAT_INFINITE_AMMO))
 	{
 		return;
 	}

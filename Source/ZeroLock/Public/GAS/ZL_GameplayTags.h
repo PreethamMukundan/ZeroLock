@@ -97,5 +97,22 @@ namespace ZerolockGameplayTagsForBinding
 	/** Triggers UZL_StatusTimerAbility on the victim (send it with UZL_StatusTimerAbility::SendStatusTimer). */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EVENT_STATUS_TIMER)
 
+	// Cheats: UZL_CheatComponent sets them as loose tags on the pawn's ASC, on the server and the owning client.
+
+	/** Damage still shows numbers but takes no health (UBaseCharAttributeSet::PostGameplayEffectExecute). */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_CHEAT_GODMODE)
+
+	/** Damage can't take the owner below 1 health (target dummies). */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_CHEAT_BUDDHA)
+
+	/** Mover NoClip mode: free flight along the camera through everything (FZeroMovementInputs::bIsNoClip, predicted). */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_CHEAT_NOCLIP)
+
+	/** UBaseGameplayAbility applies no cooldown and charged abilities keep their charges. */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_CHEAT_NO_COOLDOWNS)
+
+	/** UZL_GA_WeaponFire spends no ammo. */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_CHEAT_INFINITE_AMMO)
+
 }
 

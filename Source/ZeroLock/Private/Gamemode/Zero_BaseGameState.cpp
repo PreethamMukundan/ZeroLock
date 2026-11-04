@@ -156,6 +156,7 @@ void AZero_BaseGameState::ProcessTeamUpdate(const TArray<AZero_BasePlayerState*>
 		{
 			UZL_VM_PlayerInfo* NewVM = NewObject<UZL_VM_PlayerInfo>(this);
 			PS->SetPlayerIconVM(NewVM);
+			NewVM->SetOwningPlayerState(PS);
 			if (PS->CurrentVM)
 			{
 				NewVM->SetVM_Attributes(PS->CurrentVM);

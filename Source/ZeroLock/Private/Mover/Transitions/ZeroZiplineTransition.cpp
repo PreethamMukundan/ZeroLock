@@ -19,7 +19,7 @@ FTransitionEvalResult UZeroZiplineTransition::Evaluate_Implementation(const FSim
 
 	const FZeroMovementInputs* ZeroInputs = Params.StartState.InputCmd.InputCollection.FindDataByType<FZeroMovementInputs>();
 	// Component-level transitions run in every mode, including the rooted one; mounting would break the root.
-	if (!ZeroInputs || !ZeroInputs->bWantsToZipline || ZeroInputs->bIsRooted || ZeroInputs->bIsCubed || ZeroInputs->bIsGooBall)
+	if (!ZeroInputs || !ZeroInputs->bWantsToZipline || ZeroInputs->bIsRooted || ZeroInputs->bIsCubed || ZeroInputs->bIsGooBall || ZeroInputs->bIsNoClip)
 	{
 		return EvalResult;
 	}

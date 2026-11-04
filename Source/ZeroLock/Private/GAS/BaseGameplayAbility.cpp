@@ -140,6 +140,12 @@ void UBaseGameplayAbility::SetInputID(EGASAbilityInputID in)
 void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
 {
+	if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid()
+		&& ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_CHEAT_NO_COOLDOWNS))
+	{
+		return;
+	}
+
 	UGameplayEffect* CooldownGE = GetCooldownGameplayEffect();
 	if (CooldownGE)
 	{
@@ -532,7 +538,7 @@ void UBaseGameplayAbility::ApplyCost(const FGameplayAbilitySpecHandle Handle,
 	}
 
 	// Server only; the client sees the charge go when the attribute replicates (TimeBetweenCharges covers that gap).
-	if (HasAuthority(&ActivationInfo))
+	if (HasAuthority(&ActivationInfo) && !ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_CHEAT_NO_COOLDOWNS))
 	{
 		if (UBaseCharAbilitySystemComponent* ASC = Cast<UBaseCharAbilitySystemComponent>(ActorInfo->AbilitySystemComponent.Get()))
 		{

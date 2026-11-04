@@ -67,6 +67,20 @@ class ZEROLOCK_API AZL_HUDClass : public AHUD
 	UFUNCTION(BlueprintPure, Category="HeroSwap")
 	bool IsHeroSelectOpen() const { return HeroSelectWidget.IsValid(); }
 
+	/** Dev cheat menu (UZL_CheatComponent on the controller). Pushed onto UI.Layer.Menu; not set up in Shipping. */
+	UPROPERTY(EditDefaultsOnly, Category="Cheats")
+	TSubclassOf<UCommonActivatableWidget> CheatMenuClass;
+
+	/** Opens / closes the cheat menu (default 0, the number row key). Own runtime mapping context like HeroSelectKey; None disables it. */
+	UPROPERTY(EditDefaultsOnly, Category="Cheats")
+	FKey CheatMenuKey = EKeys::Zero;
+
+	UFUNCTION(BlueprintCallable, Category="Cheats")
+	void ToggleCheatMenu();
+
+	UFUNCTION(BlueprintPure, Category="Cheats")
+	bool IsCheatMenuOpen() const { return CheatMenuWidget.IsValid(); }
+
 protected:
 
 	UFUNCTION(BlueprintCallable)
@@ -97,6 +111,17 @@ protected:
 
 	UPROPERTY(Transient)
 	TObjectPtr<AZL_CharacterSelector_Actor> HeroSelectPreview;
+
+	void SetupCheatMenuInput();
+	void HandleCheatMenuDeactivated();
+
+	UPROPERTY(Transient)
+	TObjectPtr<UInputAction> CheatMenuAction;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UInputMappingContext> CheatMenuMappingContext;
+
+	TWeakObjectPtr<UCommonActivatableWidget> CheatMenuWidget;
 
 public:
 	/** Called by AZeroLockCharacter once a locally controlled pawn has its PlayerState. HUD widgets bind to the pawn once at init,

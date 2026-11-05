@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "CommonActivatableWidget.h"
+#include "ZeroLock/ZeroLock.h"
 #include "ZL_PlayerInfoBox.generated.h"
 
 class UZL_VM_Attributes;
@@ -55,6 +56,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Stat", meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> HealthBar;
 
+	/** Name and K/D/A. Collapsed unless the HUD says to show team stats (Tab held). */
+	UPROPERTY(BlueprintReadOnly, Category = "Stat", meta = (BindWidgetOptional))
+	TObjectPtr<UWidget> KDABox;
+
+	/** Sits over the portrait; gets a transparent circle brush with an outline in the player's team colour. */
+	UPROPERTY(BlueprintReadOnly, Category = "ICON", meta = (BindWidgetOptional))
+	TObjectPtr<UImage> IconOutline;
+
 	void SetViewModel(UZL_VM_PlayerInfo* ViewModel);
 
 	UFUNCTION(BlueprintCallable)
@@ -63,6 +72,9 @@ public:
 	/** Ally or enemy colours. Set by the team bar. */
 	UFUNCTION(BlueprintCallable, Category = "Team")
 	void SetIsAlly(bool bInIsAlly);
+
+	/** Designer layout only: health bar on the other side of the portrait, leaning the other way. Call before the card is added to a panel. */
+	void SetHealthBarMirrored(bool bMirrored);
 
 	UPROPERTY()
 	UZL_VM_PlayerInfo* myVM;
@@ -95,6 +107,16 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Colors")
 	FLinearColor EnemyColor = FLinearColor(0.95f, 0.22f, 0.20f, 1.f);
+
+	/** Portrait outline by actual team, whichever side of the timer the player is on. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Colors")
+	FLinearColor TeamRedColor = FLinearColor(0.95f, 0.12f, 0.10f, 1.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Colors")
+	FLinearColor TeamBlueColor = FLinearColor(0.10f, 0.45f, 1.00f, 1.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Card")
+	float IconOutlineThickness = 3.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Colors")
 	FLinearColor AllyHealthColor = FLinearColor(0.30f, 0.85f, 0.35f, 1.f);
@@ -129,9 +151,13 @@ private:
 	void Refresh();
 	void ApplyHero(const UZL_Character_Data_Asset* HeroData);
 	void ApplyColors();
+	FLinearColor GetTeamColor() const;
 
 	FLinearColor HeroPortraitColor = FLinearColor::Black;
 	bool bIsAlly = true;
+	bool bHealthBarMirrored = false;
+	bool bShownKDA = false;
+	ETeamID ShownTeam = ETeamID::TeamNull;
 	bool bShownDead = false;
 	bool bHasShownHero = false;
 	TWeakObjectPtr<const UClass> ShownPawnClass;

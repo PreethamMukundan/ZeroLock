@@ -1139,6 +1139,10 @@ void AZeroLockCharacter::UIInfoPressed()
 	{
 		PC->bShowMouseCursor = true;
 		PC->SetInputMode(FInputModeGameAndUI());
+		if (AZL_HUDClass* HUD = PC->GetHUD<AZL_HUDClass>())
+		{
+			HUD->SetShowingTeamStats(true);
+		}
 	}
 }
 
@@ -1148,6 +1152,10 @@ void AZeroLockCharacter::UIInfoReleased()
 	{
 		PC->bShowMouseCursor = false;
 		PC->SetInputMode(FInputModeGameOnly());
+		if (AZL_HUDClass* HUD = PC->GetHUD<AZL_HUDClass>())
+		{
+			HUD->SetShowingTeamStats(false);
+		}
 	}
 }
 

@@ -9,6 +9,7 @@
 #include "CharacterSelector/ZL_Character_Data_Asset.h"
 #include "CommonTextBlock.h"
 #include "Components/Border.h"
+#include "Components/HorizontalBoxSlot.h"
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/SizeBox.h"
@@ -20,6 +21,7 @@
 #include "Gamemode/Zero_BaseGameInstance.h"
 #include "MVVMSubsystem.h"
 #include "Styling/CoreStyle.h"
+#include "UI/HUD/ZL_HUDClass.h"
 #include "UI/MVVM/GameStats/ZL_VM_PlayerInfo.h"
 #include "UI/MVVM/ZL_VM_Attributes.h"
 #include "View/MVVMView.h"
@@ -38,6 +40,13 @@ namespace ZLPlayerCard
 		Brush.OutlineSettings.Width = 0.f;
 		return Brush;
 	}
+
+	static FSlateBrush MakeCircleBrush()
+	{
+		FSlateBrush Brush = MakeSolidBrush(0.f);
+		Brush.OutlineSettings.RoundingType = ESlateBrushRoundingType::HalfHeightRadius;
+		return Brush;
+	}
 }
 
 void UZL_PlayerInfoBox::NativeOnInitialized()
@@ -49,6 +58,21 @@ void UZL_PlayerInfoBox::NativeOnInitialized()
 		ApplyHero(nullptr);
 	}
 	bHasShownHero = false;
+
+	if (KDABox)
+	{
+		KDABox->SetVisibility(ESlateVisibility::Collapsed);
+	}
+	if (IconOutline)
+	{
+		IconOutline->SetVisibility(ESlateVisibility::HitTestInvisible);
+	}
+	if (PortraitBackground && !PortraitFrame)
+	{
+		PortraitBackground->SetBrush(ZLPlayerCard::MakeCircleBrush());
+		PortraitBackground->SetVisibility(ESlateVisibility::HitTestInvisible);
+	}
+	ApplyColors();
 }
 
 void UZL_PlayerInfoBox::BuildCard()
@@ -168,6 +192,33 @@ void UZL_PlayerInfoBox::SetIsAlly(bool bInIsAlly)
 	ApplyColors();
 }
 
+void UZL_PlayerInfoBox::SetHealthBarMirrored(bool bMirrored)
+{
+	// The built card has its bar under the portrait.
+	if (!HealthBar || PortraitFrame || bMirrored == bHealthBarMirrored)
+	{
+		return;
+	}
+	UWidget* BarBox = HealthBar->GetParent();
+	UPanelWidget* Row = BarBox ? BarBox->GetParent() : nullptr;
+	UHorizontalBoxSlot* BarSlot = BarBox ? Cast<UHorizontalBoxSlot>(BarBox->Slot) : nullptr;
+	if (!Row || !BarSlot)
+	{
+		return;
+	}
+	bHealthBarMirrored = bMirrored;
+
+	// ShiftChild only reorders the UMG slots, which is why this has to happen before the Slate widget is built.
+	Row->ShiftChild(bMirrored ? 0 : Row->GetChildrenCount() - 1, BarBox);
+
+	FMargin BarPadding = BarSlot->GetPadding();
+	Swap(BarPadding.Left, BarPadding.Right);
+	BarSlot->SetPadding(BarPadding);
+
+	const FVector2D Shear = HealthBar->GetRenderTransform().Shear;
+	HealthBar->SetRenderShear(FVector2D(-Shear.X, Shear.Y));
+}
+
 void UZL_PlayerInfoBox::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
@@ -178,6 +229,24 @@ void UZL_PlayerInfoBox::Refresh()
 {
 	AZero_BasePlayerState* PS = myVM ? myVM->GetOwningPlayerState() : nullptr;
 	APawn* Pawn = PS ? PS->GetPawn() : nullptr;
+
+	if (PS && PS->TeamID != ShownTeam)
+	{
+		ShownTeam = PS->TeamID;
+		ApplyColors();
+	}
+
+	if (KDABox)
+	{
+		const APlayerController* PC = GetOwningPlayer();
+		const AZL_HUDClass* HUD = PC ? PC->GetHUD<AZL_HUDClass>() : nullptr;
+		const bool bShowKDA = HUD && HUD->IsShowingTeamStats();
+		if (bShowKDA != bShownKDA)
+		{
+			bShownKDA = bShowKDA;
+			KDABox->SetVisibility(bShowKDA ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+		}
+	}
 
 	// Hero portrait follows the pawn's class (hero swap gives a new pawn of another class).
 	if (Pawn && Pawn->GetClass() != ShownPawnClass.Get())
@@ -276,9 +345,27 @@ void UZL_PlayerInfoBox::ApplyHero(const UZL_Character_Data_Asset* HeroData)
 	ApplyColors();
 }
 
+FLinearColor UZL_PlayerInfoBox::GetTeamColor() const
+{
+	switch (ShownTeam)
+	{
+	case ETeamID::TeamRed: return TeamRedColor;
+	case ETeamID::TeamBlue: return TeamBlueColor;
+	default: return bIsAlly ? AllyColor : EnemyColor;
+	}
+}
+
 void UZL_PlayerInfoBox::ApplyColors()
 {
-	const FLinearColor Team = bIsAlly ? AllyColor : EnemyColor;
+	const FLinearColor Team = GetTeamColor();
+	if (IconOutline)
+	{
+		FSlateBrush Outline = ZLPlayerCard::MakeCircleBrush();
+		Outline.TintColor = FSlateColor(FLinearColor::Transparent);
+		Outline.OutlineSettings.Width = IconOutlineThickness;
+		Outline.OutlineSettings.Color = FSlateColor(bShownDead ? DeadColor : Team);
+		IconOutline->SetBrush(Outline);
+	}
 	if (PortraitFrame)
 	{
 		PortraitFrame->SetBrushColor(bShownDead ? DeadColor : Team);

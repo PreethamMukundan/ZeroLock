@@ -42,6 +42,16 @@ void AZero_BaseGameState::AddPSToTeamArray(AZero_BasePlayerState* psToAdd, ETeam
 	}
 }
 
+void AZero_BaseGameState::RemovePSFromTeamArrays(AZero_BasePlayerState* PS)
+{
+	if (HasAuthority())
+	{
+		TeamRedArray.Remove(PS);
+		TeamBlueArray.Remove(PS);
+		RefreshTeamLists();
+	}
+}
+
 void AZero_BaseGameState::IncrementGameTime()
 {
 	if (HasAuthority())
@@ -66,8 +76,8 @@ void AZero_BaseGameState::IncrementGameTime()
 
 void AZero_BaseGameState::On_BlueTeamArray()
 {
-	if (TeamBlueArray.IsEmpty()) return;
-	if (OnBlueTeamArrayUpdated.IsBound())
+	// An array that just became empty still has to refresh the lists.
+	if (!TeamBlueArray.IsEmpty() && OnBlueTeamArrayUpdated.IsBound())
 	{
 		OnBlueTeamArrayUpdated.Broadcast(TeamBlueArray.Last());
 	}
@@ -76,8 +86,8 @@ void AZero_BaseGameState::On_BlueTeamArray()
 
 void AZero_BaseGameState::On_RedTeamArray()
 {
-	if (TeamRedArray.IsEmpty()) return;
-	if (OnRedTeamArrayUpdated.IsBound())
+	// An array that just became empty still has to refresh the lists.
+	if (!TeamRedArray.IsEmpty() && OnRedTeamArrayUpdated.IsBound())
 	{
 		OnRedTeamArrayUpdated.Broadcast(TeamRedArray.Last());
 	}

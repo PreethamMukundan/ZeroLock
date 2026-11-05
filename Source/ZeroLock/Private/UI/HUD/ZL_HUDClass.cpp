@@ -184,9 +184,12 @@ void AZL_HUDClass::HandleHeroReady(APawn* Hero)
 	const bool bHadPawn = bHUDHadPawn;
 	HUDPawn = Hero;
 	bHUDHadPawn = true;
+	// The release would go to the old pawn's input.
+	bShowingTeamStats = false;
 
-	// First pawn: the HUD pushed in BeginPlay is already for it, unless it was pushed pawnless while picking a hero.
-	if (bHadPawn || bWaitingForHeroPick)
+	// PushHUD waits for a pawn, so a first pawn that arrives after BeginPlay finds no HUD yet.
+	const bool bNoHUD = IsValid(RootLayer) && RootLayer->GameStack && !RootLayer->GameStack->GetActiveWidget();
+	if (bHadPawn || bWaitingForHeroPick || bNoHUD)
 	{
 		bWaitingForHeroPick = false;
 		RebuildGameHUD(0);
@@ -303,7 +306,8 @@ void AZL_HUDClass::RemoveOldHUD(TWeakObjectPtr<UCommonActivatableWidget> OldHUD,
 
 void AZL_HUDClass::PushHUD()
 {
-	if (IsValid(RootLayer) && PlayerInGameHUD)
+	// The HUD's MVVM resolvers read the owning pawn, so without one they fail. HandleHeroReady builds it once the pawn exists.
+	if (IsValid(RootLayer) && PlayerInGameHUD && HUDPawn.IsValid())
 	{
 		RootLayer->PushWidgetToLayer(FUITag::TryConvert(ZerolockUIGameplayTags::TAG_UI_LAYER_GAME), PlayerInGameHUD);
 	}

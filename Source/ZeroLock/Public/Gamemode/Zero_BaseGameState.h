@@ -56,6 +56,9 @@ public:
 	UFUNCTION()
 	void AddPSToTeamArray(AZero_BasePlayerState* psToAdd,ETeamID teamToAddto);
 
+	/** Server. Takes a player off the team bar (target dummies being removed). */
+	void RemovePSFromTeamArrays(AZero_BasePlayerState* PS);
+
 	UFUNCTION()
 	void IncrementGameTime();
 

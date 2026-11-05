@@ -79,6 +79,15 @@ void AZero_BaseGameModeBase::UpdateGameTime(AZero_BaseGameState* GS)
 /** Called when a player logs in (server-side) */
 void AZero_BaseGameModeBase::PostLogin(APlayerController* NewPlayer)
 {
+    AZero_BasePlayerState* PS = NewPlayer ? NewPlayer->GetPlayerState<AZero_BasePlayerState>() : nullptr;
+
+    // Before Super: it spawns the player (HandleStartingNewPlayer), and ChoosePlayerStart needs the team.
+    if (PS)
+    {
+        UE_LOG(LogTemp, Log, TEXT("[GM] PostLogin: Assigning team for %s"), *NewPlayer->GetName());
+        AssignTeam(PS);
+    }
+
     Super::PostLogin(NewPlayer);
 
     if (!NewPlayer)
@@ -87,12 +96,8 @@ void AZero_BaseGameModeBase::PostLogin(APlayerController* NewPlayer)
         return;
     }
 
-    AZero_BasePlayerState* PS = NewPlayer->GetPlayerState<AZero_BasePlayerState>();
     if (PS)
     {
-        UE_LOG(LogTemp, Log, TEXT("[GM] PostLogin: Assigning team for %s"), *NewPlayer->GetName());
-        AssignTeam(PS);
-
         // Debug server-side current team counts
         int32 TeamRedCount = 0;
         int32 TeamBlueCount = 0;
@@ -115,6 +120,12 @@ void AZero_BaseGameModeBase::PostLogin(APlayerController* NewPlayer)
     {
         UE_LOG(LogTemp, Warning, TEXT("[GM] PostLogin: PlayerState was null or not AZero_BasePlayerState for %s"), *NewPlayer->GetName());
     }
+}
+
+bool AZero_BaseGameModeBase::ShouldSpawnAtStartSpot(AController* Player)
+{
+    // Login caches a StartSpot before the player has a team, and the engine would reuse it. Always go through ChoosePlayerStart.
+    return false;
 }
 
 /** Return a spawn point that matches the player's team if available */

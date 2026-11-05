@@ -39,6 +39,8 @@ void UZL_GameState_Bar::RebuildTeam(UHorizontalBox* List, const TArray<UZL_VM_Pl
 			continue;
 		}
 		NewWidget->SetIsAlly(bAlly);
+		// The ally list is left of the timer: the card mirrors so its bar sits on the outer side.
+		NewWidget->SetHealthBarMirrored(bAlly);
 		NewWidget->SetViewModel(PlayerVM);
 		if (UHorizontalBoxSlot* CardSlot = List->AddChildToHorizontalBox(NewWidget))
 		{

@@ -49,6 +49,9 @@ R = 9000                  # arena radius (180 m across)
 WALL_H = 1600
 BASE_OFFSET = 10500       # base centre distance from the arena centre along X
 BASE_R = 2500             # base radius
+MINIMAP_MARGIN = 500      # map space kept around the bases and the arena wall
+MINIMAP_CENTER_Z = 1500   # the minimap box spans Z -2000..5000: above the spire, well below the Doorman hotel
+MINIMAP_HALF_Z = 3500
 LANE_HALF = 700           # lanes are 14 m wide
 GATE_X = 9000             # lanes start/end here (inside the base disc)
 # Lane centre lines: y(t) = gate + bulge * cos(pi t / 2) + lean * sin(pi t), t in [-1, 1] (x = t * GATE_X).
@@ -845,6 +848,16 @@ def build_ziplines():
         zipline("Zip_" + lane, pts)
 
 
+def build_minimap():
+    """The area the HUD minimap shows; it draws the map itself at runtime (AZL_MinimapVolume)."""
+    use_level("Gameplay")
+    half_x = BASE_OFFSET + BASE_R + MINIMAP_MARGIN
+    half_y = R + MINIMAP_MARGIN
+    v = eas.spawn_actor_from_class(unreal.ZL_MinimapVolume, unreal.Vector(0, 0, MINIMAP_CENTER_Z), unreal.Rotator(0, 0, 0))
+    v.get_editor_property("map_bounds").set_box_extent(unreal.Vector(half_x, half_y, MINIMAP_HALF_Z), True)
+    tag(v, "MinimapVolume", "Gameplay")
+
+
 def build_sky():
     f = "Atmosphere/Sky"
     use_level("Lighting")
@@ -913,6 +926,7 @@ def main():
         build_center()
         build_bases()
         build_ziplines()
+        build_minimap()
         build_sky()
         flush_meshes()
         build_hotel()

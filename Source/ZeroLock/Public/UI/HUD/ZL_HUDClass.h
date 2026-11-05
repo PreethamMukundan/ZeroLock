@@ -81,6 +81,12 @@ class ZEROLOCK_API AZL_HUDClass : public AHUD
 	UFUNCTION(BlueprintPure, Category="Cheats")
 	bool IsCheatMenuOpen() const { return CheatMenuWidget.IsValid(); }
 
+	/** The team bar cards show K/D/A while this is on. Set by the pawn while IA_UIInfo (Tab) is held. */
+	void SetShowingTeamStats(bool bShow) { bShowingTeamStats = bShow; }
+
+	UFUNCTION(BlueprintPure, Category="TeamBar")
+	bool IsShowingTeamStats() const { return bShowingTeamStats; }
+
 protected:
 
 	UFUNCTION(BlueprintCallable)
@@ -91,11 +97,12 @@ protected:
 
 	TWeakObjectPtr<APawn> HUDPawn;
 	bool bHUDHadPawn = false;
+	bool bShowingTeamStats = false;
 
 	/** Polls until there's a pawn: with AZero_BaseGameState::bPickHeroOnJoin, keeps the hero select open (reopens it if closed). */
 	void UpdateInitialHeroPick();
 	FTimerHandle InitialHeroPickTimer;
-	/** The join hero pick was shown, so the Game-layer HUD pushed in BeginPlay has no pawn and must be rebuilt for the first one. */
+	/** The join hero pick was shown, so the first pawn needs its Game-layer HUD built. */
 	bool bWaitingForHeroPick = false;
 
 	void SetupHeroSelectInput();

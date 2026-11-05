@@ -26,6 +26,7 @@
 #include "TimerManager.h"
 #include "ZeroLock/ZeroLockCharacter.h"
 #include "Zero_BasePlayerController.h"
+#include "Gamemode/Zero_BaseGameState.h"
 #include "Zero_BasePlayerState.h"
 
 static TAutoConsoleVariable<int32> CVarAllowCheats(TEXT("ZL.Cheat.Allow"), 1,
@@ -512,6 +513,11 @@ void UZL_CheatComponent::ServerSpawnDummy_Implementation(TSubclassOf<AZeroLockCh
 	{
 		DummyPS->SetTeamID(DummyTeam);
 		DummyPS->SetPlayerName(FString::Printf(TEXT("Dummy %s"), *HeroClass->GetName().Replace(TEXT("BP_"), TEXT("")).Replace(TEXT("_C"), TEXT(""))));
+		// After the team and name: this is what puts the dummy on the team bar.
+		if (AZero_BaseGameState* GS = GetWorld()->GetGameState<AZero_BaseGameState>())
+		{
+			GS->AddPSToTeamArray(DummyPS, DummyTeam);
+		}
 	}
 	DummyController->SetControlRotation(Facing);
 	DummyController->Possess(Dummy);
@@ -523,8 +529,13 @@ void UZL_CheatComponent::ServerRemoveDummies_Implementation()
 	{
 		return;
 	}
+	AZero_BaseGameState* GS = GetWorld()->GetGameState<AZero_BaseGameState>();
 	for (TActorIterator<AZL_DummyController> It(GetWorld()); It; ++It)
 	{
+		if (AZero_BasePlayerState* DummyPS = It->GetPlayerState<AZero_BasePlayerState>(); DummyPS && GS)
+		{
+			GS->RemovePSFromTeamArrays(DummyPS);
+		}
 		if (APawn* Pawn = It->GetPawn())
 		{
 			Pawn->Destroy();

@@ -70,6 +70,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Melee")
 	float MaxDuration = 0.25f;
 
+	/** MaxDuration with the hero's melee distance item stat. */
+	float GetLungeDuration() const;
+
 	/** The enemy sweep looks this far past the step and the lunge stops this short of the enemy, so a target standing
 	 * right next to you stops the lunge instead of being slid past. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Melee", meta = (ClampMin = "0"))

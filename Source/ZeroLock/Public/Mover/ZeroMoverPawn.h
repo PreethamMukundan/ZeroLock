@@ -109,6 +109,9 @@ protected:
     void OnZiplinePressed();
     
 public:
+    /** Adds or removes the hero's controls, for screens that need keys to reach the game but not move the hero. */
+    void SetGameplayInputEnabled(bool bEnabled);
+
     UFUNCTION(BlueprintCallable, Category = "Aiming")
     FRotator GetSyncedAimRotation() const;
     

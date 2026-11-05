@@ -22,6 +22,7 @@
 #include "GAS/ZL_GameplayTags.h"
 #include "GAS/ZL_GA_AimZoom.h"
 #include "Input/KeybindManagerSubsystem.h"
+#include "Items/ZL_ItemProcComponent.h"
 #include "Items/Zero_Item_Inventory_Component.h"
 #include "Kismet/GameplayStatics.h"
 #include "Mover/ZeroMeleeMode.h"
@@ -57,6 +58,7 @@ AZeroLockCharacter::AZeroLockCharacter()
 
 	ItemInventoryComp = CreateDefaultSubobject<UZero_Item_Inventory_Component>(TEXT("ItemInventory"));
 	ItemInventoryComp->SetIsReplicated(true);
+	ItemProcComp = CreateDefaultSubobject<UZL_ItemProcComponent>(TEXT("ItemProcs"));
 
 	ParryComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ParryComponent"));
 	ParryComp->SetupAttachment(RootComponent);
@@ -88,6 +90,10 @@ AZeroLockCharacter::AZeroLockCharacter()
 	if (AltFireAction.Succeeded())
 	{
 		EI_AltFire = AltFireAction.Object;
+	}
+	for (int32 Slot = 1; Slot <= UZero_Item_Inventory_Component::MaxActiveSlots; Slot++)
+	{
+		ItemInputActions.Add(TSoftObjectPtr<UInputAction>(FSoftObjectPath(FString::Printf(TEXT("/Game/ThirdPerson/Input/Actions/IA_Item%d.IA_Item%d"), Slot, Slot))));
 	}
 
 	if (GetMesh()) 
@@ -145,6 +151,20 @@ void AZeroLockCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	ParryComp->SetVisibility(false);
+
+	AbilitySystemComp->RegisterGameplayTagEvent(ZerolockGameplayTagsForBinding::TAG_STATUS_STEALTHED, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &AZeroLockCharacter::StealthChanged);
+
+	BaseMeshScale = GetMesh() ? GetMesh()->GetRelativeScale3D() : FVector::OneVector;
+	AbilitySystemComp->RegisterGameplayTagEvent(ZerolockGameplayTagsForBinding::TAG_STATUS_ENLARGED, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &AZeroLockCharacter::SizeStatusChanged);
+	AbilitySystemComp->RegisterGameplayTagEvent(ZerolockGameplayTagsForBinding::TAG_STATUS_SHRUNK, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &AZeroLockCharacter::SizeStatusChanged);
+
+	if (HasAuthority())
+	{
+		GetWorldTimerManager().SetTimer(HealthRegenHandle, this, &AZeroLockCharacter::HealthRegenStep, HealthRegenInterval, true);
+	}
 
 	// Only fires for the locally controlled pawn (jump is input).
 	OnJumpInputPressed.AddUObject(this, &AZeroLockCharacter::HandleJumpForEscape);
@@ -238,6 +258,7 @@ void AZeroLockCharacter::InitializeAttributes()
 		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCurrentAmmoAttribute()).AddUObject(this, &AZeroLockCharacter::AmmoAttributeChange);
 		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetStaminaAttribute()).AddUObject(this, &AZeroLockCharacter::StaminaAttributeChanged);
 		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxStaminaAttribute()).AddUObject(this, &AZeroLockCharacter::StaminaAttributeChanged);
+		AbilitySystemComp->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetSoulAttribute()).AddUObject(this, &AZeroLockCharacter::SoulAttributeChanged);
 
 		AbilitySystemComp->OnNewAbilityAdded.AddUniqueDynamic(this, &ThisClass::NewAbilityAddedLocal);
 	}
@@ -577,10 +598,12 @@ void AZeroLockCharacter::ResetCharacter()
 	AbilitySystemComp->InitAbilityActorInfo(this, this);
 
 	ResetAllAbilities();
+	ItemInventoryComp->ReapplyItemEffects();
 
 	float Max = AttributeSet->GetMaximumHealth();
 	AttributeSet->SetCurrentHealth(Max);
 	AbilitySystemComp->ClearCombatBarrier();
+	AbilitySystemComp->ClearCombatTimer();
 
 	if (UZeroMoverComponent* MoverComp = GetZeroMoverComponent())
 	{
@@ -588,6 +611,40 @@ void AZeroLockCharacter::ResetCharacter()
 	}
 	if (PC) EnableInput(PC);
 	bIsDead = false;
+}
+
+void AZeroLockCharacter::HealthRegenStep()
+{
+	if (!AbilitySystemComp || !AttributeSet || bIsDead)
+	{
+		return;
+	}
+
+	using namespace ZerolockGameplayTagsForBinding;
+
+	const bool bOutOfCombat = AbilitySystemComp->GetTimeOutOfCombat() >= OutOfCombatDelay;
+	if (bOutOfCombat != AbilitySystemComp->HasMatchingGameplayTag(TAG_STATUS_OUT_OF_COMBAT))
+	{
+		AbilitySystemComp->SetLooseGameplayTagCount(TAG_STATUS_OUT_OF_COMBAT, bOutOfCombat ? 1 : 0, EGameplayTagReplicationState::TagOnly);
+	}
+
+	const float Health = AttributeSet->GetCurrentHealth();
+	const float MaxHealth = AttributeSet->GetMaximumHealth();
+	const float Regen = AttributeSet->GetHealthRegeneration() + (bOutOfCombat ? AttributeSet->GetOutOfCombatRegen() : 0.0f);
+	if (Regen > 0.0f && Health < MaxHealth && !AbilitySystemComp->HasMatchingGameplayTag(TAG_STATUS_HEAL_BLOCKED))
+	{
+		AttributeSet->SetCurrentHealth(FMath::Min(Health + Regen * HealthRegenInterval, MaxHealth));
+	}
+}
+
+void AZeroLockCharacter::ItemSlotPressed(int32 Slot)
+{
+	GetAbilitySystemComponent()->AbilityLocalInputPressed(static_cast<int32>(EGASAbilityInputID::Item_1) + Slot);
+}
+
+void AZeroLockCharacter::ItemSlotReleased(int32 Slot)
+{
+	GetAbilitySystemComponent()->AbilityLocalInputReleased(static_cast<int32>(EGASAbilityInputID::Item_1) + Slot);
 }
 
 void AZeroLockCharacter::PassiveAbilityRestart(TSubclassOf<class UBaseGameplayAbility> AbilityToGrant)
@@ -718,6 +775,7 @@ void AZeroLockCharacter::CreateVM_Att()
 		VM_Attributes->SetIsInfiniteAmmo(false);
 		VM_Attributes->SetStamina(AttributeSet->GetStamina());
 		VM_Attributes->SetMaxStamina(AttributeSet->GetMaxStamina());
+		VM_Attributes->SetSouls(static_cast<int32>(AttributeSet->GetSoul()));
 	}
 	if (AZero_BasePlayerState* PS = GetPlayerState<AZero_BasePlayerState>())
 	{
@@ -777,6 +835,15 @@ void AZeroLockCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 			EnhancedInputComponent->BindAction(EI_LightMelee, ETriggerEvent::Completed, this, &AZeroLockCharacter::LightMeleeReleased);
 		}
 
+		for (int32 Slot = 0; Slot < ItemInputActions.Num(); Slot++)
+		{
+			if (const UInputAction* ItemAction = ItemInputActions[Slot].LoadSynchronous())
+			{
+				EnhancedInputComponent->BindAction(ItemAction, ETriggerEvent::Started, this, &AZeroLockCharacter::ItemSlotPressed, Slot);
+				EnhancedInputComponent->BindAction(ItemAction, ETriggerEvent::Completed, this, &AZeroLockCharacter::ItemSlotReleased, Slot);
+			}
+		}
+
 		if (EI_AltFire)
 		{
 			EnhancedInputComponent->BindAction(EI_AltFire, ETriggerEvent::Started, this, &AZeroLockCharacter::AltFirePressed);
@@ -806,6 +873,56 @@ void AZeroLockCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AZeroLockCharacter, bIsDead);
 	DOREPLIFETIME(AZeroLockCharacter, StartLocation);
+}
+
+void AZeroLockCharacter::StealthChanged(FGameplayTag GameplayTag, int NewCount)
+{
+	const APlayerController* Viewer = GetWorld()->GetFirstPlayerController();
+	AZeroLockCharacter* ViewerHero = Viewer ? Cast<AZeroLockCharacter>(Viewer->GetPawn()) : nullptr;
+	if (!ViewerHero || ViewerHero == this || IsOnSameTeam(ViewerHero))
+	{
+		return;
+	}
+
+	// Local component state: SetActorHiddenInGame would replicate from a listen server to everyone.
+	const bool bVisible = NewCount <= 0;
+	if (GetMesh())
+	{
+		GetMesh()->SetVisibility(bVisible, true);
+	}
+	if (OverHeadDisplay)
+	{
+		OverHeadDisplay->SetVisibility(bVisible, true);
+	}
+}
+
+void AZeroLockCharacter::SizeStatusChanged(FGameplayTag GameplayTag, int NewCount)
+{
+	float Scale = 1.0f;
+	if (AbilitySystemComp->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_ENLARGED))
+	{
+		Scale *= EnlargedScale;
+	}
+	if (AbilitySystemComp->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_SHRUNK))
+	{
+		Scale *= ShrunkScale;
+	}
+	if (GetMesh())
+	{
+		GetMesh()->SetRelativeScale3D(BaseMeshScale * Scale);
+	}
+}
+
+bool AZeroLockCharacter::IsHeadshot(const FVector& Point) const
+{
+	const UCapsuleComponent* Capsule = GetCapsuleComponent();
+	if (!Capsule)
+	{
+		return false;
+	}
+	const float HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
+	const float Top = GetActorLocation().Z + HalfHeight;
+	return Point.Z >= Top - HalfHeight * 2.0f * HeadshotHeight;
 }
 
 void AZeroLockCharacter::Stunned(FGameplayTag GameplayTag, int NewCount)
@@ -870,6 +987,7 @@ void AZeroLockCharacter::MeleeStrike(TWeakObjectPtr<AActor> LungeHitActor, FVect
 
 	// What the lunge ran into always counts, even if it slid out of the sweep.
 	const float Damage = GetAttributeOr(UBaseCharAttributeSet::GetHeavyMeleeDamageAttribute(), MeleeStrikeDamage);
+	TGuardValue<bool> HeavyGuard(AbilitySystemComp->bHeavyMeleeStrike, true);
 	PerformMeleeStrike(Start, End, MeleeStrikeRadius, Damage, LungeHitActor.Get(), TEXT("HeavyMelee"));
 }
 
@@ -941,6 +1059,10 @@ void AZeroLockCharacter::PerformMeleeStrike(const FVector& Start, const FVector&
 			if (ParriedStunEffect)
 			{
 				AbilitySystemComp->ApplyGameplayEffect(AbilitySystemComp, ParriedStunEffect, 1);
+			}
+			if (Villan->GetItemProcs())
+			{
+				Villan->GetItemProcs()->NotifyEvent(EZL_ProcTrigger::Parry, this, Damage);
 			}
 			return;
 		}
@@ -1048,6 +1170,11 @@ void AZeroLockCharacter::AmmoAttributeChange(const FOnAttributeChangeData& OnAtt
 	
 	GetVM_Attributes()->SetMaxAmmo(static_cast<int32>(MaxA));
 	GetVM_Attributes()->SetAmmo(static_cast<int32>(currentA));
+}
+
+void AZeroLockCharacter::SoulAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData)
+{
+	GetVM_Attributes()->SetSouls(static_cast<int32>(OnAttributeChangeData.NewValue));
 }
 
 void AZeroLockCharacter::StaminaAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData)

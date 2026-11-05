@@ -104,6 +104,21 @@ protected:
 	/** Alt fire (AltFireAbility, InputID AltFire). Defaults to IA_AltFire (right mouse). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* EI_AltFire;
+
+public:
+	/** One per active item key. Soft so the character still loads before the importer has made them. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TArray<TSoftObjectPtr<UInputAction>> ItemInputActions;
+
+	/** Seconds without dealing or taking hero damage before the hero counts as out of combat. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Regen")
+	float OutOfCombatDelay = 8.0f;
+
+	/** Seconds between health regen steps. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Regen")
+	float HealthRegenInterval = 0.25f;
+
+protected:
 	
 public:
 	AZeroLockCharacter();
@@ -139,6 +154,14 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void Stunned(FGameplayTag GameplayTag, int NewCount);
+
+	/** Every machine: hides the hero from viewers on the other team. */
+	void StealthChanged(FGameplayTag GameplayTag, int NewCount);
+
+	/** Every machine: resizes the mesh for the Enlarged and Shrunk statuses. */
+	void SizeStatusChanged(FGameplayTag GameplayTag, int NewCount);
+
+	FVector BaseMeshScale = FVector::OneVector;
 	void Parry(FGameplayTag GameplayTag, int NewCount);
 
 	/** From UZeroMeleeMode::OnMeleeLungeEnded (fired inside the Mover sim): on the server, runs MeleeStrike next tick. */
@@ -167,6 +190,7 @@ protected:
 	void AmmoAttributeChange(const FOnAttributeChangeData& OnAttributeChangeData);
 	void SpeedAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void StaminaAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData);
+	void SoulAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	/** Stamina from the mover simulation: mirrored into the attribute on the server, shown directly for the owning player. */
 	void MoverStaminaChanged(float NewStamina, float MaxStamina);
 	void AddEventForDeath();
@@ -183,6 +207,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UZero_Item_Inventory_Component* ItemInventoryComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Items")
+	class UZL_ItemProcComponent* ItemProcComp;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UZL_OverHeadWidgetComponent* OverHeadDisplay;
@@ -193,6 +220,21 @@ protected:
 public:
 	virtual class UAbilitySystemComponent* GetAbilitySystemComponent()const override;
 	virtual UBaseCharAbilitySystemComponent* GetMyAbilitySystemComp()const;
+
+	class UZL_ItemProcComponent* GetItemProcs() const { return ItemProcComp; }
+
+	/** True when a point is in the top HeadshotHeight of the capsule. */
+	bool IsHeadshot(const FVector& Point) const;
+
+	/** Part of the capsule's height that counts as the head. */
+	UPROPERTY(EditDefaultsOnly, Category = "Items")
+	float HeadshotHeight = 0.2f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Items")
+	float EnlargedScale = 1.2f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Items")
+	float ShrunkScale = 0.5f;
 	virtual UBaseCharAttributeSet* GetMyAttributeSet()const;
 
 	void MovementLocked(FGameplayTag GameplayTag, int NewCount);
@@ -227,6 +269,13 @@ public:
 
 	void SecondryFirePressed();
 	void SecondryFireReleased();
+
+	/** Server: updates the out of combat tag and adds HealthRegeneration, plus OutOfCombatRegen when out of combat. */
+	void HealthRegenStep();
+	FTimerHandle HealthRegenHandle;
+
+	void ItemSlotPressed(int32 Slot);
+	void ItemSlotReleased(int32 Slot);
 
 	void AltFirePressed();
 	void AltFireReleased();

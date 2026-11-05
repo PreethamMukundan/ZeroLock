@@ -171,6 +171,30 @@ void AProjectile::PreInitializeComponents()
 	}
 }
 
+void AProjectile::ApplyShooterBulletSpeed()
+{
+	const AZeroLockCharacter* Shooter = Cast<AZeroLockCharacter>(GetInstigator());
+	if (!bUseShooterWeaponStats || !Shooter || !Shooter->GetAbilitySystemComponent() || !ProjectileMovement)
+	{
+		return;
+	}
+
+	const float Bonus = Shooter->GetAbilitySystemComponent()->GetNumericAttribute(UBaseCharAttributeSet::GetBulletSpeedBonusAttribute());
+	const float Scale = 1.0f + Bonus / 100.0f;
+	if (Scale <= 0.0f || FMath::IsNearlyEqual(Scale, 1.0f))
+	{
+		return;
+	}
+
+	ProjectileMovement->InitialSpeed *= Scale;
+	ProjectileMovement->MaxSpeed *= Scale;
+	ProjectileMovement->Velocity *= Scale;
+	if (GetLifeSpan() > 0.0f)
+	{
+		SetLifeSpan(GetLifeSpan() / Scale);
+	}
+}
+
 void AProjectile::BeginPlay()
 {
 	Super::BeginPlay();
@@ -186,6 +210,8 @@ void AProjectile::BeginPlay()
 			return;
 		}
 	}
+
+	ApplyShooterBulletSpeed();
 
 	/** If this projectile has a valid instigator, we assume it was spawned by a player or AI, and thus want to apply
 	 * gameplay effects using that instigator's ASC. To retrieve that ASC, we also need a valid owner. */
@@ -1066,15 +1092,16 @@ void AProjectile::ApplyEffectToTarget(const bool bDirectImpact, const AActor* Ta
 	}
 
 	float Damage = WeaponDamage;
+	const FVector HitPoint = Hit.bBlockingHit ? FVector(Hit.ImpactPoint) : Victim->GetActorLocation();
 	if (bUseShooterWeaponStats)
 	{
-		const FVector HitPoint = Hit.bBlockingHit ? FVector(Hit.ImpactPoint) : Victim->GetActorLocation();
 		Damage = Shooter->GetAttributeOr(UBaseCharAttributeSet::GetBulletDamageAttribute(), WeaponDamage)
 			* Shooter->WeaponStats.GetFalloffScale(FVector::Dist(SpawnTransform.GetLocation(), HitPoint));
 	}
 
 	if (UBaseCharAbilitySystemComponent* SourceASC = Shooter->GetMyAbilitySystemComp())
 	{
+		TGuardValue<bool> HeadshotGuard(SourceASC->bHeadshotHit, Victim->IsHeadshot(HitPoint));
 		SourceASC->ApplyWeaponDamage(Victim->GetMyAbilitySystemComp(), Damage, this);
 	}
 }

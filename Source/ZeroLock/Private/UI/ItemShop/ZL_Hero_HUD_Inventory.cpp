@@ -66,9 +66,9 @@ void UZL_Hero_HUD_Inventory::NativeOnInitialized()
 				iconSlot->SetupFromItem(DefaultItem);
 				Slots.Add(iconSlot);
 				UUniformGridSlot* GridSlot = GridTileView->AddChildToUniformGrid(iconSlot,rowNum,colNum);
-				
+
 			}
 		}
-	
+		ItemsChanged(Hero->GetInventoryComponent()->Items);
 	}
 }

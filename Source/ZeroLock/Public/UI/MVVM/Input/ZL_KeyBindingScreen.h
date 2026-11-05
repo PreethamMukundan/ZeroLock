@@ -32,6 +32,6 @@ public:
 
 	/** Section order (matched against the mapping's DisplayCategory). Other categories follow in mapping order. */
 	UPROPERTY(EditDefaultsOnly, Category = "Keybindings")
-	TArray<FString> CategoryOrder = { TEXT("Movement"), TEXT("Abilities"), TEXT("Combat") };
+	TArray<FString> CategoryOrder = { TEXT("Movement"), TEXT("Abilities"), TEXT("Combat"), TEXT("Items") };
 	
 };

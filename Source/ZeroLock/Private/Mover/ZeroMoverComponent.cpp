@@ -11,6 +11,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "DefaultMovementSet/InstantMovementEffects/BasicInstantMovementEffects.h"
 #include "DefaultMovementSet/LayeredMoves/BasicLayeredMoves.h"
+#include "DefaultMovementSet/Modes/FallingMode.h"
 #include "DefaultMovementSet/Settings/CommonLegacyMovementSettings.h"
 #include "DefaultMovementSet/Settings/StanceSettings.h"
 #include "Engine/Engine.h"
@@ -22,6 +23,7 @@
 #include "Mover/ZeroGooBallMode.h"
 #include "Mover/ZeroGooBallShapeModifier.h"
 #include "MoveLibrary/FloorQueryUtils.h"
+#include "MoveLibrary/MovementUtils.h"
 #include "Mover/ZeroDashMove.h"
 #include "Mover/ZeroInstantMovementEffects.h"
 #include "Mover/ZeroMovementData.h"
@@ -101,6 +103,7 @@ void UZeroMoverComponent::OnMoverPreSimulationTick(const FMoverTimeStep& TimeSte
     // Must happen before Super, which turns the crouch request into a stance change this same frame.
     if (FoundZeroInputs)
     {
+        ApplyItemMoveStats(*FoundZeroInputs);
         UpdateCrouchIntent(CurrentMode, *FoundZeroInputs);
     }
 
@@ -474,7 +477,79 @@ float UZeroMoverComponent::GetMoveSpeedMultiplier() const
     const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
     bool bFound = false;
     const float Multiplier = ASC ? ASC->GetGameplayAttributeValue(UBaseCharAttributeSet::GetMoveSpeedMultiplierAttribute(), bFound) : 1.0f;
-    return bFound && Multiplier > 0.0f ? FMath::Clamp(Multiplier, 0.1f, 1.0f) : 1.0f;
+    if (!bFound || Multiplier <= 0.0f)
+    {
+        return 1.0f;
+    }
+
+    // Slow resist takes a share off the slow: 40% resist turns a 50% slow into 30%.
+    const float Resist = FMath::Clamp(ASC->GetNumericAttribute(UBaseCharAttributeSet::GetSlowResistanceAttribute()), 0.0f, 100.0f);
+    const float Slow = 1.0f - FMath::Clamp(Multiplier, 0.1f, 1.0f);
+    return 1.0f - Slow * (1.0f - Resist / 100.0f);
+}
+
+void UZeroMoverComponent::ReadItemMoveStats(FZeroMovementInputs& Inputs) const
+{
+    const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+    if (!ASC || !ASC->GetAttributeSet(UBaseCharAttributeSet::StaticClass()))
+    {
+        return;
+    }
+
+    Inputs.ItemMoveSpeed = ASC->GetNumericAttribute(UBaseCharAttributeSet::GetMoveSpeedBonusAttribute());
+    if (ASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_OUT_OF_COMBAT))
+    {
+        Inputs.ItemMoveSpeed += ASC->GetNumericAttribute(UBaseCharAttributeSet::GetSprintSpeedBonusAttribute());
+    }
+    Inputs.ItemSlideDistance = ASC->GetNumericAttribute(UBaseCharAttributeSet::GetSlideDistanceBonusAttribute());
+    Inputs.ItemMeleeDistance = ASC->GetNumericAttribute(UBaseCharAttributeSet::GetMeleeDistanceBonusAttribute());
+    Inputs.ItemAirControl = ASC->GetNumericAttribute(UBaseCharAttributeSet::GetAirControlBonusAttribute());
+}
+
+void UZeroMoverComponent::ApplyItemMoveStats(const FZeroMovementInputs& Inputs)
+{
+    // Negative move speed items can't stop a hero outright.
+    constexpr float MinItemMaxSpeed = 100.0f;
+
+    float MoveSpeed = Inputs.ItemMoveSpeed;
+    ItemSlideDistance = Inputs.ItemSlideDistance;
+    ItemMeleeDistance = Inputs.ItemMeleeDistance;
+    float AirControl = Inputs.ItemAirControl;
+
+    // Attributes change on the server first, so its value is the most the client can honestly send.
+    if (GetOwner() && GetOwner()->HasAuthority())
+    {
+        FZeroMovementInputs Allowed;
+        ReadItemMoveStats(Allowed);
+        MoveSpeed = FMath::Min(MoveSpeed, Allowed.ItemMoveSpeed);
+        ItemSlideDistance = FMath::Min(ItemSlideDistance, Allowed.ItemSlideDistance);
+        ItemMeleeDistance = FMath::Min(ItemMeleeDistance, Allowed.ItemMeleeDistance);
+        AirControl = FMath::Min(AirControl, Allowed.ItemAirControl);
+    }
+
+    if (UCommonLegacyMovementSettings* Settings = FindSharedSettings_Mutable<UCommonLegacyMovementSettings>())
+    {
+        if (BaseMaxSpeed < 0.0f)
+        {
+            // From the class defaults: a crouch may be overwriting this object's value right now.
+            const UMoverComponent* Original = UMovementUtils::GetOriginalComponentType<UMoverComponent>(GetOwner());
+            const UCommonLegacyMovementSettings* OriginalSettings = Original ? Original->FindSharedSettings<UCommonLegacyMovementSettings>() : nullptr;
+            BaseMaxSpeed = OriginalSettings ? OriginalSettings->MaxSpeed : Settings->MaxSpeed;
+        }
+        if (!IsCrouching())
+        {
+            Settings->MaxSpeed = FMath::Max(BaseMaxSpeed + MoveSpeed, MinItemMaxSpeed);
+        }
+    }
+
+    if (UFallingMode* Falling = Cast<UFallingMode>(FindMovementModeByName(DefaultModeNames::Falling)))
+    {
+        if (BaseAirControl < 0.0f)
+        {
+            BaseAirControl = Falling->AirControlPercentage;
+        }
+        Falling->AirControlPercentage = FMath::Clamp(BaseAirControl * (1.0f + AirControl / 100.0f), 0.0f, 1.0f);
+    }
 }
 
 void UZeroMoverComponent::HandleRooted(const FMoverTimeStep& TimeStep, const FName& CurrentMode)

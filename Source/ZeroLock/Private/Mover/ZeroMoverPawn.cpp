@@ -146,6 +146,27 @@ void AZeroMoverPawn::UpdateSmoothedCamera()
 
 
 
+void AZeroMoverPawn::SetGameplayInputEnabled(bool bEnabled)
+{
+    const APlayerController* PlayerController = Cast<APlayerController>(GetController());
+    if (!PlayerController || !DefaultMappingContext)
+    {
+        return;
+    }
+
+    if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+    {
+        if (bEnabled)
+        {
+            Subsystem->AddMappingContext(DefaultMappingContext, 0);
+        }
+        else
+        {
+            Subsystem->RemoveMappingContext(DefaultMappingContext);
+        }
+    }
+}
+
 void AZeroMoverPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -254,6 +275,10 @@ void AZeroMoverPawn::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmd
     if (Controller)
     {
         ZeroInputs.LookDir = Controller->GetControlRotation();
+    }
+    if (MoverComponent)
+    {
+        MoverComponent->ReadItemMoveStats(ZeroInputs);
     }
     ZeroInputs.bIsRooted = MoverComponent && MoverComponent->IsRooted();
     ZeroInputs.bIsCubed = bCubed;

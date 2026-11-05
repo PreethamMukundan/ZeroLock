@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "BaseCharAbilitySystemComponent.generated.h"
 
+enum class EZL_ProcTrigger : uint8;
 class UZL_Task_WaitSlamLocation;
 class UBaseGameplayAbility;
 /**
@@ -26,11 +27,29 @@ class ZEROLOCK_API UBaseCharAbilitySystemComponent : public UAbilitySystemCompon
 
 	virtual void OnRep_ActivateAbilities() override;
 
+public:
+	/** Timed effects: enemy ones are shortened by the target's DebufReduction, ability ones lengthened by the caster's DurationExtension. */
+	virtual FActiveGameplayEffectHandle ApplyGameplayEffectSpecToSelf(const FGameplayEffectSpec& GameplayEffect, FPredictionKey PredictionKey = FPredictionKey()) override;
+
 	/** Server: counts ability uses for telemetry. */
 	virtual void NotifyAbilityActivated(const FGameplayAbilitySpecHandle Handle, UGameplayAbility* Ability) override;
 	
 protected:
 	TMap<FPredictionKey, TWeakObjectPtr<UZL_Task_WaitSlamLocation>> PendingSlamTasks;
+
+	/** Multiplier for the effect's duration, 1 when nothing changes it. */
+	float GetEffectDurationScale(const FGameplayEffectSpec& Spec) const;
+
+	/** The damage with this hero's item procs added. */
+	float ScaleDamageForProcs(EZL_ProcTrigger Trigger, const UAbilitySystemComponent* TargetASC, float DamageValue) const;
+
+	/** After a hit: runs item procs on both heroes with the damage that landed, and ends stealth. */
+	void FinishHit(EZL_ProcTrigger HitTrigger, EZL_ProcTrigger TakenTrigger, const UAbilitySystemComponent* TargetASC, float DamageDealt, const UObject* DamageSource);
+
+	void BreakStealth();
+
+	static constexpr float LongOutOfCombat = 100000.0f;
+	float LastCombatTime = -LongOutOfCombat;
 	
 public:
 	UPROPERTY(BlueprintAssignable)
@@ -58,9 +77,30 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ApplyHeal(UAbilitySystemComponent* TargetASC,float HealValue);
 
+	/** Server: this hero just dealt or took hero damage. */
+	void MarkInCombat();
+
+	/** Server: seconds since the last MarkInCombat. */
+	float GetTimeOutOfCombat() const;
+
+	/** Server: counts as long out of combat (respawn). */
+	void ClearCombatTimer() { LastCombatTime = -LongOutOfCombat; }
+
 	/** Server. Adds Amount to this ASC's CombatBarrier; after Duration takes back whatever of it damage hasn't eaten. */
 	UFUNCTION(BlueprintCallable)
 	void AddCombatBarrier(float Amount, float Duration);
+
+	/** Server. Removes timed effects enemies put on this hero. Infinite ones, like UZL_GE_MoveSlow, belong to their applier. */
+	void CleanseDebuffs();
+
+	/** Set by the attribute set while a hit is applied: what it did after resists, before the barrier. */
+	float LastDamageDealt = 0.f;
+
+	/** Set around a heavy melee strike, for HeavyMeleeHit procs. */
+	bool bHeavyMeleeStrike = false;
+
+	/** Set around a bullet that hit a head, for Headshot procs. */
+	bool bHeadshotHit = false;
 
 	/** Server. Barrier to 0; pending AddCombatBarrier expiries no longer touch it (respawn). */
 	void ClearCombatBarrier();
@@ -84,7 +124,7 @@ public:
 	bool IsUntouchable(UAbilitySystemComponent* TargetToCheck);
 
 	UFUNCTION(BlueprintCallable)
-	void SendGameplayEventToSelf(FGameplayTag Tag, UAbilitySystemComponent* TargetASC);
+	void SendGameplayEventToSelf(FGameplayTag Tag, UAbilitySystemComponent* TargetASC, float Magnitude = 0.f);
 
 	UFUNCTION(BlueprintCallable)
 	void SendGameplayEventToTarget(FGameplayTag Tag , UAbilitySystemComponent* TargetASC);

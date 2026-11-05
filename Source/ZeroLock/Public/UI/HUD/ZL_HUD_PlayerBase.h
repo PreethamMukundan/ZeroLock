@@ -50,11 +50,17 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<UZL_AbilityChargePhase> ChargePhaseClass;
 
+	/** The active item keys. Place it in the widget editor. */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<class UZL_HUD_ActiveItemBar> ActiveItemBar;
+
 private:
 	UFUNCTION()
 	void AddToDelegate();
 
 	virtual void NativeOnInitialized() override;
+
+	/** Added at runtime next to the health bar, so WBP_PlayerHUD needs no change. */
 
 	
 };

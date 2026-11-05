@@ -241,6 +241,9 @@ public:
  
 	/** Tries to link the client's version of the authoritative projectile to its corresponding fake projectile. */
 	virtual void BeginPlay() override;
+
+	/** Primary-fire bullets: the shooter's BulletSpeedBonus. Every copy (fake, server, proxies) reads the same attribute. Range stays the same. */
+	void ApplyShooterBulletSpeed();
  
 	/** Tick client's version of the authoritative projectile forward to where it is on the server, to make up for
 	 * replication time. */

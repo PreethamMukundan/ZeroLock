@@ -2,19 +2,21 @@
 
 
 #include "UI/ItemShop/ZL_ItemShop_Base.h"
+#include "UI/ItemShop/ZL_ImbuePicker.h"
 
 #include "CommonActivatableWidgetSwitcher.h"
 #include "CommonButtonBase.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
 #include "CommonTileView.h"
+#include "Engine/GameViewportClient.h"
+#include "Engine/LocalPlayer.h"
 #include "Items/Zero_Item_data.h"
-#include "Items/Zero_Item_Inventory_Component.h"
-#include "Kismet/GameplayStatics.h"
+#include "Mover/ZeroMoverPawn.h"
+#include "TimerManager.h"
 #include "UI/ItemShop/ZL_ITemIcon.h"
 #include "UI/ItemShop/ZL_ItemShopCategory.h"
 #include "ZeroLock/ZeroLock.h"
-#include "ZeroLock/ZeroLockCharacter.h"
 
 UZL_ItemShop_Base::UZL_ItemShop_Base()
 {
@@ -26,6 +28,50 @@ void UZL_ItemShop_Base::NativeOnInitialized()
 	LoadItemsAsync();
 	AddDelegates();
 	ItemSwitcher->SetActiveWidget(ItemListView);
+}
+
+void UZL_ItemShop_Base::NativeOnActivated()
+{
+	Super::NativeOnActivated();
+	RefreshIcons();
+
+	// WBP_PlayerHUD sets UI-only input around the same time it activates this, so wait for that to be done.
+	GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this]()
+	{
+		if (IsActivated())
+		{
+			AllowKeysWithoutHeroControls();
+		}
+	}));
+}
+
+void UZL_ItemShop_Base::NativeOnDeactivated()
+{
+	if (ImbuePicker)
+	{
+		ImbuePicker->RemoveFromParent();
+	}
+
+	if (AZeroMoverPawn* Pawn = Cast<AZeroMoverPawn>(GetOwningPlayerPawn()))
+	{
+		Pawn->SetGameplayInputEnabled(true);
+	}
+	Super::NativeOnDeactivated();
+}
+
+void UZL_ItemShop_Base::AllowKeysWithoutHeroControls()
+{
+	// The shop closes on WBP_PlayerHUD's B key event, which UI-only input stops at the viewport.
+	const APlayerController* PC = GetOwningPlayer();
+	const ULocalPlayer* LocalPlayer = PC ? PC->GetLocalPlayer() : nullptr;
+	if (LocalPlayer && LocalPlayer->ViewportClient)
+	{
+		LocalPlayer->ViewportClient->SetIgnoreInput(false);
+	}
+	if (AZeroMoverPawn* Pawn = Cast<AZeroMoverPawn>(GetOwningPlayerPawn()))
+	{
+		Pawn->SetGameplayInputEnabled(false);
+	}
 }
 
 void UZL_ItemShop_Base::LoadItemsAsync()
@@ -126,120 +172,82 @@ void UZL_ItemShop_Base::AddDelegates()
 	SpiritCategory->OnItemClickedOn.AddDynamic(this,&UZL_ItemShop_Base::ItemPressed);
 	WeaponCategory->OnItemClickedOn.AddDynamic(this,&UZL_ItemShop_Base::ItemPressed);
 	VitalityCategory->OnItemClickedOn.AddDynamic(this,&UZL_ItemShop_Base::ItemPressed);
-	
+	ItemListView->OnItemClicked().AddUObject(this,&ThisClass::OnAllListItemClicked);
 }
 
-void UZL_ItemShop_Base::FindAndSetToUpgradeOrRemove(UZero_Item_data* ItemsToSetReadyToUpgrade, bool setToUpgradeState, UZero_Item_data* FromItem)
+void UZL_ItemShop_Base::OnAllListItemClicked(UObject* Object)
 {
-	if (UZL_ITemIcon* iconToChange =Cast<UZL_ITemIcon>(ItemListView->GetEntryWidgetFromItem(ItemsToSetReadyToUpgrade)))
-	{
-		iconToChange->SetItemCanBeUpgradedTo(setToUpgradeState,FromItem);
-	}
-}
-
-UZL_ITemIcon* UZL_ItemShop_Base::FindAndReturnIcon(UZero_Item_data* ItemData)
-{
-	if (UZL_ITemIcon* iconToChange =Cast<UZL_ITemIcon>(ItemListView->GetEntryWidgetFromItem(ItemData)))
-	{
-		return iconToChange;
-	}
-	return nullptr;
-}
-
-void UZL_ItemShop_Base::RecSellFunction(UZero_Item_data* ItemData)
-{
-	if (!ItemData) return;
-	if (UZL_ITemIcon* icon = FindAndReturnIcon(ItemData))
-	{
-		icon->SetOnItemSold();
-		if (icon->ItemUpgradedFrom)
-		{
-			for (UZero_Item_data* it : icon->ItemUpgradedFrom->NextItemsToUpgrade)
-			{
-				ZLOG(it->ItemName);
-				FindAndSetToUpgradeOrRemove(it,false,nullptr);
-			}
-			RecSellFunction(icon->ItemUpgradedFrom);
-		}
-	}
+	ItemPressed(Cast<UZero_Item_data>(Object));
 }
 
 void UZL_ItemShop_Base::ItemPressed(UZero_Item_data* itemData)
 {
-	if (!HeroItemComponent)
+	UZero_Item_Inventory_Component* Inventory = GetHeroInventory();
+	if (!Inventory || !itemData) return;
+
+	// Icons change when the server's answer replicates, so a refused purchase never shows as owned.
+	if (Inventory->HasItem(itemData))
 	{
-		HeroItemComponent =Cast<UZero_Item_Inventory_Component>( UGameplayStatics::GetPlayerPawn(GetWorld(),0)->GetComponentByClass(UZero_Item_Inventory_Component::StaticClass()));
-		if (!HeroItemComponent) return;
-		
+		Inventory->ServerSellItem(itemData);
 	}
-	
-	if (itemData)
+	else if (Inventory->IsUpgradedAway(itemData))
 	{
-		for (UZero_Item_data* it : itemData->NextItemsToUpgrade)
+		return;
+	}
+	else if (Inventory->NeedsImbueChoice(itemData))
+	{
+		if (!ImbuePicker)
 		{
-			ZLOG(it->ItemName);
-			
+			ImbuePicker = CreateWidget<UZL_ImbuePicker>(this, UZL_ImbuePicker::StaticClass());
 		}
-		if (UZL_ITemIcon* icon =Cast<UZL_ITemIcon>(ItemListView->GetEntryWidgetFromItem(itemData)))
+		ImbuePicker->AddToViewport(1000);
+		ImbuePicker->Open(itemData, Inventory);
+	}
+	else
+	{
+		Inventory->ServerBuyItem(itemData, nullptr);
+	}
+}
+
+UZero_Item_Inventory_Component* UZL_ItemShop_Base::GetHeroInventory()
+{
+	const APawn* Pawn = GetOwningPlayerPawn();
+	UZero_Item_Inventory_Component* Inventory = Pawn ? Pawn->FindComponentByClass<UZero_Item_Inventory_Component>() : nullptr;
+	if (Inventory != HeroItemComponent)
+	{
+		if (IsValid(HeroItemComponent))
 		{
-			if (icon->ItemCurrentState == EItemState::Sold)
-			{
-				icon->SetOnItemSold();
-				for (UZero_Item_data* it : itemData->NextItemsToUpgrade)
-				{
-					ZLOG(it->ItemName);
-					FindAndSetToUpgradeOrRemove(it,false,nullptr);
-				}
-				RecSellFunction(icon->ItemUpgradedFrom);
-				HeroItemComponent->ServerSellItem(itemData);
-				
-			}
-			else if (icon->ItemCurrentState == EItemState::Default)
-			{
-				icon->SetOnItemPurchased();
-				for (UZero_Item_data* it : itemData->NextItemsToUpgrade)
-				{
-					ZLOG(it->ItemName);
-					FindAndSetToUpgradeOrRemove(it,true,itemData);
-				}
-				HeroItemComponent->ServerBuyItem(itemData,icon->ItemUpgradedFrom);
-			}
-			else if (icon->ItemCurrentState == EItemState::ReadyToUpgrade)
-			{
-				if (icon->ItemUpgradedFrom)
-				{
-					for (UZero_Item_data* it : icon->ItemUpgradedFrom->NextItemsToUpgrade)
-					{
-						if (it == itemData)
-						{
-							FindAndSetToUpgradeOrRemove(it,false,icon->ItemUpgradedFrom);
-							continue;
-						}
-						FindAndSetToUpgradeOrRemove(it,false,nullptr);
-					}
-					if (UZL_ITemIcon* fromIcon = FindAndReturnIcon(icon->ItemUpgradedFrom))
-					{
-						fromIcon->SetUpgradedBlocked();
-					}
-					HeroItemComponent->ServerBuyItem(itemData,icon->ItemUpgradedFrom);
-				}
-				
-				icon->SetOnItemPurchased();
-
-				for (UZero_Item_data* it : itemData->NextItemsToUpgrade)
-				{
-					ZLOG(it->ItemName);
-					FindAndSetToUpgradeOrRemove(it,true,itemData);
-				}
-
-				
-			}
-			
+			HeroItemComponent->ItemDelegate.RemoveDynamic(this, &ThisClass::OnInventoryChanged);
+		}
+		HeroItemComponent = Inventory;
+		if (Inventory)
+		{
+			Inventory->ItemDelegate.AddUniqueDynamic(this, &ThisClass::OnInventoryChanged);
 		}
 	}
-	
-	
-	
+	return HeroItemComponent;
+}
+
+void UZL_ItemShop_Base::OnInventoryChanged(TArray<FZeroInventoryItem> InventoryItems)
+{
+	RefreshIcons();
+}
+
+void UZL_ItemShop_Base::RefreshIcons()
+{
+	const UZero_Item_Inventory_Component* Inventory = GetHeroInventory();
+	if (!Inventory) return;
+
+	for (UUserWidget* Entry : ItemListView->GetDisplayedEntryWidgets())
+	{
+		if (UZL_ITemIcon* Icon = Cast<UZL_ITemIcon>(Entry))
+		{
+			Icon->RefreshState(Inventory);
+		}
+	}
+	SpiritCategory->RefreshIcons(Inventory);
+	WeaponCategory->RefreshIcons(Inventory);
+	VitalityCategory->RefreshIcons(Inventory);
 }
 
 void UZL_ItemShop_Base::AddtoCategory(UZero_Item_data* dataItem)

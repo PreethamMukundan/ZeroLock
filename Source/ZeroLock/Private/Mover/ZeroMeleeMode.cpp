@@ -6,6 +6,14 @@
 #include "GameFramework/Pawn.h"
 #include "MoveLibrary/MovementUtils.h"
 #include "Mover/ZeroMovementData.h"
+#include "Mover/ZeroMoverComponent.h"
+
+float UZeroMeleeMode::GetLungeDuration() const
+{
+	// Same speed for longer, so +50% melee distance is +50% time.
+	const UZeroMoverComponent* ZeroMover = Cast<UZeroMoverComponent>(GetMoverComponent());
+	return ZeroMover ? MaxDuration * FMath::Max(1.0f + ZeroMover->GetItemMeleeDistance() / 100.0f, 0.1f) : MaxDuration;
+}
 
 void FZeroMeleeSyncState::Interpolate(const FMoverDataStructBase& From, const FMoverDataStructBase& To, float Pct)
 {
@@ -158,7 +166,7 @@ void UZeroMeleeMode::SimulationTick_Implementation(const FSimulationTickParams& 
         OutputState.MovementEndState.NextModeName = DefaultModeNames::Falling;
         bLungeEnded = true;
     }
-    else if (OutputMeleeState.ElapsedTimeMs >= (MaxDuration * 1000.0f))
+    else if (OutputMeleeState.ElapsedTimeMs >= (GetLungeDuration() * 1000.0f))
     {
         FinalVelocity =FVector::ZeroVector;
         OutputState.MovementEndState.NextModeName = DefaultModeNames::Walking;

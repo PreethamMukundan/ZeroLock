@@ -6,6 +6,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Mover/ZeroMovementData.h"
+#include "Mover/ZeroMoverComponent.h"
 #include "ZeroLock/ZeroLock.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(ZeroSlideMode)
@@ -100,7 +101,10 @@ void UZeroSlideMode::GenerateMove_Implementation(const FMoverSimContext& SimCont
     float Speed = CurrentVelocity.Size2D();
     if (Speed > 0.0f)
     {
-       float FrictionDrop = SlideFriction * 500.0f * DeltaSeconds;
+       // Less friction for the same start speed: +35% slide distance is friction / 1.35.
+       const UZeroMoverComponent* ZeroMover = Cast<UZeroMoverComponent>(GetMoverComponent());
+       const float DistanceScale = ZeroMover ? FMath::Max(1.0f + ZeroMover->GetItemSlideDistance() / 100.0f, 0.1f) : 1.0f;
+       float FrictionDrop = SlideFriction * 500.0f * DeltaSeconds / DistanceScale;
        float NewSpeed = FMath::Max(Speed - FrictionDrop, 0.0f);
        CurrentVelocity = CurrentVelocity.GetSafeNormal2D() * NewSpeed + FVector(0, 0, CurrentVelocity.Z);
     }

@@ -21,7 +21,7 @@ void UZL_ItemTooltipWidget::SetupFromItem(class UZero_Item_data* ItemData)
 	}
 	if (ItemNameText)
 	{
-		ItemNameText->SetText(FText::FromName(ItemData->ItemID));
+		ItemNameText->SetText(ItemData->GetDisplayName());
 	}
     
 	if (DescriptionText)

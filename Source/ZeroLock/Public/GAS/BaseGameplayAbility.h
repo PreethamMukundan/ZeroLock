@@ -9,6 +9,8 @@
 #include "ZeroLock/ZeroLock.h"
 #include "BaseGameplayAbility.generated.h"
 
+enum class EZL_ItemStat : uint8;
+
 class UZL_VM_ChargePercent;
 class UZL_VM_Attributes;
 class UZL_VM_AbilityTimerProgressBar;
@@ -103,8 +105,14 @@ public:
 	virtual void ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
 
 	virtual float GetCoolDownTime() const;
+
+	/** Multiplier from the caster's AbilityRangeBonus. Use it on anything the player aims at a distance. */
+	float GetAbilityRangeScale() const;
 	
 	virtual const FGameplayTagContainer* GetCooldownTags() const override;
+
+	/** What imbue items add to this ability alone. Valid on clients too. */
+	float GetImbueBonus(EZL_ItemStat Stat) const;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Cooldown")
 	FGameplayTagContainer CooldownTags;

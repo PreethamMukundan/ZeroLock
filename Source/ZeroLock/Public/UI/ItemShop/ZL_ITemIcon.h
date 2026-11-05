@@ -56,6 +56,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetupFromItem(class UZero_Item_data* ItemData);
 
+	/** Shows what the inventory says about this item. */
+	void RefreshState(const class UZero_Item_Inventory_Component* Inventory);
+
 	virtual void NativeOnListItemObjectSet(UObject* ListItemObject) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

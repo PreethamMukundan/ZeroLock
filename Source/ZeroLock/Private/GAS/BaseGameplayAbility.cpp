@@ -10,6 +10,8 @@
 #include "GAS/BaseCharAttributeSet.h"
 #include "GAS/ZL_GameplayTags.h"
 #include "GAS/ZL_GE_BaseCooldown.h"
+#include "Items/Zero_Item_Inventory_Component.h"
+#include "Items/Zero_Item_data.h"
 #include "Mover/ZeroMoverComponent.h"
 #include "Mover/ZeroMoverPawn.h"
 #include "Mover/ZeroMovementData.h"
@@ -52,6 +54,27 @@ bool UBaseGameplayAbility::CanActivateAbility(const FGameplayAbilitySpecHandle H
 			OptionalRelevantTags->AddTag(ZerolockGameplayTagsForBinding::TAG_STATUS_CUBED);
 		}
 		return false;
+	}
+	if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid() && AbilityTriggers.IsEmpty())
+	{
+		const UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
+		const FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(Handle);
+		const int32 InputID = Spec ? Spec->InputID : static_cast<int32>(EGASAbilityInputID::None);
+
+		const bool bHeroAbility = InputID == static_cast<int32>(EGASAbilityInputID::Secondry_Attack)
+			|| InputID == static_cast<int32>(EGASAbilityInputID::Ability_1)
+			|| InputID == static_cast<int32>(EGASAbilityInputID::Ability_2)
+			|| InputID == static_cast<int32>(EGASAbilityInputID::Ultimate);
+		if (bHeroAbility && ASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_SILENCED))
+		{
+			return false;
+		}
+
+		const AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(ActorInfo->AvatarActor.Get());
+		if (Hero && Hero->PrimaryFireAbility == GetClass() && ASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_DISARMED))
+		{
+			return false;
+		}
 	}
 	if (bIsMovementAbility && ActorInfo && ActorInfo->AbilitySystemComponent.IsValid()
 		&& ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_MOVEMENT_ABILITIES_BLOCKED))
@@ -153,6 +176,11 @@ void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle
 		// the cooldown GE is only the short lockout between uses. Skip it at 0, since a 0 duration GE is instant and the
 		// client's predicted copy would never expire.
 		float CooldownTimeToUse = bIsChargedAbility ? TimeBetweenCharges : GetCoolDownTime();
+		if (bIsChargedAbility)
+		{
+			const float Reduction = ActorInfo->AbilitySystemComponent->GetNumericAttribute(UBaseCharAttributeSet::GetChargeCooldownReductionAttribute());
+			CooldownTimeToUse *= FMath::Clamp(1.0f - Reduction / 100.0f, 0.0f, 1.0f);
+		}
 		if (bIsChargedAbility && CooldownTimeToUse <= 0.f)
 		{
 			return;
@@ -183,10 +211,25 @@ float UBaseGameplayAbility::GetCoolDownTime() const
 		{
 			return cooldownTime;
 		}
-		float CDR = Hero->GetMyAttributeSet()->GetCooldownReduction();
+		float CDR = Hero->GetMyAttributeSet()->GetCooldownReduction() + GetImbueBonus(EZL_ItemStat::CooldownReduction);
 		return (cooldownTime*(1-CDR/100));
 	}
 	return cooldownTime;
+}
+
+float UBaseGameplayAbility::GetAbilityRangeScale() const
+{
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	return ASC ? 1.0f + (ASC->GetNumericAttribute(UBaseCharAttributeSet::GetAbilityRangeBonusAttribute()) + GetImbueBonus(EZL_ItemStat::AbilityRange)) / 100.0f : 1.0f;
+}
+
+float UBaseGameplayAbility::GetImbueBonus(EZL_ItemStat Stat) const
+{
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	const FGameplayAbilitySpec* Spec = ASC ? ASC->FindAbilitySpecFromHandle(GetCurrentAbilitySpecHandle()) : nullptr;
+	const AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
+	const UZero_Item_Inventory_Component* Inventory = Hero ? Hero->GetInventoryComponent() : nullptr;
+	return Spec && Inventory ? Inventory->GetImbueBonus(Stat, Spec->InputID) : 0.0f;
 }
 
 const FGameplayTagContainer* UBaseGameplayAbility::GetCooldownTags() const

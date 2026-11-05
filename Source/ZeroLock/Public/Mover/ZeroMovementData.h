@@ -104,6 +104,20 @@ struct FZeroMovementInputs : public FMoverDataStructBase
 	UPROPERTY(BlueprintReadWrite, Category="Zero")
 	bool bIsNoClip = false;
 
+	// Item stats, sampled from the owner's attributes when the input is produced so client and server use them on the same
+	// frame. UZeroMoverComponent::ApplyItemMoveStats caps them on the server. Speed in cm/s, the others percent.
+	UPROPERTY(BlueprintReadWrite, Category="Zero")
+	float ItemMoveSpeed = 0.0f;
+
+	UPROPERTY(BlueprintReadWrite, Category="Zero")
+	float ItemSlideDistance = 0.0f;
+
+	UPROPERTY(BlueprintReadWrite, Category="Zero")
+	float ItemMeleeDistance = 0.0f;
+
+	UPROPERTY(BlueprintReadWrite, Category="Zero")
+	float ItemAirControl = 0.0f;
+
     virtual UScriptStruct*GetScriptStruct() const override { return FZeroMovementInputs::StaticStruct(); }
     virtual FMoverDataStructBase* Clone() const override { return new FZeroMovementInputs(*this); }
 
@@ -143,6 +157,10 @@ struct FZeroMovementInputs : public FMoverDataStructBase
     	Ar << bIsGooBall;
     	Ar << bIsFloating;
     	Ar << bIsNoClip;
+    	Ar << ItemMoveSpeed;
+    	Ar << ItemSlideDistance;
+    	Ar << ItemMeleeDistance;
+    	Ar << ItemAirControl;
 
     	Map->SerializeObject(Ar, AActor::StaticClass(), (UObject*&)DynamicTargetActor);
     

@@ -1,0 +1,8930 @@
+[
+ {
+  "id": "upgrade_magic_burst",
+  "name": "Charged Burst",
+  "type": "Spirit",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "SpiritHit",
+    "cooldown": 14.0,
+    "chance": 0.0,
+    "min_damage": 80.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 40.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\nOn spirit damage (80+ damage): 40 Spirit Damage, 14s cooldown",
+  "upgrades_to": [
+   "upgrade_magic_shock"
+  ]
+ },
+ {
+  "id": "upgrade_withering_whip",
+  "name": "Corroding Curse",
+  "type": "Spirit",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 60.0
+   },
+   {
+    "stat": "SprintSpeed",
+    "value": 55.55555555555556
+   }
+  ],
+  "active": {
+   "target": "Enemy",
+   "cooldown": 16.0,
+   "duration": 5.0,
+   "range": 2240.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "FireRatePercent",
+     "value": -32.0
+    },
+    {
+     "stat": "WeaponResist",
+     "value": -8.0
+    },
+    {
+     "stat": "MeleeResist",
+     "value": -8.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+60 Max Health\n+0.5 m/s Out of Combat Speed\nActive (16s cooldown): Weakens for 5s",
+  "upgrades_to": [
+   "upgrade_greater_withering_whip"
+  ]
+ },
+ {
+  "id": "upgrade_extra_charge",
+  "name": "Extra Charge",
+  "type": "Spirit",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritPower",
+    "value": 7.0
+   },
+   {
+    "stat": "AbilityCharges",
+    "value": 1.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+7 Spirit Power\n+1 Ability Charges",
+  "upgrades_to": [
+   "upgrade_rapid_recharge"
+  ]
+ },
+ {
+  "id": "upgrade_improved_spirit",
+  "name": "Extra Spirit",
+  "type": "Spirit",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritPower",
+    "value": 10.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+10 Spirit Power",
+  "upgrades_to": [
+   "upgrade_magic_storm",
+   "upgrade_soaring_spirit"
+  ]
+ },
+ {
+  "id": "upgrade_magic_reach",
+  "name": "Focused Reach",
+  "type": "Spirit",
+  "tier": 1,
+  "cost": 800,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [],
+  "imbue": true,
+  "imbue_stats": [
+   {
+    "stat": "AbilityRange",
+    "value": 20.0
+   }
+  ],
+  "description": "800 Souls\nImbue: pick an ability: +20 Ability Range",
+  "upgrades_to": [
+   "upgrade_bulletshredimbue",
+   "upgrade_tech_range"
+  ]
+ },
+ {
+  "id": "upgrade_goose_egg",
+  "name": "Growing Nest Egg",
+  "type": "Spirit",
+  "tier": 1,
+  "cost": 800,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [
+   "ALL_DAMAGE_MULTIPLIER"
+  ],
+  "stats": [
+   {
+    "stat": "SprintSpeed",
+    "value": 111.11111111111111
+   },
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 1.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+1 m/s Out of Combat Speed\n+1 Out of Combat Regen",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_acolytes_glove",
+  "name": "Spirit Knuckles",
+  "type": "Spirit",
+  "tier": 1,
+  "cost": 800,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "MeleeHit",
+    "cooldown": 8.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 40.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "SpiritResist",
+      "value": -6.0
+     }
+    ],
+    "duration": 6.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\nOn melee hit: 40 Spirit Damage, Target -6 Spirit Resist, for 6s, 8s cooldown",
+  "upgrades_to": [
+   "upgrade_spirit_snatch"
+  ]
+ },
+ {
+  "id": "upgrade_mystic_regeneration",
+  "name": "Spirit Mender",
+  "type": "Spirit",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 50.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "SpiritHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "HealthRegen",
+      "value": 4.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 7.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+50 Max Health\nOn spirit damage: You +4 Health Regen, for 7s",
+  "upgrades_to": [
+   "upgrade_resonant_healing"
+  ]
+ },
+ {
+  "id": "upgrade_bullet_resist_shredder",
+  "name": "Armor Melter",
+  "type": "Spirit",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponResist",
+    "value": 9.0
+   },
+   {
+    "stat": "WeaponDamage",
+    "value": 9.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "SpiritHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "WeaponResist",
+      "value": -10.0
+     },
+     {
+      "stat": "MeleeResist",
+      "value": -10.0
+     }
+    ],
+    "duration": 8.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+9% Bullet Resist\n+9% Weapon Damage\nOn spirit damage: Target -10 Weapon Resist, -10 Melee Resist, for 8s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_containment",
+  "name": "Binding Curse",
+  "type": "Spirit",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SprintSpeed",
+    "value": 55.55555555555556
+   }
+  ],
+  "active": {
+   "target": "Enemy",
+   "cooldown": 29.0,
+   "duration": 3.5,
+   "range": 1750.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "MoveSlowPercent",
+     "value": -16.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+0.5 m/s Out of Combat Speed\nActive (29s cooldown): Weakens for 3.5s",
+  "upgrades_to": [
+   "upgrade_aoe_root"
+  ]
+ },
+ {
+  "id": "upgrade_arcane_surge",
+  "name": "Dash Charged Cast",
+  "type": "Spirit",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxStamina",
+    "value": 1.0
+   },
+   {
+    "stat": "StaminaRegenPercent",
+    "value": 12.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+1 Stamina\n+12% Stamina Recovery",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_suppressor",
+  "name": "Fire Rate Curse",
+  "type": "Spirit",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritPower",
+    "value": 6.0
+   },
+   {
+    "stat": "WeaponResist",
+    "value": 8.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "SpiritHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "FireRatePercent",
+      "value": -28.0
+     }
+    ],
+    "duration": 4.5,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+6 Spirit Power\n+8% Bullet Resist\nOn spirit damage: Target -28 Fire Rate Percent, for 4.5s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_magic_tempo",
+  "name": "Focused Cooldown",
+  "type": "Spirit",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [],
+  "imbue": true,
+  "imbue_stats": [
+   {
+    "stat": "CooldownReduction",
+    "value": 18.0
+   }
+  ],
+  "description": "1600 Souls\nImbue: pick an ability: +18 Cooldown Reduction",
+  "upgrades_to": [
+   "upgrade_cooldown_reduction"
+  ]
+ },
+ {
+  "id": "upgrade_arcane_extension",
+  "name": "Focused Duration",
+  "type": "Spirit",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [],
+  "imbue": true,
+  "imbue_stats": [
+   {
+    "stat": "AbilityDuration",
+    "value": 22.0
+   }
+  ],
+  "description": "1600 Souls\nImbue: pick an ability: +22 Ability Duration",
+  "upgrades_to": [
+   "upgrade_imbued_duration_extender"
+  ]
+ },
+ {
+  "id": "upgrade_cold_front",
+  "name": "Frost Wave",
+  "type": "Spirit",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritResist",
+    "value": 6.0
+   }
+  ],
+  "active": {
+   "target": "Self",
+   "cooldown": 25.0,
+   "duration": 4.0,
+   "range": 0.0,
+   "radius": 700.0,
+   "area_team": "Enemies",
+   "damage": 95.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "MoveSlowPercent",
+     "value": -48.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+6% Spirit Resist\nActive (25s cooldown): 95 Spirit Damage, Weakens for 4s",
+  "upgrades_to": [
+   "upgrade_arctic_blast"
+  ]
+ },
+ {
+  "id": "upgrade_soaring_spirit",
+  "name": "Greater Spirit",
+  "type": "Spirit",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 1.5
+   },
+   {
+    "stat": "SpiritPower",
+    "value": 18.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+1.5 Out of Combat Regen\n+18 Spirit Power",
+  "upgrades_to": [
+   "upgrade_boundless_spirit"
+  ]
+ },
+ {
+  "id": "upgrade_quick_silver",
+  "name": "Reload Charge",
+  "type": "Spirit",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "ImbuedHit",
+    "cooldown": 18.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 44.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   },
+   {
+    "trigger": "ImbuedCast",
+    "cooldown": 18.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "FireRatePercent",
+      "value": 10.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 12.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": true,
+  "imbue_stats": [],
+  "description": "1600 Souls\nImbue: pick an ability\nOn imbued hit: 44 Spirit Damage, 18s cooldown\nOn imbued cast: You +10 Fire Rate Percent, for 12s, 18s cooldown",
+  "upgrades_to": [
+   "upgrade_ethereal_bullets"
+  ]
+ },
+ {
+  "id": "upgrade_magic_slow",
+  "name": "Spirit Drag",
+  "type": "Spirit",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 50.0
+   },
+   {
+    "stat": "SprintSpeed",
+    "value": 83.33333333333334
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "SpiritHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "MoveSlowPercent",
+      "value": -24.0
+     }
+    ],
+    "duration": 2.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+50 Max Health\n+0.75 m/s Out of Combat Speed\nOn spirit damage: Target -24 Move Slow Percent, for 2s",
+  "upgrades_to": [
+   "upgrade_ultimate_burst"
+  ]
+ },
+ {
+  "id": "upgrade_spirit_sap",
+  "name": "Spirit Drain",
+  "type": "Spirit",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 50.0
+   }
+  ],
+  "active": {
+   "target": "Enemy",
+   "cooldown": 22.0,
+   "duration": 12.0,
+   "range": 2450.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "SpiritResist",
+     "value": -9.0
+    },
+    {
+     "stat": "SpiritPower",
+     "value": -30.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+50 Max Health\nActive (22s cooldown): Weakens for 12s",
+  "upgrades_to": [
+   "upgrade_focus_lens"
+  ]
+ },
+ {
+  "id": "upgrade_magic_vulnerability",
+  "name": "Spirit Exposure",
+  "type": "Spirit",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritResist",
+    "value": 8.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "SpiritHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "SpiritResist",
+      "value": -8.0
+     }
+    ],
+    "duration": 7.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+8% Spirit Resist\nOn spirit damage: Target -8 Spirit Resist, for 7s",
+  "upgrades_to": [
+   "upgrade_escalating_exposure"
+  ]
+ },
+ {
+  "id": "upgrade_cooldown_reduction",
+  "name": "Cooldown Reduction",
+  "type": "Spirit",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 4.0
+   },
+   {
+    "stat": "CooldownReduction",
+    "value": 20.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+4 Out of Combat Regen\n+20% Cooldown Reduction",
+  "upgrades_to": [
+   "upgrade_transcendent_cooldown"
+  ]
+ },
+ {
+  "id": "upgrade_target_stun",
+  "name": "Delayed Stun",
+  "type": "Spirit",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 75.0
+   },
+   {
+    "stat": "AbilityRange",
+    "value": 5.0
+   }
+  ],
+  "active": {
+   "target": "Enemy",
+   "cooldown": 35.0,
+   "duration": 0.0,
+   "range": 3150.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [],
+   "statuses": [
+    "Stun"
+   ],
+   "status_duration": 0.5,
+   "cleanse": false,
+   "delay": 2.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+75 Max Health\n+5% Ability Range\nActive (35s cooldown): after 2s, Stun for 0.5s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_rapid_recharge",
+  "name": "Fast Recharge",
+  "type": "Spirit",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "CooldownReduction",
+    "value": 14.0
+   },
+   {
+    "stat": "SpiritPower",
+    "value": 14.0
+   },
+   {
+    "stat": "AbilityCharges",
+    "value": 2.0
+   },
+   {
+    "stat": "ChargeCooldownReduction",
+    "value": 30.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+14% Cooldown Reduction\n+14 Spirit Power\n+2 Ability Charges\n+30% Faster Charges",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_resonant_healing",
+  "name": "Greater Spirit Mender",
+  "type": "Spirit",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 90.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "SpiritHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "HealthRegen",
+      "value": 4.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 7.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   },
+   {
+    "trigger": "AbilityCast",
+    "cooldown": 6.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 40.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "MoveSpeed",
+      "value": 194.44444444444446
+     }
+    ],
+    "target_stats": [],
+    "duration": 3.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+90 Max Health\nOn spirit damage: You +4 Health Regen, for 7s\nOn cast: Heal 40, You +1.75 m/s Move Speed, for 3s, 6s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_magic_storm",
+  "name": "Growing Power",
+  "type": "Spirit",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "While",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "SpiritPower",
+      "value": 28.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   },
+   {
+    "trigger": "ImbuedCast",
+    "cooldown": 14.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "FireRatePercent",
+      "value": 20.0
+     },
+     {
+      "stat": "MoveSpeed",
+      "value": 194.44444444444446
+     }
+    ],
+    "target_stats": [],
+    "duration": 8.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": true,
+  "imbue_stats": [],
+  "description": "3200 Souls\nImbue: pick an ability\nWhile: You +28 Spirit Power\nOn imbued cast: You +20 Fire Rate Percent, +1.75 m/s Move Speed, for 8s, 14s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_targeted_silence",
+  "name": "Hush Wave",
+  "type": "Spirit",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 90.0
+   }
+  ],
+  "active": {
+   "target": "Enemy",
+   "cooldown": 42.0,
+   "duration": 3.0,
+   "range": 2800.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 75.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [],
+   "statuses": [
+    "Silence"
+   ],
+   "status_duration": 3.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+90 Max Health\nActive (42s cooldown): 75 Spirit Damage, Silence for 3s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_imbued_duration_extender",
+  "name": "Longer Duration",
+  "type": "Spirit",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponResist",
+    "value": 8.0
+   },
+   {
+    "stat": "AbilityDuration",
+    "value": 28.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+8% Bullet Resist\n+28% Ability Duration",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_magic_shock",
+  "name": "Max Health Burst",
+  "type": "Spirit",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 50.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "SpiritHit",
+    "cooldown": 14.0,
+    "chance": 0.0,
+    "min_damage": 165.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 40.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 7.5,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+50 Max Health\nOn spirit damage (165+ damage): 40 Spirit Damage, 7.5% of current health as Spirit Damage, 14s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_tech_damage_pulse",
+  "name": "Pulse Emitter",
+  "type": "Spirit",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 100.0
+   },
+   {
+    "stat": "MeleeResist",
+    "value": 22.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "Periodic",
+    "cooldown": 1.4,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 25.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 630.0,
+    "max_targets": 2,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+100 Max Health\n+22% Melee Resist\nRepeating: 25 Spirit Damage, 9m radius, 1.4s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_spirit_snatch",
+  "name": "Spirit Thief",
+  "type": "Spirit",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MeleeDamage",
+    "value": 7.0
+   },
+   {
+    "stat": "MaxHealth",
+    "value": 75.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "MeleeHit",
+    "cooldown": 6.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 50.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "SpiritResist",
+      "value": 12.0
+     },
+     {
+      "stat": "SpiritPower",
+      "value": 25.0
+     }
+    ],
+    "target_stats": [
+     {
+      "stat": "SpiritResist",
+      "value": -12.0
+     },
+     {
+      "stat": "SpiritPower",
+      "value": -25.0
+     }
+    ],
+    "duration": 10.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+7% Melee Damage\n+75 Max Health\nOn melee hit: 50 Spirit Damage, Target -12 Spirit Resist, -25 Spirit Power, You +12 Spirit Resist, +25 Spirit Power, for 10s, 6s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_rupture",
+  "name": "Wasting Curse",
+  "type": "Spirit",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritPower",
+    "value": 8.0
+   },
+   {
+    "stat": "MaxHealth",
+    "value": 65.0
+   }
+  ],
+  "active": {
+   "target": "Enemy",
+   "cooldown": 30.0,
+   "duration": 12.0,
+   "range": 1400.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "HealingReduction",
+     "value": 55.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 1.95,
+   "dot_duration": 12.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+8 Spirit Power\n+65 Max Health\nActive (30s cooldown): 1.95% max health per second for 12s, Weakens for 12s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_greater_withering_whip",
+  "name": "Weapon Lock Curse",
+  "type": "Spirit",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 75.0
+   },
+   {
+    "stat": "SprintSpeed",
+    "value": 83.33333333333334
+   }
+  ],
+  "active": {
+   "target": "Enemy",
+   "cooldown": 16.0,
+   "duration": 4.25,
+   "range": 2240.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "WeaponResist",
+     "value": -13.0
+    },
+    {
+     "stat": "MeleeResist",
+     "value": -13.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+75 Max Health\n+0.75 m/s Out of Combat Speed\nActive (16s cooldown): Weakens for 4.25s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_tech_range",
+  "name": "Wide Reach",
+  "type": "Spirit",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritResist",
+    "value": 10.0
+   },
+   {
+    "stat": "AbilityRange",
+    "value": 30.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+10% Spirit Resist\n+30% Ability Range",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_ability_power_shard",
+  "name": "Ability Reset",
+  "type": "Spirit",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritResist",
+    "value": 5.0
+   },
+   {
+    "stat": "WeaponResist",
+    "value": 5.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+5% Spirit Resist\n+5% Bullet Resist",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_discord",
+  "name": "Ally Thorns",
+  "type": "Spirit",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 100.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+100 Max Health",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_arctic_blast",
+  "name": "Deep Freeze",
+  "type": "Spirit",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritResist",
+    "value": 10.0
+   }
+  ],
+  "active": {
+   "target": "Self",
+   "cooldown": 24.0,
+   "duration": 4.0,
+   "range": 0.0,
+   "radius": 1120.0,
+   "area_team": "Enemies",
+   "damage": 175.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+10% Spirit Resist\nActive (24s cooldown): 175 Spirit Damage",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_mystic_reverb",
+  "name": "Echoing Drain",
+  "type": "Spirit",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritLifesteal",
+    "value": 8.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "ImbuedHit",
+    "cooldown": 6.25,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 50.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "MoveSlowPercent",
+      "value": -32.0
+     }
+    ],
+    "duration": 3.0,
+    "max_stacks": 0,
+    "radius": 1120.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": true,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": true,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+8% Spirit Lifesteal\nImbue: pick an ability\nOn imbued hit: 50% of the hit to others, Target -32 Move Slow Percent, for 3s, 16m radius, 6.25s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_ability_refresher",
+  "name": "Full Reset",
+  "type": "Spirit",
+  "tier": 4,
+  "cost": 6400,
+  "status": "unsupported",
+  "in_shop": false,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_aoe_root",
+  "name": "Gravity Snare",
+  "type": "Spirit",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "AbilityRange",
+    "value": 8.0
+   },
+   {
+    "stat": "SprintSpeed",
+    "value": 83.33333333333334
+   }
+  ],
+  "active": {
+   "target": "Ground",
+   "cooldown": 42.0,
+   "duration": 4.0,
+   "range": 2100.0,
+   "radius": 840.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "MoveSlowPercent",
+     "value": -28.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": true
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+8% Ability Range\n+0.75 m/s Out of Combat Speed\nActive (42s cooldown): Pull enemies together, Weakens for 4s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_transcendent_cooldown",
+  "name": "Greater Cooldown Reduction",
+  "type": "Spirit",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [
+   "ITEM_COOLDOWN_REDUCTION_PERCENTAGE"
+  ],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 4.0
+   },
+   {
+    "stat": "CooldownReduction",
+    "value": 25.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+4 Out of Combat Regen\n+25% Cooldown Reduction",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_magic_carpet",
+  "name": "Hover Board",
+  "type": "Spirit",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "AbilityDuration",
+    "value": 15.0
+   },
+   {
+    "stat": "MaxHealth",
+    "value": 125.0
+   },
+   {
+    "stat": "SpiritPower",
+    "value": 14.0
+   },
+   {
+    "stat": "AirControl",
+    "value": 25.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+15% Ability Duration\n+125 Max Health\n+14 Spirit Power\n+25% Air Control",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_focus_lens",
+  "name": "Mute Lens",
+  "type": "Spirit",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "FireRatePercent",
+    "value": 10.0
+   }
+  ],
+  "active": {
+   "target": "Enemy",
+   "cooldown": 40.0,
+   "duration": 4.5,
+   "range": 1750.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "SpiritResist",
+     "value": -9.0
+    },
+    {
+     "stat": "SpiritPower",
+     "value": -30.0
+    }
+   ],
+   "statuses": [
+    "Silence"
+   ],
+   "status_duration": 4.5,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+10% Fire Rate\nActive (40s cooldown): Weakens for 4.5s, Silence for 4.5s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_ethereal_bullets",
+  "name": "Reload Arcana",
+  "type": "Spirit",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "AmmoPercent",
+    "value": 20.0
+   },
+   {
+    "stat": "SpiritPower",
+    "value": 7.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "ImbuedHit",
+    "cooldown": 15.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 60.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   },
+   {
+    "trigger": "ImbuedCast",
+    "cooldown": 15.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "FireRatePercent",
+      "value": 22.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 12.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": true,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+20% Ammo\n+7 Spirit Power\nImbue: pick an ability\nOn imbued hit: 60 Spirit Damage, 15s cooldown\nOn imbued cast: You +22 Fire Rate Percent, for 12s, 15s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_spirit_burn",
+  "name": "Spirit Ember",
+  "type": "Spirit",
+  "tier": 4,
+  "cost": 6400,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "AbilityRange",
+    "value": 6.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "SpiritHit",
+    "cooldown": 20.0,
+    "chance": 0.0,
+    "min_damage": 500.0,
+    "damage_window": 5.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 50.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "HealingReduction",
+      "value": 70.0
+     }
+    ],
+    "duration": 8.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 24.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 8.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+6% Ability Range\nOn spirit damage (500+ damage in 5s): 50 Spirit Damage, 24 Spirit Damage per second for 8s, Target +70 Healing Reduction, for 8s, 20s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_escalating_exposure",
+  "name": "Stacking Exposure",
+  "type": "Spirit",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [
+   "TECH_RESIST_REDUCTION"
+  ],
+  "stats": [
+   {
+    "stat": "SpiritResist",
+    "value": 17.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "SpiritHit",
+    "cooldown": 0.7,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "SpiritResist",
+      "value": -4.5
+     }
+    ],
+    "duration": 12.0,
+    "max_stacks": 12,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+17% Spirit Resist\nOn spirit damage: Target -4.5 Spirit Resist, for 12s, stacks 12 times, 0.7s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_boundless_spirit",
+  "name": "Supreme Spirit",
+  "type": "Spirit",
+  "tier": 4,
+  "cost": 6400,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritPower",
+    "value": 30.0
+   },
+   {
+    "stat": "MaxHealth",
+    "value": 75.0
+   },
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 4.0
+   },
+   {
+    "stat": "SpiritPowerPercent",
+    "value": 15.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+30 Spirit Power\n+75 Max Health\n+4 Out of Combat Regen\n+15% Spirit Power",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_glitch",
+  "name": "Total Lockdown",
+  "type": "Spirit",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": {
+   "target": "Enemy",
+   "cooldown": 55.0,
+   "duration": 3.25,
+   "range": 1400.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [],
+   "statuses": [
+    "Silence",
+    "Disarm"
+   ],
+   "status_duration": 3.25,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\nActive (55s cooldown): Silence and Disarm for 3.25s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_ultimate_burst",
+  "name": "Ultimate Stun",
+  "type": "Spirit",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [
+   "MOVEMENT_SPEED_SLOW_PERCENT"
+  ],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 50.0
+   },
+   {
+    "stat": "SprintSpeed",
+    "value": 83.33333333333334
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+50 Max Health\n+0.75 m/s Out of Combat Speed",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_self_bubble",
+  "name": "Void Step",
+  "type": "Spirit",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": {
+   "target": "Self",
+   "cooldown": 37.0,
+   "duration": 4.0,
+   "range": 0.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 5.0,
+   "timed_stats": [
+    {
+     "stat": "SpiritResist",
+     "value": 30.0
+    },
+    {
+     "stat": "SpiritPower",
+     "value": 20.0
+    },
+    {
+     "stat": "MoveSpeed",
+     "value": 333.33333333333337
+    }
+   ],
+   "statuses": [
+    "Invulnerable",
+    "Silence",
+    "Disarm"
+   ],
+   "status_duration": 4.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\nActive (37s cooldown): Buffs for 4s, Invulnerable and Silence and Disarm for 4s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_omnicharge_pendant",
+  "name": "Charge Seal",
+  "type": "Spirit",
+  "tier": 5,
+  "cost": 9999,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritPower",
+    "value": 50.0
+   },
+   {
+    "stat": "ChargeCooldownReduction",
+    "value": 70.0
+   },
+   {
+    "stat": "CooldownReduction",
+    "value": 30.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "9999 Souls\n+50 Spirit Power\n+70% Faster Charges\n+30% Cooldown Reduction",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_mystical_piano",
+  "name": "Falling Stun",
+  "type": "Spirit",
+  "tier": 5,
+  "cost": 9999,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": {
+   "target": "Ground",
+   "cooldown": 23.0,
+   "duration": 1.7,
+   "range": 0.0,
+   "radius": 840.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [],
+   "statuses": [
+    "Stun"
+   ],
+   "status_duration": 2.0,
+   "cleanse": false,
+   "delay": 1.7,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "9999 Souls\nActive (23s cooldown): after 1.7s, Stun for 2s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_shivas_bracelet",
+  "name": "Imbued Frost",
+  "type": "Spirit",
+  "tier": 5,
+  "cost": 9999,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "While",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "SpiritPower",
+      "value": 70.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   },
+   {
+    "trigger": "ImbuedHit",
+    "cooldown": 10.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 200.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "Stun",
+    "status_duration": 1.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": true,
+  "imbue_stats": [
+   {
+    "stat": "CooldownReduction",
+    "value": 50.0
+   }
+  ],
+  "description": "9999 Souls\nImbue: pick an ability: +50 Cooldown Reduction\nWhile: You +70 Spirit Power\nOn imbued hit: 200 Spirit Damage, Stun for 1s, 10s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_prism_blast",
+  "name": "Laser Void",
+  "type": "Spirit",
+  "tier": 5,
+  "cost": 9999,
+  "status": "unsupported",
+  "in_shop": false,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "9999 Souls",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_shrink_ray",
+  "name": "Mini Mode",
+  "type": "Spirit",
+  "tier": 5,
+  "cost": 9999,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": {
+   "target": "Ally",
+   "cooldown": 30.0,
+   "duration": 60.0,
+   "range": 2800.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "MoveSpeed",
+     "value": 555.5555555555555
+    },
+    {
+     "stat": "FireRatePercent",
+     "value": 20.0
+    }
+   ],
+   "statuses": [
+    "Shrunk"
+   ],
+   "status_duration": 60.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "9999 Souls\nActive (30s cooldown): Buffs for 60s, Shrunk for 60s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_unstable_concoction",
+  "name": "Risky Brew",
+  "type": "Spirit",
+  "tier": 5,
+  "cost": 9999,
+  "status": "unsupported",
+  "in_shop": false,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "9999 Souls",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_patrons_blessing",
+  "name": "Spirit Anthem",
+  "type": "Spirit",
+  "tier": 5,
+  "cost": 9999,
+  "status": "unsupported",
+  "in_shop": false,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "9999 Souls",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_lifestrike_gauntlets",
+  "name": "Draining Punch",
+  "type": "Vitality",
+  "tier": 1,
+  "cost": 800,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MeleeDamage",
+    "value": 12.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "MeleeHit",
+    "cooldown": 8.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 100.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+12% Melee Damage\nOn melee hit: Heal 100, 8s cooldown",
+  "upgrades_to": [
+   "upgrade_boxing_glove"
+  ]
+ },
+ {
+  "id": "upgrade_health",
+  "name": "Extra Health",
+  "type": "Vitality",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 210.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+210 Max Health",
+  "upgrades_to": [
+   "upgrade_chonky",
+   "upgrade_colossus"
+  ]
+ },
+ {
+  "id": "upgrade_endurance",
+  "name": "Extra Regen",
+  "type": "Vitality",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 1.5
+   },
+   {
+    "stat": "HealthRegen",
+    "value": 2.5
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+1.5 Out of Combat Regen\n+2.5 Health Regen",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_improved_stamina",
+  "name": "Extra Stamina",
+  "type": "Vitality",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "StaminaRegenPercent",
+    "value": 12.0
+   },
+   {
+    "stat": "MaxStamina",
+    "value": 1.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+12% Stamina Recovery\n+1 Stamina",
+  "upgrades_to": [
+   "upgrade_arcane_surge",
+   "upgrade_kinetic_sash",
+   "upgrade_superior_stamina"
+  ]
+ },
+ {
+  "id": "upgrade_health_stimpak",
+  "name": "Healing Patch",
+  "type": "Vitality",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [],
+  "active": {
+   "target": "Ally",
+   "cooldown": 70.0,
+   "duration": 20.0,
+   "range": 2100.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "SprintSpeed",
+     "value": 222.22222222222223
+    },
+    {
+     "stat": "HealthRegen",
+     "value": 15.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\nActive (70s cooldown): Buffs for 20s",
+  "upgrades_to": [
+   "upgrade_health_nova",
+   "upgrade_rescue_beam"
+  ]
+ },
+ {
+  "id": "upgrade_melee_rebuttal",
+  "name": "Parry Mender",
+  "type": "Vitality",
+  "tier": 1,
+  "cost": 800,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [
+   "PARRY_COOLDOWN_REDUCTION_FIXED"
+  ],
+  "stats": [
+   {
+    "stat": "MeleeResist",
+    "value": 18.0
+   },
+   {
+    "stat": "MaxHealth",
+    "value": 75.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "Parry",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 100.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 100.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "AllDamagePercent",
+      "value": 30.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 6.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+18% Melee Resist\n+75 Max Health\nOn parry: Returns 100% of the hit, Heal 100% of the damage, You +30 All Damage Percent, for 6s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_grit",
+  "name": "Quick Barrier",
+  "type": "Vitality",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 1.0
+   }
+  ],
+  "active": {
+   "target": "Self",
+   "cooldown": 60.0,
+   "duration": 0.0,
+   "range": 0.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 200.0,
+   "barrier_duration": 4.0,
+   "timed_stats": [],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+1 Out of Combat Regen\nActive (60s cooldown): 200 Barrier",
+  "upgrades_to": [
+   "upgrade_guardian_ward",
+   "upgrade_spirit_bubble",
+   "upgrade_vex_barrier",
+   "upgrade_weapon_shielding"
+  ]
+ },
+ {
+  "id": "upgrade_sprint_booster",
+  "name": "Sprint Shoes",
+  "type": "Vitality",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 2.0
+   },
+   {
+    "stat": "SprintSpeed",
+    "value": 222.22222222222223
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+2 Out of Combat Regen\n+2 m/s Out of Combat Speed",
+  "upgrades_to": [
+   "upgrade_cardio_calibrator",
+   "upgrade_cloaking_device_active",
+   "upgrade_trophy_collector"
+  ]
+ },
+ {
+  "id": "upgrade_guardian_ward",
+  "name": "Ally Barrier",
+  "type": "Vitality",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 1.5
+   },
+   {
+    "stat": "AbilityRange",
+    "value": 8.0
+   }
+  ],
+  "active": {
+   "target": "Ally",
+   "cooldown": 60.0,
+   "duration": 6.0,
+   "range": 2800.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 250.0,
+   "barrier_duration": 6.0,
+   "timed_stats": [
+    {
+     "stat": "MoveSpeed",
+     "value": 305.55555555555554
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+1.5 Out of Combat Regen\n+8% Ability Range\nActive (60s cooldown): 250 Barrier, Buffs for 6s",
+  "upgrades_to": [
+   "upgrade_divine_barrier"
+  ]
+ },
+ {
+  "id": "upgrade_vampire",
+  "name": "Bullet Lifesteal",
+  "type": "Vitality",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 90.0
+   },
+   {
+    "stat": "WeaponDamage",
+    "value": 10.0
+   },
+   {
+    "stat": "WeaponLifesteal",
+    "value": 15.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+90 Max Health\n+10% Weapon Damage\n+15% Bullet Lifesteal",
+  "upgrades_to": [
+   "upgrade_damage_recycler",
+   "upgrade_fury_trance",
+   "upgrade_surging_power"
+  ]
+ },
+ {
+  "id": "upgrade_weapon_shielding",
+  "name": "Bullet Reflex Barrier",
+  "type": "Vitality",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 2.5
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletTaken",
+    "cooldown": 35.0,
+    "chance": 0.0,
+    "min_damage": 250.0,
+    "damage_window": 4.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 300.0,
+    "barrier_duration": 8.0,
+    "self_stats": [
+     {
+      "stat": "WeaponResist",
+      "value": 18.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 8.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+2.5 Out of Combat Regen\nWhen shot (250+ damage in 4s): 300 Barrier, You +18 Weapon Resist, for 8s, 35s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_debuff_reducer",
+  "name": "Debuff Resistance",
+  "type": "Vitality",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 90.0
+   },
+   {
+    "stat": "DebuffResist",
+    "value": 25.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+90 Max Health\n+25% Debuff Resist",
+  "upgrades_to": [
+   "upgrade_spellbreaker",
+   "upgrade_unstoppable"
+  ]
+ },
+ {
+  "id": "upgrade_healing_booster",
+  "name": "Healing Boost",
+  "type": "Vitality",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 2.0
+   },
+   {
+    "stat": "HealingBonus",
+    "value": 20.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+2 Out of Combat Regen\n+20% Healing",
+  "upgrades_to": [
+   "upgrade_healbuff"
+  ]
+ },
+ {
+  "id": "upgrade_magic_shield",
+  "name": "High-Health Spirit Rig",
+  "type": "Vitality",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 2.0
+   },
+   {
+    "stat": "SpiritResist",
+    "value": 18.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "While",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 65.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "SpiritPower",
+      "value": 15.0
+     },
+     {
+      "stat": "CooldownReduction",
+      "value": 5.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+2 Out of Combat Regen\n+18% Spirit Resist\nWhile (above 65% health): You +15 Spirit Power, +5 Cooldown Reduction",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_regenerating_bullet_shield",
+  "name": "High-Health Weapon Rig",
+  "type": "Vitality",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 3.0
+   },
+   {
+    "stat": "WeaponResist",
+    "value": 18.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "While",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 65.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "WeaponDamage",
+      "value": 22.0
+     },
+     {
+      "stat": "FireRatePercent",
+      "value": 7.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+3 Out of Combat Regen\n+18% Bullet Resist\nWhile (above 65% health): You +22 Weapon Damage, +7 Fire Rate Percent",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_trophy_collector",
+  "name": "Kill Streak Charm",
+  "type": "Vitality",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [
+   "WEAPON_DAMAGE_TO_NPC_INCREASE"
+  ],
+  "stats": [
+   {
+    "stat": "SprintSpeed",
+    "value": 222.22222222222223
+   },
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 2.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+2 m/s Out of Combat Speed\n+2 Out of Combat Regen",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_vex_barrier",
+  "name": "Panic Barrier",
+  "type": "Vitality",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 1.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+1 Out of Combat Regen",
+  "upgrades_to": [
+   "upgrade_auto_cleanse"
+  ]
+ },
+ {
+  "id": "upgrade_return_fire",
+  "name": "Retaliation Turret",
+  "type": "Vitality",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponResist",
+    "value": 10.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+10% Bullet Resist",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_cardio_calibrator",
+  "name": "Slow Resistance Brace",
+  "type": "Vitality",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 2.0
+   },
+   {
+    "stat": "MoveSpeed",
+    "value": 222.22222222222223
+   },
+   {
+    "stat": "SlowResist",
+    "value": 25.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+2 Out of Combat Regen\n+2 m/s Move Speed\n+25% Slow Resist",
+  "upgrades_to": [
+   "upgrade_juggernaut"
+  ]
+ },
+ {
+  "id": "upgrade_health_stealing_magic",
+  "name": "Spirit Lifesteal",
+  "type": "Vitality",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 90.0
+   },
+   {
+    "stat": "SpiritPower",
+    "value": 8.0
+   },
+   {
+    "stat": "SpiritLifesteal",
+    "value": 15.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+90 Max Health\n+8 Spirit Power\n+15% Spirit Lifesteal",
+  "upgrades_to": [
+   "upgrade_damage_recycler",
+   "upgrade_infuser",
+   "upgrade_tech_overflow"
+  ]
+ },
+ {
+  "id": "upgrade_spirit_bubble",
+  "name": "Spirit Reflex Barrier",
+  "type": "Vitality",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 2.5
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "SpiritTaken",
+    "cooldown": 45.0,
+    "chance": 0.0,
+    "min_damage": 225.0,
+    "damage_window": 3.5,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 300.0,
+    "barrier_duration": 8.0,
+    "self_stats": [
+     {
+      "stat": "SpiritResist",
+      "value": 15.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 8.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+2.5 Out of Combat Regen\nWhen hit by spirit damage (225+ damage in 3.5s): 300 Barrier, You +15 Spirit Resist, for 8s, 45s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_restorative_locket",
+  "name": "Stored Mending",
+  "type": "Vitality",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritResist",
+    "value": 8.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+8% Spirit Resist",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_healbane",
+  "name": "Wound Curse",
+  "type": "Vitality",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritPower",
+    "value": 7.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "SpiritHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "HealingReduction",
+      "value": 35.0
+     }
+    ],
+    "duration": 8.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+7 Spirit Power\nOn spirit damage: Target +35 Healing Reduction, for 8s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_warp_stone",
+  "name": "Blink Stone",
+  "type": "Vitality",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [],
+  "active": {
+   "target": "Self",
+   "cooldown": 16.0,
+   "duration": 6.0,
+   "range": 770.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "WeaponResist",
+     "value": 30.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 770.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\nActive (16s cooldown): Dash 11m, Buffs for 6s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_chonky",
+  "name": "Calm Recovery",
+  "type": "Vitality",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 375.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "While",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 75.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "MoveSpeed",
+      "value": 166.66666666666669
+     }
+    ],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+375 Max Health\nWhile (above 75% health): You +1.5 m/s Move Speed",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_reduce_debuff_duration",
+  "name": "Cleansing Charm",
+  "type": "Vitality",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritResist",
+    "value": 10.0
+   }
+  ],
+  "active": {
+   "target": "Self",
+   "cooldown": 45.0,
+   "duration": 3.0,
+   "range": 0.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 250.0,
+   "barrier": 0.0,
+   "barrier_duration": 3.0,
+   "timed_stats": [
+    {
+     "stat": "MoveSpeed",
+     "value": 222.22222222222223
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": true,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+10% Spirit Resist\nActive (45s cooldown): Heal 250, Buffs for 3s, Removes debuffs",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_superior_stamina",
+  "name": "Extra Air Move",
+  "type": "Vitality",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [
+   "AIR_MOVE_DISTANCE_INCREASE_PERCENT"
+  ],
+  "stats": [
+   {
+    "stat": "MaxStamina",
+    "value": 2.0
+   },
+   {
+    "stat": "StaminaRegenPercent",
+    "value": 18.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+2 Stamina\n+18% Stamina Recovery",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_health_nova",
+  "name": "Group Heal",
+  "type": "Vitality",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "AbilityRange",
+    "value": 5.0
+   },
+   {
+    "stat": "SpiritPower",
+    "value": 8.0
+   }
+  ],
+  "active": {
+   "target": "Self",
+   "cooldown": 60.0,
+   "duration": 2.0,
+   "range": 0.0,
+   "radius": 1260.0,
+   "area_team": "Allies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "HealthRegen",
+     "value": 162.5
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+5% Ability Range\n+8 Spirit Power\nActive (60s cooldown): Buffs for 2s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_boxing_glove",
+  "name": "Heavy Mitts",
+  "type": "Vitality",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 125.0
+   },
+   {
+    "stat": "MeleeDamage",
+    "value": 16.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "MeleeHit",
+    "cooldown": 4.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 120.0,
+    "heal_percent_of_damage": 35.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "MoveSlowPercent",
+      "value": -48.0
+     }
+    ],
+    "duration": 2.5,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+125 Max Health\n+16% Melee Damage\nOn melee hit: Heal 120, Heal 35% of the damage, Target -48 Move Slow Percent, for 2.5s, 4s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_metal_skin",
+  "name": "Iron Hide",
+  "type": "Vitality",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponResist",
+    "value": 12.0
+   }
+  ],
+  "active": {
+   "target": "Self",
+   "cooldown": 24.0,
+   "duration": 5.0,
+   "range": 0.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "MoveSpeed",
+     "value": -166.66666666666669
+    }
+   ],
+   "statuses": [
+    "BulletImmune"
+   ],
+   "status_duration": 5.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+12% Bullet Resist\nActive (24s cooldown): Buffs for 5s, BulletImmune for 5s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_rescue_beam",
+  "name": "Lifeline Tether",
+  "type": "Vitality",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SprintSpeed",
+    "value": 83.33333333333334
+   },
+   {
+    "stat": "AbilityRange",
+    "value": 6.0
+   }
+  ],
+  "active": {
+   "target": "Ally",
+   "cooldown": 60.0,
+   "duration": 0.0,
+   "range": 2450.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 20.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+0.75 m/s Out of Combat Speed\n+6% Ability Range\nActive (60s cooldown): Heal 20% of max health",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_improved_bullet_armor",
+  "name": "Low-Health Bullet Ward",
+  "type": "Vitality",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 5.0
+   },
+   {
+    "stat": "WeaponResist",
+    "value": 35.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "While",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 50.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "WeaponResist",
+      "value": 15.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+5 Out of Combat Regen\n+35% Bullet Resist\nWhile (below 50% health): You +15 Weapon Resist",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_tech_purge",
+  "name": "Low-Health Spirit Ward",
+  "type": "Vitality",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 3.0
+   },
+   {
+    "stat": "SpiritResist",
+    "value": 30.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "While",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 50.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "SpiritResist",
+      "value": 15.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+3 Out of Combat Regen\n+30% Spirit Resist\nWhile (below 50% health): You +15 Spirit Resist",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_rocket_booster",
+  "name": "Sky Jump",
+  "type": "Vitality",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": {
+   "target": "Self",
+   "cooldown": 45.0,
+   "duration": 2.5,
+   "range": 0.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 200.0,
+   "barrier_duration": 8.0,
+   "timed_stats": [
+    {
+     "stat": "AirControl",
+     "value": 50.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 1890.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\nActive (45s cooldown): 200 Barrier, Launch upwards, Buffs for 2.5s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_counterspell",
+  "name": "Spell Parry",
+  "type": "Vitality",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 50.0
+   },
+   {
+    "stat": "SpiritPower",
+    "value": 5.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+50 Max Health\n+5 Spirit Power",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_veil_walker",
+  "name": "Veil Step",
+  "type": "Vitality",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 125.0
+   },
+   {
+    "stat": "SpiritPower",
+    "value": 6.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+125 Max Health\n+6 Spirit Power",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_fury_trance",
+  "name": "War Trance",
+  "type": "Vitality",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponLifesteal",
+    "value": 15.0
+   },
+   {
+    "stat": "MaxHealth",
+    "value": 100.0
+   },
+   {
+    "stat": "WeaponDamage",
+    "value": 10.0
+   }
+  ],
+  "active": {
+   "target": "Self",
+   "cooldown": 18.0,
+   "duration": 6.5,
+   "range": 0.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "FireRatePercent",
+     "value": 32.0
+    },
+    {
+     "stat": "SpiritResist",
+     "value": 40.0
+    },
+    {
+     "stat": "MoveSpeed",
+     "value": 166.66666666666669
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+15% Bullet Lifesteal\n+100 Max Health\n+10% Weapon Damage\nActive (18s cooldown): Buffs for 6.5s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_damage_recycler",
+  "name": "Anti-Wound Serum",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 180.0
+   },
+   {
+    "stat": "WeaponDamage",
+    "value": 12.0
+   },
+   {
+    "stat": "SpiritPower",
+    "value": 12.0
+   },
+   {
+    "stat": "SpiritLifesteal",
+    "value": 30.0
+   },
+   {
+    "stat": "WeaponLifesteal",
+    "value": 30.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+180 Max Health\n+12% Weapon Damage\n+12 Spirit Power\n+30% Spirit Lifesteal\n+30% Bullet Lifesteal",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_phantom_strike",
+  "name": "Blink Ambush",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponDamage",
+    "value": 15.0
+   },
+   {
+    "stat": "SpiritPower",
+    "value": 8.0
+   }
+  ],
+  "active": {
+   "target": "Enemy",
+   "cooldown": 35.0,
+   "duration": 3.0,
+   "range": 1750.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 75.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "MoveSlowPercent",
+     "value": -40.0
+    }
+   ],
+   "statuses": [
+    "Disarm"
+   ],
+   "status_duration": 3.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": true,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+15% Weapon Damage\n+8 Spirit Power\nActive (35s cooldown): 75 Spirit Damage, Dash to the target, Weakens for 3s, Disarm for 3s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_surging_power",
+  "name": "Blood Rush",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponLifesteal",
+    "value": 15.0
+   },
+   {
+    "stat": "WeaponResist",
+    "value": 10.0
+   },
+   {
+    "stat": "MaxHealth",
+    "value": 100.0
+   },
+   {
+    "stat": "WeaponDamage",
+    "value": 10.0
+   }
+  ],
+  "active": {
+   "target": "Self",
+   "cooldown": 30.0,
+   "duration": 5.0,
+   "range": 0.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "FireRatePercent",
+     "value": 34.0
+    },
+    {
+     "stat": "WeaponLifesteal",
+     "value": 75.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+15% Bullet Lifesteal\n+10% Bullet Resist\n+100 Max Health\n+10% Weapon Damage\nActive (30s cooldown): Buffs for 5s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_divine_barrier",
+  "name": "Cleansing Barrier",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "AbilityRange",
+    "value": 10.0
+   },
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 1.5
+   }
+  ],
+  "active": {
+   "target": "Ally",
+   "cooldown": 55.0,
+   "duration": 6.0,
+   "range": 2800.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 600.0,
+   "barrier_duration": 6.0,
+   "timed_stats": [
+    {
+     "stat": "MoveSpeed",
+     "value": 305.55555555555554
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+10% Ability Range\n+1.5 Out of Combat Regen\nActive (55s cooldown): 600 Barrier, Buffs for 6s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_deflecting_armor",
+  "name": "Deflection Plates",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 130.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+130 Max Health",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_colossus",
+  "name": "Giant Form",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [
+   "BASE_HEALTH_PERCENT"
+  ],
+  "stats": [
+   {
+    "stat": "WeaponDamage",
+    "value": 15.0
+   }
+  ],
+  "active": {
+   "target": "Self",
+   "cooldown": 37.0,
+   "duration": 7.0,
+   "range": 0.0,
+   "radius": 980.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "MoveSlowPercent",
+     "value": -24.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 7.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [
+    {
+     "stat": "WeaponResist",
+     "value": 35.0
+    },
+    {
+     "stat": "SpiritResist",
+     "value": 35.0
+    },
+    {
+     "stat": "MeleeDamage",
+     "value": 30.0
+    }
+   ],
+   "caster_statuses": [
+    "Enlarged"
+   ],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+15% Weapon Damage\nActive (37s cooldown): You +35 Weapon Resist, +35 Spirit Resist, +30 Melee Damage, Weakens for 7s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_healbuff",
+  "name": "Healing Echo",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritResist",
+    "value": 10.0
+   },
+   {
+    "stat": "HealthRegen",
+    "value": 6.0
+   },
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 4.0
+   },
+   {
+    "stat": "HealingBonus",
+    "value": 25.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+10% Spirit Resist\n+6 Health Regen\n+4 Out of Combat Regen\n+25% Healing",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_cheat_death",
+  "name": "Second Wind",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 200.0
+   },
+   {
+    "stat": "WeaponResist",
+    "value": 15.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+200 Max Health\n+15% Bullet Resist",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_juggernaut",
+  "name": "Slowing Armor",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MoveSpeed",
+    "value": 277.77777777777777
+   },
+   {
+    "stat": "MeleeResist",
+    "value": 25.0
+   },
+   {
+    "stat": "HealthRegen",
+    "value": 15.0
+   },
+   {
+    "stat": "SlowResist",
+    "value": 50.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletTaken",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "FireRatePercent",
+      "value": -40.0
+     }
+    ],
+    "duration": 4.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+2.5 m/s Move Speed\n+25% Melee Resist\n+15 Health Regen\n+50% Slow Resist\nWhen shot: Target -40 Fire Rate Percent, for 4s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_spellbreaker",
+  "name": "Spell Buffer",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 90.0
+   },
+   {
+    "stat": "SpiritResist",
+    "value": 18.0
+   },
+   {
+    "stat": "DebuffResist",
+    "value": 25.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+90 Max Health\n+18% Spirit Resist\n+25% Debuff Resist",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_absorbing_armor",
+  "name": "Spirit Absorb Plate",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritResist",
+    "value": 22.0
+   },
+   {
+    "stat": "SpiritPower",
+    "value": 14.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+22% Spirit Resist\n+14 Spirit Power",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_infuser",
+  "name": "Spirit Surge",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritLifesteal",
+    "value": 15.0
+   },
+   {
+    "stat": "SpiritResist",
+    "value": 10.0
+   },
+   {
+    "stat": "MaxHealth",
+    "value": 100.0
+   },
+   {
+    "stat": "SpiritPower",
+    "value": 8.0
+   }
+  ],
+  "active": {
+   "target": "Self",
+   "cooldown": 30.0,
+   "duration": 7.0,
+   "range": 0.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "SpiritPower",
+     "value": 30.0
+    },
+    {
+     "stat": "SpiritLifesteal",
+     "value": 75.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+15% Spirit Lifesteal\n+10% Spirit Resist\n+100 Max Health\n+8 Spirit Power\nActive (30s cooldown): Buffs for 7s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_unstoppable",
+  "name": "Status Immunity",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "DebuffResist",
+    "value": 25.0
+   },
+   {
+    "stat": "MaxHealth",
+    "value": 125.0
+   }
+  ],
+  "active": {
+   "target": "Self",
+   "cooldown": 60.0,
+   "duration": 5.5,
+   "range": 0.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [],
+   "statuses": [
+    "Unstoppable"
+   ],
+   "status_duration": 5.5,
+   "cleanse": true,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+25% Debuff Resist\n+125 Max Health\nActive (60s cooldown): Unstoppable for 5.5s, Removes debuffs",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_auto_cleanse",
+  "name": "Stun Breaker",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 2.0
+   },
+   {
+    "stat": "WeaponResist",
+    "value": 10.0
+   },
+   {
+    "stat": "SpiritResist",
+    "value": 10.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+2 Out of Combat Regen\n+10% Bullet Resist\n+10% Spirit Resist",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_diviners_kevlar",
+  "name": "Ultimate Guard",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [
+   "ULTIMATE_COOLDOWN_REDUCTION_PERCENTAGE"
+  ],
+  "stats": [
+   {
+    "stat": "AbilityDuration",
+    "value": 15.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "UltimateCast",
+    "cooldown": 40.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 1000.0,
+    "barrier_duration": 20.0,
+    "self_stats": [
+     {
+      "stat": "SpiritPower",
+      "value": 40.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 20.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+15% Ability Duration\nOn ultimate: 1000 Barrier, You +40 Spirit Power, for 20s, 40s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_siphon_bullets",
+  "name": "Vital Drain",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponDamage",
+    "value": 15.0
+   },
+   {
+    "stat": "WeaponResist",
+    "value": 10.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+15% Weapon Damage\n+10% Bullet Resist",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_inhibitor",
+  "name": "Weakening Rounds",
+  "type": "Vitality",
+  "tier": 4,
+  "cost": 6400,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponDamage",
+    "value": 10.0
+   },
+   {
+    "stat": "MaxHealth",
+    "value": 150.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 13,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "AllDamagePercent",
+      "value": -30.0
+     },
+     {
+      "stat": "HealingReduction",
+      "value": 40.0
+     }
+    ],
+    "duration": 5.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+10% Weapon Damage\n+150 Max Health\nOn bullet hit (after 13 hits): Target -30 All Damage Percent, +40 Healing Reduction, for 5s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_icarus_wings",
+  "name": "Aerial Edge",
+  "type": "Vitality",
+  "tier": 5,
+  "cost": 9999,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "StaminaRegenPercent",
+    "value": 120.0
+   },
+   {
+    "stat": "AirControl",
+    "value": 100.0
+   },
+   {
+    "stat": "AirControl",
+    "value": 50.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "9999 Souls\n+120% Stamina Recovery\n+100% Air Control\n+50% Air Control",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_nullification_aura",
+  "name": "Buff Purge",
+  "type": "Vitality",
+  "tier": 5,
+  "cost": 9999,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "DebuffResist",
+    "value": 40.0
+   },
+   {
+    "stat": "MaxHealth",
+    "value": 300.0
+   }
+  ],
+  "active": {
+   "target": "Self",
+   "cooldown": 18.0,
+   "duration": 7.0,
+   "range": 0.0,
+   "radius": 1400.0,
+   "area_team": "Enemies",
+   "damage": 250.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "HealingReduction",
+     "value": 100.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "9999 Souls\n+40% Debuff Resist\n+300 Max Health\nActive (18s cooldown): 250 Spirit Damage, Weakens for 7s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_cloak_of_opportunity",
+  "name": "Debuff Block",
+  "type": "Vitality",
+  "tier": 5,
+  "cost": 9999,
+  "status": "unsupported",
+  "in_shop": false,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "9999 Souls",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_celestial_guidance",
+  "name": "Global Cleanse",
+  "type": "Vitality",
+  "tier": 5,
+  "cost": 9999,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": {
+   "target": "Self",
+   "cooldown": 30.0,
+   "duration": 6.0,
+   "range": 0.0,
+   "radius": 69930.0,
+   "area_team": "Allies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 6.0,
+   "timed_stats": [
+    {
+     "stat": "StaminaRegenPercent",
+     "value": 100.0
+    },
+    {
+     "stat": "MoveSpeed",
+     "value": 555.5555555555555
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": true,
+   "delay": 0.0,
+   "heal_max_health_percent": 60.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "9999 Souls\nActive (30s cooldown): Heal 60% of max health, Buffs for 6s, Removes debuffs",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_eternal_gift",
+  "name": "Random Blessing",
+  "type": "Vitality",
+  "tier": 5,
+  "cost": 9999,
+  "status": "unsupported",
+  "in_shop": false,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "9999 Souls",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_electric_slippers",
+  "name": "Slide Dodger",
+  "type": "Vitality",
+  "tier": 5,
+  "cost": 9999,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxStamina",
+    "value": 2.0
+   },
+   {
+    "stat": "SlideDistance",
+    "value": 80.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "9999 Souls\n+2 Stamina\n+80% Slide Distance",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_shadow_strike",
+  "name": "Stamina Stealth",
+  "type": "Vitality",
+  "tier": 5,
+  "cost": 9999,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxStamina",
+    "value": 3.0
+   },
+   {
+    "stat": "MaxHealth",
+    "value": 350.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "9999 Souls\n+3 Stamina\n+350 Max Health",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_close_range",
+  "name": "Close Range Rounds",
+  "type": "Weapon",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MeleeResist",
+    "value": 20.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 1050.0,
+    "bonus_damage_percent": 20.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+20% Melee Resist\nOn bullet hit (within 15m): +20% damage",
+  "upgrades_to": [
+   "upgrade_close_quarter_combat"
+  ]
+ },
+ {
+  "id": "upgrade_non_player_bonus",
+  "name": "Creep Rounds",
+  "type": "Weapon",
+  "tier": 1,
+  "cost": 800,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [
+   "BULLET_RESIST_NON_HERO",
+   "WEAPON_DAMAGE_TO_NPC_INCREASE"
+  ],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 1.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+1 Out of Combat Regen",
+  "upgrades_to": [
+   "upgrade_non_player_bonus_sacrifice"
+  ]
+ },
+ {
+  "id": "upgrade_clip_size",
+  "name": "Extended Clip",
+  "type": "Weapon",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponDamage",
+    "value": 8.0
+   },
+   {
+    "stat": "AmmoPercent",
+    "value": 30.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+8% Weapon Damage\n+30% Ammo",
+  "upgrades_to": [
+   "upgrade_reinforcing_casings",
+   "upgrade_titan_round"
+  ]
+ },
+ {
+  "id": "upgrade_high_velocity_mag",
+  "name": "Fast Rounds",
+  "type": "Weapon",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponDamage",
+    "value": 8.0
+   },
+   {
+    "stat": "BulletSpeedPercent",
+    "value": 45.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+8% Weapon Damage\n+45% Bullet Speed",
+  "upgrades_to": [
+   "upgrade_aprounds",
+   "upgrade_express_shot",
+   "upgrade_pristine_emblem",
+   "upgrade_sharpshooter"
+  ]
+ },
+ {
+  "id": "upgrade_headshot_booster",
+  "name": "Headshot Rounds",
+  "type": "Weapon",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 30.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "Headshot",
+    "cooldown": 9.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 45.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+30 Max Health\nOn headshot: 45 Weapon Damage, 9s cooldown",
+  "upgrades_to": [
+   "upgrade_headhunter"
+  ]
+ },
+ {
+  "id": "upgrade_medic_bullets",
+  "name": "Mending Shot",
+  "type": "Weapon",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponDamage",
+    "value": 6.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 6.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 50.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+6% Weapon Damage\nOn bullet hit: Heal 50, 6s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_rapid_rounds",
+  "name": "Quick Fire",
+  "type": "Weapon",
+  "tier": 1,
+  "cost": 800,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "FireRatePercent",
+    "value": 9.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "800 Souls\n+9% Fire Rate",
+  "upgrades_to": [
+   "upgrade_blitz_bullets",
+   "upgrade_burst_fire"
+  ]
+ },
+ {
+  "id": "upgrade_rechargingbullets",
+  "name": "Charge Rounds",
+  "type": "Weapon",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "AmmoPercent",
+    "value": 20.0
+   },
+   {
+    "stat": "WeaponDamage",
+    "value": 10.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+20% Ammo\n+10% Weapon Damage",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_melee_charge",
+  "name": "Charged Melee",
+  "type": "Weapon",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MeleeDamage",
+    "value": 10.0
+   },
+   {
+    "stat": "WeaponResist",
+    "value": 6.0
+   },
+   {
+    "stat": "MeleeDistance",
+    "value": 50.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "HeavyMeleeHit",
+    "cooldown": 5.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 25.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+10% Melee Damage\n+6% Bullet Resist\n+50% Melee Distance\nOn heavy melee hit: +25% damage, 5s cooldown",
+  "upgrades_to": [
+   "upgrade_crushing_fists"
+  ]
+ },
+ {
+  "id": "upgrade_kinetic_sash",
+  "name": "Dash Loader",
+  "type": "Weapon",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxStamina",
+    "value": 1.0
+   },
+   {
+    "stat": "StaminaRegenPercent",
+    "value": 12.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+1 Stamina\n+12% Stamina Recovery",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_slowing_bullets",
+  "name": "Drag Rounds",
+  "type": "Weapon",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 15,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "MoveSlowPercent",
+      "value": -24.0
+     }
+    ],
+    "duration": 3.5,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\nOn bullet hit (after 15 hits): Target -24 Move Slow Percent, for 3.5s",
+  "upgrades_to": [
+   "upgrade_weighted_shots"
+  ]
+ },
+ {
+  "id": "upgrade_headshot_booster2",
+  "name": "Exposing Headshot",
+  "type": "Weapon",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 60.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "Headshot",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "WeaponResist",
+      "value": -12.0
+     },
+     {
+      "stat": "MeleeResist",
+      "value": -12.0
+     }
+    ],
+    "duration": 12.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+60 Max Health\nOn headshot: Target -12 Weapon Resist, -12 Melee Resist, for 12s",
+  "upgrades_to": [
+   "upgrade_banshee_slugs"
+  ]
+ },
+ {
+  "id": "upgrade_pristine_emblem",
+  "name": "First Strike",
+  "type": "Weapon",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "BulletSpeedPercent",
+    "value": 60.0
+   },
+   {
+    "stat": "WeaponDamage",
+    "value": 8.0
+   },
+   {
+    "stat": "SpiritPower",
+    "value": 7.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 50.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 25.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+60% Bullet Speed\n+8% Weapon Damage\n+7 Spirit Power\nOn bullet hit (target above 50% health): +25% damage",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_intensifying_clip",
+  "name": "Heat-Up Magazine",
+  "type": "Weapon",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "AmmoPercent",
+    "value": 20.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+20% Ammo",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_titan_round",
+  "name": "Huge Magazine",
+  "type": "Weapon",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponDamage",
+    "value": 14.0
+   },
+   {
+    "stat": "AmmoPercent",
+    "value": 100.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+14% Weapon Damage\n+100% Ammo",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_long_range",
+  "name": "Long Range Rounds",
+  "type": "Weapon",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [
+   "BONUS_ATTACK_RANGE_PERCENT"
+  ],
+  "stats": [
+   {
+    "stat": "SprintSpeed",
+    "value": 83.33333333333334
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 1050.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 40.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+0.75 m/s Out of Combat Speed\nOn bullet hit (beyond 15m): +40% damage",
+  "upgrades_to": [
+   "upgrade_sharpshooter"
+  ]
+ },
+ {
+  "id": "upgrade_active_reload",
+  "name": "Perfect Reload",
+  "type": "Weapon",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "AmmoPercent",
+    "value": 20.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+20% Ammo",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_fleetfoot_boots",
+  "name": "Running Gunner",
+  "type": "Weapon",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponDamage",
+    "value": 6.0
+   },
+   {
+    "stat": "SlideDistance",
+    "value": 35.0
+   },
+   {
+    "stat": "WeaponResist",
+    "value": 6.0
+   }
+  ],
+  "active": {
+   "target": "Self",
+   "cooldown": 16.0,
+   "duration": 5.0,
+   "range": 0.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "MoveSpeed",
+     "value": 333.33333333333337
+    },
+    {
+     "stat": "SlowResist",
+     "value": 40.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+6% Weapon Damage\n+35% Slide Distance\n+6% Bullet Resist\nActive (16s cooldown): Buffs for 5s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_crackshot",
+  "name": "Spirit Tip",
+  "type": "Weapon",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritPower",
+    "value": 7.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 8.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 40.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+7 Spirit Power\nOn bullet hit: 40 Spirit Damage, 8s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_split_shot",
+  "name": "Spread Fire",
+  "type": "Weapon",
+  "tier": 2,
+  "cost": 1600,
+  "status": "unsupported",
+  "in_shop": false,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_blitz_bullets",
+  "name": "Swift Fire",
+  "type": "Weapon",
+  "tier": 2,
+  "cost": 1600,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SprintSpeed",
+    "value": 83.33333333333334
+   },
+   {
+    "stat": "FireRatePercent",
+    "value": 20.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+0.75 m/s Out of Combat Speed\n+20% Fire Rate",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_tech_defense_shredders",
+  "name": "Ward Breaker Rounds",
+  "type": "Weapon",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "SpiritResist",
+      "value": -8.0
+     }
+    ],
+    "duration": 8.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\nOn bullet hit: Target -8 Spirit Resist, for 8s",
+  "upgrades_to": [
+   "upgrade_spellslinger_headshots"
+  ]
+ },
+ {
+  "id": "upgrade_weapon_backstabber",
+  "name": "Wound Opener",
+  "type": "Weapon",
+  "tier": 2,
+  "cost": 1600,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 50.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 6.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 560.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "MoveSpeed",
+      "value": 166.66666666666669
+     }
+    ],
+    "target_stats": [
+     {
+      "stat": "WeaponResist",
+      "value": -6.0
+     },
+     {
+      "stat": "MeleeResist",
+      "value": -6.0
+     }
+    ],
+    "duration": 5.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 17.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 5.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "1600 Souls\n+50 Max Health\nOn bullet hit (within 8m): 17 Spirit Damage per second for 5s, Target -6 Weapon Resist, -6 Melee Resist, You +1.5 m/s Move Speed, for 5s, 6s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_chain_lightning",
+  "name": "Arc Rounds",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.2,
+    "chance": 15.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 33.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 560.0,
+    "max_targets": 4,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\nOn bullet hit (15% chance): 33 Spirit Damage, 8m radius, 0.2s cooldown",
+  "upgrades_to": [
+   "upgrade_capacitor"
+  ]
+ },
+ {
+  "id": "upgrade_spellslinger_headshots",
+  "name": "Arcane Breaker Rounds",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 75.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "SpiritResist",
+      "value": -8.0
+     }
+    ],
+    "duration": 8.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   },
+   {
+    "trigger": "Headshot",
+    "cooldown": 2.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "SpiritResist",
+      "value": -7.0
+     }
+    ],
+    "duration": 8.0,
+    "max_stacks": 4,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+75 Max Health\nOn bullet hit: Target -8 Spirit Resist, for 8s\nOn headshot: Target -7 Spirit Resist, for 8s, stacks 4 times, 2s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_reinforcing_casings",
+  "name": "Armoring Hits",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 75.0
+   },
+   {
+    "stat": "WeaponDamage",
+    "value": 18.0
+   },
+   {
+    "stat": "AmmoPercent",
+    "value": 35.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "WeaponResist",
+      "value": 2.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 24.0,
+    "max_stacks": 30,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+75 Max Health\n+18% Weapon Damage\n+35% Ammo\nOn bullet hit: You +2 Weapon Resist, for 24s, stacks 30 times",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_toxic_bullets",
+  "name": "Bleeding Rounds",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 8,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "HealingReduction",
+      "value": 40.0
+     }
+    ],
+    "duration": 4.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 1.9,
+    "dot_duration": 4.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\nOn bullet hit (after 8 hits): 1.9% max health per second for 4s, Target +40 Healing Reduction, for 4s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_blood_tribute",
+  "name": "Blood Engine",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "DebuffResist",
+    "value": 8.0
+   },
+   {
+    "stat": "SpiritResist",
+    "value": 8.0
+   },
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 4.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+8% Debuff Resist\n+8% Spirit Resist\n+4 Out of Combat Regen",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_non_player_bonus_sacrifice",
+  "name": "Blood Offering",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [
+   "BULLET_RESIST_NON_HERO",
+   "WEAPON_DAMAGE_TO_NPC_INCREASE"
+  ],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 2.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+2 Out of Combat Regen",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_close_quarter_combat",
+  "name": "Brawler Rig",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 75.0
+   },
+   {
+    "stat": "MeleeResist",
+    "value": 30.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 1050.0,
+    "bonus_damage_percent": 50.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   },
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 1050.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "MoveSlowPercent",
+      "value": -20.0
+     }
+    ],
+    "duration": 2.5,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+75 Max Health\n+30% Melee Resist\nOn bullet hit (within 15m): +50% damage\nOn bullet hit (within 15m): Target -20 Move Slow Percent, for 2.5s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_express_shot",
+  "name": "Double Tap",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponDamage",
+    "value": 8.0
+   },
+   {
+    "stat": "BulletSpeedPercent",
+    "value": 60.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+8% Weapon Damage\n+60% Bullet Speed",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_thermal_detonator",
+  "name": "Fire Flask",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritPower",
+    "value": 10.0
+   }
+  ],
+  "active": {
+   "target": "Ground",
+   "cooldown": 30.0,
+   "duration": 5.0,
+   "range": 0.0,
+   "radius": 700.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "WeaponResist",
+     "value": -7.0
+    },
+    {
+     "stat": "MeleeResist",
+     "value": -7.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 5.0,
+   "zone_damage_per_second": 45.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+10 Spirit Power\nActive (30s cooldown): 45 Spirit Damage per second in the area for 5s, Weakens for 5s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_hollow_point_rounds",
+  "name": "Full-Health Rounds",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 4.5
+   },
+   {
+    "stat": "MaxHealth",
+    "value": 125.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "While",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 65.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "WeaponDamage",
+      "value": 35.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   },
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 65.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "WeaponResist",
+      "value": -10.0
+     },
+     {
+      "stat": "MeleeResist",
+      "value": -10.0
+     }
+    ],
+    "duration": 8.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+4.5 Out of Combat Regen\n+125 Max Health\nWhile (above 65% health): You +35 Weapon Damage\nOn bullet hit (above 65% health): Target -10 Weapon Resist, -10 Melee Resist, for 8s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_weighted_shots",
+  "name": "Heavy Slugs",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "DebuffResist",
+    "value": 22.0
+   },
+   {
+    "stat": "StaminaRegenPercent",
+    "value": -14.0
+   },
+   {
+    "stat": "MoveSpeed",
+    "value": -55.55555555555556
+   },
+   {
+    "stat": "WeaponDamage",
+    "value": 30.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 15,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "MoveSlowPercent",
+      "value": -24.0
+     }
+    ],
+    "duration": 3.5,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+22% Debuff Resist\n-14% Stamina Recovery\n-0.5 m/s Move Speed\n+30% Weapon Damage\nOn bullet hit (after 15 hits): Target -24 Move Slow Percent, for 3.5s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_burst_fire",
+  "name": "Hit Streak",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SlideDistance",
+    "value": 50.0
+   },
+   {
+    "stat": "FireRatePercent",
+    "value": 10.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 9.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "FireRatePercent",
+      "value": 32.0
+     },
+     {
+      "stat": "MoveSpeed",
+      "value": 138.88888888888889
+     }
+    ],
+    "target_stats": [],
+    "duration": 4.5,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+50% Slide Distance\n+10% Fire Rate\nOn bullet hit: You +32 Fire Rate Percent, +1.25 m/s Move Speed, for 4.5s, 9s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_sharpshooter",
+  "name": "Marksman Scope",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [
+   "BONUS_ATTACK_RANGE_PERCENT",
+   "ZOOM_INCREASE_PERCENT"
+  ],
+  "stats": [
+   {
+    "stat": "BulletSpeedPercent",
+    "value": 60.0
+   },
+   {
+    "stat": "WeaponDamage",
+    "value": 10.0
+   },
+   {
+    "stat": "SprintSpeed",
+    "value": 111.11111111111111
+   },
+   {
+    "stat": "MoveSpeed",
+    "value": -77.77777777777777
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 1050.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 60.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+60% Bullet Speed\n+10% Weapon Damage\n+1 m/s Out of Combat Speed\n-0.7 m/s Move Speed\nOn bullet hit (beyond 15m): +60% damage",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_berserker",
+  "name": "Rage Engine",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponResist",
+    "value": 8.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "DamageTaken",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 120.0,
+    "damage_window": 10.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "WeaponDamage",
+      "value": 7.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 10.0,
+    "max_stacks": 10,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+8% Bullet Resist\nWhen damaged (120+ damage in 10s): You +7 Weapon Damage, for 10s, stacks 10 times",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_bulletshredimbue",
+  "name": "Range And Shred",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "ImbuedHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "WeaponDamage",
+      "value": 20.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 20.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": true,
+  "imbue_stats": [
+   {
+    "stat": "AbilityRange",
+    "value": 22.0
+   }
+  ],
+  "description": "3200 Souls\nImbue: pick an ability: +22 Ability Range\nOn imbued hit: You +20 Weapon Damage, for 20s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_headhunter",
+  "name": "Skull Taker",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "WeaponDamage",
+    "value": 5.0
+   },
+   {
+    "stat": "MaxHealth",
+    "value": 50.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "Headshot",
+    "cooldown": 8.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 75.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 4.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "MoveSpeed",
+      "value": 194.44444444444446
+     }
+    ],
+    "target_stats": [],
+    "duration": 3.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+5% Weapon Damage\n+50 Max Health\nOn headshot: 75 Weapon Damage, Heal 4% of max health, You +1.75 m/s Move Speed, for 3s, 8s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_bullet_armor_reduction_aura",
+  "name": "Suppression Field",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 100.0
+   },
+   {
+    "stat": "SprintSpeed",
+    "value": 83.33333333333334
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "Aura",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "WeaponResist",
+      "value": -10.0
+     },
+     {
+      "stat": "MeleeResist",
+      "value": -10.0
+     },
+     {
+      "stat": "FireRatePercent",
+      "value": -15.0
+     }
+    ],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 1050.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+100 Max Health\n+0.75 m/s Out of Combat Speed\nAura: Target -10 Weapon Resist, -10 Melee Resist, -15 Fire Rate Percent, 15m radius",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_cloaking_device_active",
+  "name": "Vanish Cloak",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "OutOfCombatRegen",
+    "value": 5.0
+   },
+   {
+    "stat": "SprintSpeed",
+    "value": 222.22222222222223
+   }
+  ],
+  "active": {
+   "target": "Self",
+   "cooldown": 37.0,
+   "duration": 13.0,
+   "range": 0.0,
+   "radius": 0.0,
+   "area_team": "Enemies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "WeaponDamage",
+     "value": 50.0
+    },
+    {
+     "stat": "SpiritPower",
+     "value": 25.0
+    }
+   ],
+   "statuses": [
+    "Stealth"
+   ],
+   "status_duration": 13.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+5 Out of Combat Regen\n+2 m/s Out of Combat Speed\nActive (37s cooldown): Buffs for 13s, Stealth for 13s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_dps_aura",
+  "name": "War Banner",
+  "type": "Weapon",
+  "tier": 3,
+  "cost": 3200,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SprintSpeed",
+    "value": 166.66666666666669
+   }
+  ],
+  "active": {
+   "target": "Self",
+   "cooldown": 22.0,
+   "duration": 7.0,
+   "range": 0.0,
+   "radius": 2450.0,
+   "area_team": "Allies",
+   "damage": 0.0,
+   "heal": 0.0,
+   "barrier": 0.0,
+   "barrier_duration": 0.0,
+   "timed_stats": [
+    {
+     "stat": "FireRatePercent",
+     "value": 26.0
+    },
+    {
+     "stat": "MoveSpeed",
+     "value": 250.0
+    }
+   ],
+   "statuses": [],
+   "status_duration": 0.0,
+   "cleanse": false,
+   "delay": 0.0,
+   "heal_max_health_percent": 0.0,
+   "caster_stats": [],
+   "caster_statuses": [],
+   "dot_damage_per_second": 0.0,
+   "dot_max_health_percent": 0.0,
+   "dot_duration": 0.0,
+   "zone_duration": 0.0,
+   "zone_damage_per_second": 0.0,
+   "dash_distance": 0.0,
+   "dash_to_target": false,
+   "launch_speed": 0.0,
+   "pull_to_point": false
+  },
+  "procs": [
+   {
+    "trigger": "Aura",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "WeaponResist",
+      "value": 17.0
+     }
+    ],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 2450.0,
+    "max_targets": 0,
+    "area_team": "Allies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "3200 Souls\n+1.5 m/s Out of Combat Speed\nActive (22s cooldown): Buffs for 7s\nAura: Target +17 Weapon Resist, 35m radius",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_ricochet",
+  "name": "Bounce Rounds",
+  "type": "Weapon",
+  "tier": 4,
+  "cost": 6400,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "FireRatePercent",
+    "value": 18.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 65.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 910.0,
+    "max_targets": 2,
+    "area_team": "Enemies",
+    "skip_hit_target": true,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+18% Fire Rate\nOn bullet hit: 65% of the hit to others, 13m radius",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_enchanted_holsters",
+  "name": "Cast And Fire",
+  "type": "Weapon",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "CooldownReduction",
+    "value": 5.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "AbilityCast",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "FireRatePercent",
+      "value": 11.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 18.0,
+    "max_stacks": 6,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+5% Cooldown Reduction\nOn cast: You +11 Fire Rate Percent, for 18s, stacks 6 times",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_tech_overflow",
+  "name": "Combat Flow",
+  "type": "Weapon",
+  "tier": 4,
+  "cost": 6400,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "AbilityDuration",
+    "value": 13.0
+   },
+   {
+    "stat": "SpiritLifesteal",
+    "value": 15.0
+   },
+   {
+    "stat": "MaxHealth",
+    "value": 90.0
+   },
+   {
+    "stat": "SpiritPower",
+    "value": 8.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 10,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "FireRatePercent",
+      "value": 25.0
+     },
+     {
+      "stat": "SpiritPower",
+      "value": 30.0
+     },
+     {
+      "stat": "SpiritLifesteal",
+      "value": 10.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 15.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+13% Ability Duration\n+15% Spirit Lifesteal\n+90 Max Health\n+8 Spirit Power\nOn bullet hit (after 10 hits): You +25 Fire Rate Percent, +30 Spirit Power, +10 Spirit Lifesteal, for 15s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_proc_silence",
+  "name": "Dampening Rounds",
+  "type": "Weapon",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "SpiritResist",
+    "value": 12.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "SpiritPower",
+      "value": -25.0
+     }
+    ],
+    "duration": 6.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   },
+   {
+    "trigger": "BulletHit",
+    "cooldown": 10.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 10,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "Silence",
+    "status_duration": 2.5,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+12% Spirit Resist\nOn bullet hit: Target -25 Spirit Power, for 6s\nOn bullet hit (after 10 hits): Silence for 2.5s, 10s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_critshot",
+  "name": "Fortune Rounds",
+  "type": "Weapon",
+  "tier": 4,
+  "cost": 6400,
+  "status": "complete",
+  "in_shop": true,
+  "needs_effect": false,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "AmmoPercent",
+    "value": 30.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "BulletHit",
+    "cooldown": 0.0,
+    "chance": 25.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 100.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [],
+    "duration": 0.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+30% Ammo\nOn bullet hit (25% chance): +100% damage",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_fervor",
+  "name": "Last Stand",
+  "type": "Weapon",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 160.0
+   },
+   {
+    "stat": "FireRatePercent",
+    "value": 15.0
+   },
+   {
+    "stat": "WeaponLifesteal",
+    "value": 10.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "While",
+    "cooldown": 16.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 50.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [
+     {
+      "stat": "MoveSpeed",
+      "value": 444.44444444444446
+     },
+     {
+      "stat": "FireRatePercent",
+      "value": 40.0
+     },
+     {
+      "stat": "DebuffResist",
+      "value": 40.0
+     }
+    ],
+    "target_stats": [],
+    "duration": 10.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+160 Max Health\n+15% Fire Rate\n+10% Bullet Lifesteal\nWhile (below 50% health): You +4 m/s Move Speed, +40 Fire Rate Percent, +40 Debuff Resist, for 10s, 16s cooldown",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_aprounds",
+  "name": "Piercing Rounds",
+  "type": "Weapon",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "BulletSpeedPercent",
+    "value": 60.0
+   },
+   {
+    "stat": "WeaponDamage",
+    "value": 8.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+60% Bullet Speed\n+8% Weapon Damage",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_banshee_slugs",
+  "name": "Shattering Headshot",
+  "type": "Weapon",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MaxHealth",
+    "value": 125.0
+   }
+  ],
+  "active": null,
+  "procs": [
+   {
+    "trigger": "Headshot",
+    "cooldown": 0.0,
+    "chance": 0.0,
+    "min_damage": 0.0,
+    "damage_window": 0.0,
+    "build_up_hits": 0,
+    "health_above": 0.0,
+    "health_below": 0.0,
+    "target_health_above": 0.0,
+    "min_range": 0.0,
+    "max_range": 0.0,
+    "bonus_damage_percent": 0.0,
+    "spirit_damage": 0.0,
+    "weapon_damage": 0.0,
+    "target_health_percent": 0.0,
+    "percent_of_hit": 0.0,
+    "heal": 0.0,
+    "heal_percent_of_damage": 0.0,
+    "heal_max_health_percent": 0.0,
+    "barrier": 0.0,
+    "barrier_duration": 0.0,
+    "self_stats": [],
+    "target_stats": [
+     {
+      "stat": "WeaponResist",
+      "value": -16.0
+     },
+     {
+      "stat": "MeleeResist",
+      "value": -16.0
+     },
+     {
+      "stat": "SpiritResist",
+      "value": -16.0
+     },
+     {
+      "stat": "HealingReduction",
+      "value": 40.0
+     }
+    ],
+    "duration": 12.0,
+    "max_stacks": 0,
+    "radius": 0.0,
+    "max_targets": 0,
+    "area_team": "Enemies",
+    "skip_hit_target": false,
+    "dot_damage_per_second": 0.0,
+    "dot_max_health_percent": 0.0,
+    "dot_duration": 0.0,
+    "status": "None",
+    "status_duration": 0.0,
+    "cleanse": false
+   }
+  ],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+125 Max Health\nOn headshot: Target -16 Weapon Resist, -16 Melee Resist, -16 Spirit Resist, +40 Healing Reduction, for 12s",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_capacitor",
+  "name": "Storm Cell",
+  "type": "Weapon",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "FireRatePercent",
+    "value": 5.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+5% Fire Rate",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_crushing_fists",
+  "name": "Stun Fists",
+  "type": "Weapon",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MeleeDamage",
+    "value": 22.0
+   },
+   {
+    "stat": "WeaponResist",
+    "value": 12.0
+   },
+   {
+    "stat": "MeleeDistance",
+    "value": 60.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+22% Melee Damage\n+12% Bullet Resist\n+60% Melee Distance",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_glass_cannon",
+  "name": "Trophy Fire Rate",
+  "type": "Weapon",
+  "tier": 4,
+  "cost": 6400,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [
+   "HEALTH_MAX_PERCENT"
+  ],
+  "stats": [
+   {
+    "stat": "WeaponDamage",
+    "value": 85.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "6400 Souls\n+85% Weapon Damage",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_eldritch_shot",
+  "name": "Cursed Bullet",
+  "type": "Weapon",
+  "tier": 5,
+  "cost": 9999,
+  "status": "unsupported",
+  "in_shop": false,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "9999 Souls",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_infinite_rounds",
+  "name": "Endless Rounds",
+  "type": "Weapon",
+  "tier": 5,
+  "cost": 9999,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "BulletSpeedPercent",
+    "value": 200.0
+   },
+   {
+    "stat": "FireRatePercent",
+    "value": 35.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "9999 Souls\n+200% Bullet Speed\n+35% Fire Rate",
+  "upgrades_to": []
+ },
+ {
+  "id": "upgrade_runed_gauntlets",
+  "name": "Parry Piercer",
+  "type": "Weapon",
+  "tier": 5,
+  "cost": 9999,
+  "status": "partial",
+  "in_shop": true,
+  "needs_effect": true,
+  "needs_stats": [],
+  "stats": [
+   {
+    "stat": "MeleeResist",
+    "value": 50.0
+   },
+   {
+    "stat": "MeleeDamage",
+    "value": 30.0
+   },
+   {
+    "stat": "MeleeDistance",
+    "value": 150.0
+   }
+  ],
+  "active": null,
+  "procs": [],
+  "imbue": false,
+  "imbue_stats": [],
+  "description": "9999 Souls\n+50% Melee Resist\n+30% Melee Damage\n+150% Melee Distance",
+  "upgrades_to": []
+ }
+]

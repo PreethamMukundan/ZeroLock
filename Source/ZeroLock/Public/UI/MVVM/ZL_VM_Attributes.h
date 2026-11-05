@@ -112,4 +112,18 @@ private:
 
 	void BroadcastStaminaDerived();
 
+
+	//Souls
+public:
+	int32 GetSouls() const {return Souls;}
+	void SetSouls(const int32& souls);
+
+	// "1,200"
+	UFUNCTION(BlueprintPure,FieldNotify)
+	FText GetSoulsText() const { return FText::AsNumber(Souls); }
+
+private:
+	UPROPERTY(BlueprintReadOnly,FieldNotify,Getter,Setter,meta=(AllowPrivateAccess=true))
+	int32 Souls = 0;
+
 };

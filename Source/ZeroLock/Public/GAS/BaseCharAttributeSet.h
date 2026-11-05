@@ -216,6 +216,50 @@ public:
 	FGameplayAttributeData DurationExtension;
 	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, DurationExtension)
 
+	/** The AbilityCharges_N that goes with a MaxCharges_N, invalid for any other attribute. */
+	static FGameplayAttribute GetChargeAttributeForMax(const FGameplayAttribute& MaxAttribute);
+
+	// Item stats. Speeds are cm/s, the rest percent as whole numbers. OutOfCombatRegen is health per second.
+	UPROPERTY(BlueprintReadOnly, Category = "Item Stats", ReplicatedUsing = OnRep_OutOfCombatRegen)
+	FGameplayAttributeData OutOfCombatRegen;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, OutOfCombatRegen)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Item Stats", ReplicatedUsing = OnRep_MoveSpeedBonus)
+	FGameplayAttributeData MoveSpeedBonus;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, MoveSpeedBonus)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Item Stats", ReplicatedUsing = OnRep_SprintSpeedBonus)
+	FGameplayAttributeData SprintSpeedBonus;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, SprintSpeedBonus)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Item Stats", ReplicatedUsing = OnRep_BulletSpeedBonus)
+	FGameplayAttributeData BulletSpeedBonus;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, BulletSpeedBonus)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Item Stats", ReplicatedUsing = OnRep_SlowResistance)
+	FGameplayAttributeData SlowResistance;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, SlowResistance)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Item Stats", ReplicatedUsing = OnRep_SlideDistanceBonus)
+	FGameplayAttributeData SlideDistanceBonus;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, SlideDistanceBonus)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Item Stats", ReplicatedUsing = OnRep_MeleeDistanceBonus)
+	FGameplayAttributeData MeleeDistanceBonus;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, MeleeDistanceBonus)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Item Stats", ReplicatedUsing = OnRep_AirControlBonus)
+	FGameplayAttributeData AirControlBonus;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, AirControlBonus)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Item Stats", ReplicatedUsing = OnRep_AbilityRangeBonus)
+	FGameplayAttributeData AbilityRangeBonus;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, AbilityRangeBonus)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Item Stats", ReplicatedUsing = OnRep_ChargeCooldownReduction)
+	FGameplayAttributeData ChargeCooldownReduction;
+	ATTRIBUTE_ACCESSORS(UBaseCharAttributeSet, ChargeCooldownReduction)
+
 	
 
 	//AbilityCharges
@@ -388,6 +432,27 @@ protected:
 
 	UFUNCTION()
 	virtual void OnRep_DurationExtension(const FGameplayAttributeData& OldValue);
+
+	UFUNCTION()
+	virtual void OnRep_OutOfCombatRegen(const FGameplayAttributeData& OldValue);
+	UFUNCTION()
+	virtual void OnRep_MoveSpeedBonus(const FGameplayAttributeData& OldValue);
+	UFUNCTION()
+	virtual void OnRep_SprintSpeedBonus(const FGameplayAttributeData& OldValue);
+	UFUNCTION()
+	virtual void OnRep_BulletSpeedBonus(const FGameplayAttributeData& OldValue);
+	UFUNCTION()
+	virtual void OnRep_SlowResistance(const FGameplayAttributeData& OldValue);
+	UFUNCTION()
+	virtual void OnRep_SlideDistanceBonus(const FGameplayAttributeData& OldValue);
+	UFUNCTION()
+	virtual void OnRep_MeleeDistanceBonus(const FGameplayAttributeData& OldValue);
+	UFUNCTION()
+	virtual void OnRep_AirControlBonus(const FGameplayAttributeData& OldValue);
+	UFUNCTION()
+	virtual void OnRep_AbilityRangeBonus(const FGameplayAttributeData& OldValue);
+	UFUNCTION()
+	virtual void OnRep_ChargeCooldownReduction(const FGameplayAttributeData& OldValue);
 	
 };
 

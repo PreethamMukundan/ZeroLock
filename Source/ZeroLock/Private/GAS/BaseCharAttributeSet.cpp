@@ -178,6 +178,9 @@ void UBaseCharAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 			{
 				float LocalDamageDone = GetDamage();
 				SetDamage(0.f);
+				TargetCharacter->GetMyAbilitySystemComp()->MarkInCombat();
+				SourceCharacter->GetMyAbilitySystemComp()->MarkInCombat();
+				SourceCharacter->GetMyAbilitySystemComp()->LastDamageDealt = LocalDamageDone;
 				// Non-lethal damage (e.g. Affliction) can take the target down to 1 health, never kill it.
 				if (SpecAssetTags.HasTag(ZerolockGameplayTagsForBinding::TAG_DAMAGE_NONLETHAL))
 				{
@@ -282,6 +285,15 @@ void UBaseCharAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 		SetAbilityCharges_4(FMath::Clamp(GetAbilityCharges_4(), 0.0f, GetMaxCharges_4()));
 }
 
+FGameplayAttribute UBaseCharAttributeSet::GetChargeAttributeForMax(const FGameplayAttribute& MaxAttribute)
+{
+	if (MaxAttribute == GetMaxCharges_1Attribute()) return GetAbilityCharges_1Attribute();
+	if (MaxAttribute == GetMaxCharges_2Attribute()) return GetAbilityCharges_2Attribute();
+	if (MaxAttribute == GetMaxCharges_3Attribute()) return GetAbilityCharges_3Attribute();
+	if (MaxAttribute == GetMaxCharges_4Attribute()) return GetAbilityCharges_4Attribute();
+	return FGameplayAttribute();
+}
+
 void UBaseCharAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
 {
 	Super::PostAttributeChange(Attribute, OldValue, NewValue);
@@ -303,6 +315,16 @@ void UBaseCharAttributeSet::PostAttributeChange(const FGameplayAttribute& Attrib
 	
 		//TargetChar->GetCharacterMovement()->JumpZVelocity = NewValue;
 	
+	}
+	else if (TargetChar->HasAuthority() && GetChargeAttributeForMax(Attribute).IsValid())
+	{
+		// An item added charges: they arrive full. Losing the item takes back whatever no longer fits.
+		if (UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent())
+		{
+			const FGameplayAttribute ChargeAttribute = GetChargeAttributeForMax(Attribute);
+			const float Gained = FMath::Max(NewValue - OldValue, 0.0f);
+			ASC->SetNumericAttributeBase(ChargeAttribute, FMath::Clamp(ASC->GetNumericAttributeBase(ChargeAttribute) + Gained, 0.0f, NewValue));
+		}
 	}
 	else if (Attribute == GetFireRateAttribute())
 	{
@@ -372,6 +394,16 @@ void UBaseCharAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet,CooldownReduction, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet,DebufReduction, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet,DurationExtension, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, OutOfCombatRegen, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, MoveSpeedBonus, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, SprintSpeedBonus, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, BulletSpeedBonus, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, SlowResistance, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, SlideDistanceBonus, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, MeleeDistanceBonus, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, AirControlBonus, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, AbilityRangeBonus, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, ChargeCooldownReduction, COND_None, REPNOTIFY_OnChanged);
 
 
 	DOREPLIFETIME_CONDITION_NOTIFY(UBaseCharAttributeSet, AbilityCharges_1, COND_None, REPNOTIFY_Always);
@@ -623,6 +655,56 @@ void UBaseCharAttributeSet::OnRep_CooldownReduction(const FGameplayAttributeData
 void UBaseCharAttributeSet::OnRep_DebufReduction(const FGameplayAttributeData& OldValue)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet,DebufReduction, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_OutOfCombatRegen(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, OutOfCombatRegen, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_MoveSpeedBonus(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, MoveSpeedBonus, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_SprintSpeedBonus(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, SprintSpeedBonus, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_BulletSpeedBonus(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, BulletSpeedBonus, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_SlowResistance(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, SlowResistance, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_SlideDistanceBonus(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, SlideDistanceBonus, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_MeleeDistanceBonus(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, MeleeDistanceBonus, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_AirControlBonus(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, AirControlBonus, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_AbilityRangeBonus(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, AbilityRangeBonus, OldValue);
+}
+
+void UBaseCharAttributeSet::OnRep_ChargeCooldownReduction(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBaseCharAttributeSet, ChargeCooldownReduction, OldValue);
 }
 
 void UBaseCharAttributeSet::OnRep_DurationExtension(const FGameplayAttributeData& OldValue)

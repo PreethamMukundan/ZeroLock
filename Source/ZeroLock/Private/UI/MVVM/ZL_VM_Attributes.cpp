@@ -107,6 +107,14 @@ void UZL_VM_Attributes::BroadcastStaminaDerived()
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetStaminaText);
 }
 
+void UZL_VM_Attributes::SetSouls(const int32& souls)
+{
+	if (UE_MVVM_SET_PROPERTY_VALUE(Souls,souls))
+	{
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetSoulsText);
+	}
+}
+
 void UZL_VM_Attributes::SetVM_ChargePhase(UZL_VM_ChargePercent* inVM)
 {
 

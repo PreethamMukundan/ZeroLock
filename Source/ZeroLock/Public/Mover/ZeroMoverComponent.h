@@ -168,6 +168,13 @@ public:
 	 */
 	float GetMoveSpeedMultiplier() const;
 
+	/** Fills the Item* input fields from the owner's attributes. Sprint speed only counts out of combat. */
+	void ReadItemMoveStats(FZeroMovementInputs& Inputs) const;
+
+	/** Slide and melee stats for this sim step, in percent, for the modes. Set from the input each step. */
+	float GetItemSlideDistance() const { return ItemSlideDistance; }
+	float GetItemMeleeDistance() const { return ItemMeleeDistance; }
+
 	/** The zipline mode's name in the mode map (UZeroZiplineMode); counts as ground for the jump/air-dash counters. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Zipline")
 	FName ZipliningModeName = FName("Ziplining");
@@ -248,6 +255,20 @@ public:
 	bool IsResimulatingStep() const { return bStepIsResimulating; }
 
 protected:
+	/**
+	 * Walking MaxSpeed and air control for this step, from the input. Runs every step, resimulated ones included, so the
+	 * settings always match the input being replayed. Crouched steps keep the stance's speed. The server caps the input
+	 * at what its own attributes allow.
+	 */
+	void ApplyItemMoveStats(const FZeroMovementInputs& Inputs);
+
+	float ItemSlideDistance = 0.0f;
+	float ItemMeleeDistance = 0.0f;
+
+	/** The BP's values, before item stats. Negative until read. */
+	float BaseMaxSpeed = -1.0f;
+	float BaseAirControl = -1.0f;
+
 	void HandleRooted(const FMoverTimeStep& TimeStep, const FName& CurrentMode);
 
 	/** Cubed: hold the Cubed mode; ability moves become impulses; pulls, stops and teleports still apply. */

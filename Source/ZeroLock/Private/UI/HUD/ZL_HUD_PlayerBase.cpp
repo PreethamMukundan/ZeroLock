@@ -3,6 +3,7 @@
 
 #include "UI/HUD/ZL_HUD_PlayerBase.h"
 #include "CommonActivatableWidgetSwitcher.h"
+#include "UI/BaseComp/MyZL_BasePlayerHealthBar.h"
 #include "UI/HUD/ZL_AbilityChargePhase.h"
 #include "UI/HUD/ZL_HUD_CrosshairBase.h"
 
@@ -55,3 +56,4 @@ void UZL_HUD_PlayerBase::NativeOnInitialized()
 	Super::NativeOnInitialized();
 	SetCrosshair();
 }
+

@@ -33,7 +33,7 @@ void UZL_BaseConeTargetAbility::OnTargetActorSpawned(AGameplayAbilityTargetActor
 	if (AZL_GATA_ConeSingleTarget* Cone = Cast<AZL_GATA_ConeSingleTarget>(TargetActor))
 	{
 		ConeActor = Cone;
-		Cone->MaxRange = Range.GetValueAtLevel(GetAbilityLevel());
+		Cone->MaxRange = Range.GetValueAtLevel(GetAbilityLevel()) * GetAbilityRangeScale();
 		Cone->ConeHalfAngle = ConeHalfAngle;
 		Cone->TargetTeam = TargetTeam;
 		Cone->bSelfCastWithoutTarget = bSelfCastWithoutTarget;
@@ -80,7 +80,7 @@ bool UZL_BaseConeTargetAbility::CanConfirmTarget(const FGameplayAbilityTargetDat
 
 	// The cone again, with slack: on the server the aim and the target's position lag the client's a little.
 	const bool bValid = AZL_GATA_ConeSingleTarget::IsValidConeTarget(Hero, Target, Hero->GetPawnViewLocation(), GetHeroAimDirection(),
-		Range.GetValueAtLevel(GetAbilityLevel()) + ServerRangeSlack, ConeHalfAngle + ServerAngleSlack, TargetTeam);
+		Range.GetValueAtLevel(GetAbilityLevel()) * GetAbilityRangeScale() + ServerRangeSlack, ConeHalfAngle + ServerAngleSlack, TargetTeam);
 	if (!bValid)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[%s] %s rejected target %s"), *GetName(), HasAuthority(&CurrentActivationInfo) ? TEXT("server") : TEXT("client"), *Target->GetName());

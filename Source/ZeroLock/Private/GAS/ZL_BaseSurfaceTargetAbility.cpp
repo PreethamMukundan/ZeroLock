@@ -19,7 +19,7 @@ void UZL_BaseSurfaceTargetAbility::OnTargetActorSpawned(AGameplayAbilityTargetAc
 	if (AZL_GATA_SurfaceTrace* SurfaceTrace = Cast<AZL_GATA_SurfaceTrace>(TargetActor))
 	{
 		SurfaceTrace->SurfaceMode = SurfaceMode;
-		SurfaceTrace->MaxRange = MaxPlacementRange.GetValueAtLevel(GetAbilityLevel());
+		SurfaceTrace->MaxRange = MaxPlacementRange.GetValueAtLevel(GetAbilityLevel()) * GetAbilityRangeScale();
 		SurfaceTrace->bDebug = bDrawTargetingDebug;
 		SurfaceTrace->PreviewBox = GetPreviewBox();
 		if (bShowPreview)
@@ -85,7 +85,7 @@ bool UZL_BaseSurfaceTargetAbility::CanConfirmTarget(const FGameplayAbilityTarget
 		return false;
 	}
 
-	const float Range = MaxPlacementRange.GetValueAtLevel(GetAbilityLevel()) + ServerRangeSlack;
+	const float Range = MaxPlacementRange.GetValueAtLevel(GetAbilityLevel()) * GetAbilityRangeScale() + ServerRangeSlack;
 	FTransform Placement;
 	const bool bValid = FVector::DistSquared(Hero->GetActorLocation(), Hit.ImpactPoint) <= FMath::Square(Range) && GetPlacementTransform(Hit, Placement);
 	if (!bValid)

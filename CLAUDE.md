@@ -16,6 +16,7 @@ Main branch `main`; feature branches `feature/Hero/<Hero>`.
 | `Docs/Claude/Animation.md` | `ABP_DeadlockHero` C++ anim node/instance/anim set, Deadlock importer |
 | `Docs/Claude/Telemetry.md` | Stats recording (`UZL_TelemetrySubsystem`), Cloudflare Worker API + D1, dashboard, setup/deploy |
 | `Docs/Claude/Content.md` | Content folder map, editor module, `Tools/` |
+| `Docs/Claude/ItemRoadmap.md` | Item system phases, what's done, open decisions |
 
 ## Architecture in one screen
 - **Hero** = `AZeroLockCharacter` → `AZeroMoverPawn` (APawn, **Mover plugin**, not ACharacter/CMC) with `UZeroMoverComponent`. Mover modes/transitions are configured in BP (`Content/ZERO/monkeyBoi/BP_Mover_Monkey`).
@@ -56,7 +57,6 @@ Main branch `main`; feature branches `feature/Hero/<Hero>`.
 ## Highest-impact known issues (details in the system docs)
 - Security/trust: server trusts client projectile spawn transform and fire rate; `ServerHandleDeath` callable by any client; `Server_UpgradeAbility` unvalidated; latched Mover moves unvalidated (Weapons.md, GameFlow.md, UI.md, Movement.md).
 - GAS: `Damage` meta attribute not reset on friendly hits; lifesteal before team check; melee mitigation precedence bug; `"ZeroLLock.Abilities"` typo (GAS.md).
-- Items: selling deducts souls instead of refunding; upgrade path broken (GAS.md).
 - Riposte can hang; Itani leaves client time dilation (Heroes.md).
 - Mover: slide landing buffer unreachable, slide has no ground tag/ledge check; `GetSyncedAimRotation` always returns actor rotation (Movement.md).
 - `Config/DefaultEngine.ini:43` malformed `GameViewportClientClassName` line (UI.md, GameFlow.md).

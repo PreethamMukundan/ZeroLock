@@ -33,7 +33,11 @@ enum class EGASAbilityInputID : uint8
 	Parry UMETA(DisplayName = "Parry"),
 	Reload UMETA(DisplayName = "Reload"),
 	LightMelee UMETA(DisplayName = "LightMelee"),
-	AltFire UMETA(DisplayName = "AltFire")
+	AltFire UMETA(DisplayName = "AltFire"),
+	Item_1 UMETA(DisplayName = "Item_1"),
+	Item_2 UMETA(DisplayName = "Item_2"),
+	Item_3 UMETA(DisplayName = "Item_3"),
+	Item_4 UMETA(DisplayName = "Item_4")
 };
 UENUM(BlueprintType)
 enum class EGASTargetConfirmationStyle : uint8

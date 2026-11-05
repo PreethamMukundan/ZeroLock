@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "CommonActivatableWidget.h"
+#include "Items/Zero_Item_Inventory_Component.h"
 #include "ZL_ItemShop_Base.generated.h"
 
 
@@ -35,6 +36,8 @@ class ZEROLOCK_API UZL_ItemShop_Base : public UCommonActivatableWidget
 
 public:
 	virtual void NativeOnInitialized() override;
+	virtual void NativeOnActivated() override;
+	virtual void NativeOnDeactivated() override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shop")
 	UDataTable* ItemTable;
@@ -68,13 +71,24 @@ public:
 	UFUNCTION()
 	void AddDelegates();
 
-	void FindAndSetToUpgradeOrRemove(UZero_Item_data* ItemsToSetReadyToUpgrade, bool setToUpgradeState, UZero_Item_data* FromItem);
-	UZL_ITemIcon* FindAndReturnIcon(UZero_Item_data* ItemData);
-
-	void RecSellFunction(UZero_Item_data* ItemData);
-	
 	UFUNCTION()
 	void ItemPressed(UZero_Item_data* Data);
+
+	/** The current pawn's inventory. The shop outlives pawns, so this also moves the change listener to a new one. */
+	UZero_Item_Inventory_Component* GetHeroInventory();
+
+	UFUNCTION()
+	void OnInventoryChanged(TArray<FZeroInventoryItem> InventoryItems);
+
+	void RefreshIcons();
+
+	/** Lets keys through to the game while the shop is open, without the hero reacting to them. */
+	void AllowKeysWithoutHeroControls();
+
+	void OnAllListItemClicked(UObject* Object);
+
+	UPROPERTY()
+	TObjectPtr<class UZL_ImbuePicker> ImbuePicker;
 
 
 	UPROPERTY()

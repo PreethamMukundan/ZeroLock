@@ -3,68 +3,77 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GAS/BaseGameplayAbility.h"
+#include "Xayah/ZL_Xayah_ThrowAbility.h"
 #include "ZL_Xayah_Featherstorm.generated.h"
 
-class AGameplayAbilityTargetActor_GroundTrace;
+class AZL_Xayah_StormPreview;
+class UAbilityTask_WaitConfirmCancel;
+class UZL_WaitDelay_Task;
+
 /**
- * 
+ * Ultimate. Xayah leaps back and up, untouchable, and hangs in the air (Floating) while a circle follows her aim. Confirm
+ * (or Cancel, or the end of TargetWindow) throws a cone of blades at it; each one drops a feather, ready for Bladecaller.
+ * The cost is paid on the press, so Cancel doesn't refund it. The client's blades carry the aim to the server (spawn data).
  */
 UCLASS()
-class ZEROLOCK_API UZL_Xayah_Featherstorm : public UBaseGameplayAbility
+class ZEROLOCK_API UZL_Xayah_Featherstorm : public UZL_Xayah_ThrowAbility
 {
 	GENERATED_BODY()
+
 public:
 	UZL_Xayah_Featherstorm();
-	
+
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
-
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
+
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Fan Configuration")
-	TSubclassOf<class AZL_Xayah_projectile> ProjectileClass;
+	/** Speed away from where she's looking during the leap, cm/s. */
+	UPROPERTY(EditDefaultsOnly, Category = "Leap")
+	FScalableFloat LeapBackSpeed = 1500.0f;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Fan Configuration")
-	int32 ProjectileCount = 10;
+	/** Upward speed during the leap, cm/s. */
+	UPROPERTY(EditDefaultsOnly, Category = "Leap")
+	FScalableFloat LeapUpSpeed = 1600.0f;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Fan Configuration")
-	float ConeAngle = 90.0f;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Fan Configuration")
-	float DownwardAngle = 30.0f;
+	/** Seconds of the leap. Short and fast feels snappy. She stops when it ends, so the height is LeapUpSpeed × this. */
+	UPROPERTY(EditDefaultsOnly, Category = "Leap")
+	FScalableFloat LeapDuration = 0.25f;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Fan Configuration")
-	float SpawnRadius = 100.0f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Fan Configuration|Jitter")
-	float AngleJitter = 2.0f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Fan Configuration|Jitter")
-	float PositionJitter = 15.0f;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Movement")
-	float LaunchStrength = 1200.0f;
-
-
-	UPROPERTY(EditDefaultsOnly, Category = "Movement")
-	float LaunchPitchAngle = 45.0f;
-
-
-	UPROPERTY(EditDefaultsOnly, Category = "Movement")
-	float FireDelay = 0.4f;
-
-	UFUNCTION()
-	void FireFeathers();
-	
-	UFUNCTION()
-	void OnTargetDataReady(const FGameplayAbilityTargetDataHandle& Data);
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Targeting")
-	TSubclassOf<AGameplayAbilityTargetActor_GroundTrace> TargetActorClass;
-	
+	/** Seconds from the press to the automatic throw. */
 	UPROPERTY(EditDefaultsOnly, Category = "Targeting")
-	float TargetingDelay = 1.f;
-	
+	FScalableFloat TargetWindow = 1.25f;
+
+	/** Half-angle of the cone of blades, in degrees. */
+	UPROPERTY(EditDefaultsOnly, Category = "Targeting", meta = (ClampMin = "0.0"))
+	float ConeHalfAngle = 12.0f;
+
+	/** How far the aim circle reaches. Keep it near the blade's range (speed × InitialLifeSpan). */
+	UPROPERTY(EditDefaultsOnly, Category = "Targeting")
+	float PreviewRange = 2000.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Targeting")
+	TSubclassOf<AZL_Xayah_StormPreview> PreviewClass;
+
+	/** Spreads the blades evenly over a disc across the cone. */
+	virtual FRotator GetBladeRotation(const FRotator& AimRotation, int32 Index) const override;
+
+	UPROPERTY()
+	TObjectPtr<UZL_WaitDelay_Task> TargetTask;
+
+	UPROPERTY()
+	TObjectPtr<UAbilityTask_WaitConfirmCancel> ConfirmTask;
+
+	UPROPERTY()
+	TObjectPtr<AZL_Xayah_StormPreview> Preview;
+
+	bool bThrown = false;
+
+	void DestroyPreview();
+
 	UFUNCTION()
-	void TargetTimeDone();
+	void ThrowNow();
+
+	/** Stops her dead at the top of the leap: Float cancels gravity, so she'd keep rising at the leap's speed. */
+	UFUNCTION()
+	void OnLeapFinished();
 };

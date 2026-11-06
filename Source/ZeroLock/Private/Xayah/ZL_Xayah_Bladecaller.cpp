@@ -3,52 +3,71 @@
 
 #include "Xayah/ZL_Xayah_Bladecaller.h"
 
-#include "AbilitySystemComponent.h"
-#include "Weapon/Zero_BaseProjectile.h"
-#include "Xayah/ZL_Xayah_CleanCut.h"
-#include "Xayah/ZL_Xayah_projectile.h"
+#include "GAS/BaseCharAbilitySystemComponent.h"
+#include "GAS/ZL_GameplayTags.h"
+#include "Solomon/ZL_Solomon_KnightEffect.h"
+#include "Xayah/ZL_Xayah_Feather.h"
+#include "ZeroLock/ZeroLockCharacter.h"
 
-void UZL_Xayah_Bladecaller::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
-                                            const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-                                            const FGameplayEventData* TriggerEventData)
+UZL_Xayah_Bladecaller::UZL_Xayah_Bladecaller()
 {
-	
-		UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
-		if (!ASC) return;
+	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
+	Slot = EGameplayAbilitySlot::AbilitySlot3;
+	CooldownDuration = 12.0f;
+	AbilityName = TEXT("Bladecaller");
+	AbilityDescription = TEXT("Call your feathers back. Each one damages enemies it passes; 3 hits on one enemy roots them.");
+}
 
+bool UZL_Xayah_Bladecaller::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
+{
+	return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags)
+		&& ActorInfo && AZL_Xayah_Feather::GetGroundFeathers(ActorInfo->AvatarActor.Get()).Num() > 0;
+}
 
-		UZL_Xayah_CleanCut* TrackerInstance = nullptr;
-	
-		TArray<FGameplayAbilitySpec> Abilities = ASC->GetActivatableAbilities();
-		TArray<FGameplayAbilitySpecHandle> AbilitiesHandles; 
-		FGameplayTagContainer myTags;
-		myTags.AddTag(FGameplayTag::RequestGameplayTag("Zerolock.Xayah.ClearCut",false));
-		ASC->FindAllAbilitiesWithTags(AbilitiesHandles,myTags,true);
-	
-		for (const FGameplayAbilitySpecHandle& SpecHandle : AbilitiesHandles)
+void UZL_Xayah_Bladecaller::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+{
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
+	if (HasAuthority(&ActivationInfo))
+	{
+		const float Level = GetAbilityLevel();
+		CastDamage = SpiritDamage.GetValueAtLevel(Level);
+		CastRootHitCount = FMath::Max(FMath::RoundToInt(RootHitCount.GetValueAtLevel(Level)), 1);
+		CastRootDuration = RootDuration.GetValueAtLevel(Level);
+		FeatherHits.Reset();
+
+		for (AZL_Xayah_Feather* Feather : AZL_Xayah_Feather::GetGroundFeathers(GetAvatarActorFromActorInfo()))
 		{
-		
-			FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(SpecHandle);
-			if (Spec)
-			{
-				ZLOG(Spec->Ability->GetClass()->GetName());
-				TrackerInstance = Cast<UZL_Xayah_CleanCut>(Spec->GetPrimaryInstance());
-				break; 
-			}
+			Feather->StartReturn(this);
 		}
-	
-		if (TrackerInstance)
-		{
-			for (auto& WeakFeather : TrackerInstance->ActiveFeathers)
-			{
-				if (WeakFeather.IsValid())
-				{
-					WeakFeather->StartReturn(GetAvatarActorFromActorInfo());
-				}
-			}
-			TrackerInstance->ActiveFeathers.Empty();
-		}
+	}
 
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-	
+	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+}
+
+void UZL_Xayah_Bladecaller::OnFeatherHit(AZeroLockCharacter* Hero, AZeroLockCharacter* Villan)
+{
+	UBaseCharAbilitySystemComponent* HeroASC = IsValid(Hero) ? Hero->GetMyAbilitySystemComp() : nullptr;
+	UBaseCharAbilitySystemComponent* VillanASC = IsValid(Villan) ? Villan->GetMyAbilitySystemComp() : nullptr;
+	if (!HeroASC || !VillanASC)
+	{
+		return;
+	}
+
+	HeroASC->ApplySpiritDamage(VillanASC, CastDamage, this);
+
+	int32& Hits = FeatherHits.FindOrAdd(Villan);
+	if (++Hits == CastRootHitCount)
+	{
+		// Root = Mover "Locked" while the tag is on.
+		FGameplayTagContainer RootTags;
+		RootTags.AddTag(ZerolockGameplayTagsForBinding::TAG_MOVEMENT_ROOTED);
+		UZL_Solomon_KnightEffect::Apply(HeroASC, VillanASC, CastRootDuration, RootTags);
+	}
 }

@@ -75,6 +75,10 @@ namespace ZerolockGameplayTagsForBinding
 	/** Promoted by Solomon's Kingside Knight (UZL_Solomon_KnightEffect): an ally knight, or Solomon himself as king. */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_KNIGHT)
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_KING)
+	/** Xayah has Clean Cut shots ready. */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_CLEAN_CUT)
+	/** SetByCaller multiplier on FireRate (seconds between shots). */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SETBYCALLER_FIRE_RATE_MULTIPLIER)
 
 	/** SetByCaller tags for UZL_Viscous_GooBallEffect: added WeaponResistance / SpiritResistance (percent). */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SETBYCALLER_BULLET_RESIST)

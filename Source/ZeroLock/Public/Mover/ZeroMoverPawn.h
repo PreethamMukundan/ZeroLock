@@ -106,6 +106,8 @@ protected:
     void OnCrouchReleased();
     void OnDashPressed();
     void OnHeavyMeleePressed();
+    void OnMeleeChargeStarted();
+    void OnMeleeChargeEnded();
     void OnZiplinePressed();
     
 public:
@@ -143,6 +145,34 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera|Aim Zoom", meta = (ClampMin = "0.1", ClampMax = "1.0"))
     float AimZoomArmLengthScale = 0.65f;
 
+    /** Camera lag during the heavy melee lunge and the start of a zipline ride: how fast the camera catches up (lower trails more). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera|Effects")
+    float ActionCameraLagSpeed = 8.0f;
+
+    /** The camera never trails the hero by more than this (cm); a zipline pull up is fast enough to reach it. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera|Effects")
+    float ActionCameraLagMaxDistance = 150.0f;
+
+    /** Seconds the lag eases in and out. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera|Effects")
+    float ActionCameraLagBlendTime = 0.15f;
+
+    /** Seconds of lag from the start of a zipline ride. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera|Effects")
+    float ZiplineCameraLagTime = 0.4f;
+
+    /** How far the camera pulls back (cm) during the heavy melee charge and lunge. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera|Effects")
+    float MeleeZoomOutDistance = 100.0f;
+
+    /** Melee key held this long (s) before the zoom starts, so a light melee tap doesn't move the camera. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera|Effects")
+    float MeleeZoomOutDelay = 0.1f;
+
+    /** Seconds the zoom eases in and out. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera|Effects")
+    float MeleeZoomBlendTime = 0.25f;
+
 private:
     /** Blends FOV and arm length toward the aim zoom (locally controlled only). */
     void UpdateAimZoom(float DeltaSeconds);
@@ -155,6 +185,22 @@ private:
     bool bHasAimZoomBase = false;
     float AimZoomBaseFOV = 90.0f;
     float AimZoomBaseArmLength = 400.0f;
+
+    /** Melee and zipline camera lag and melee zoom out (locally controlled only). */
+    void UpdateCameraEffects(float DeltaSeconds);
+
+    float CameraLagAlpha = 0.0f;
+    /** This effect turned the spring arm's lag on. It leaves the lag alone if something else (Apollo's Itani) already has it on. */
+    bool bOwnsCameraLag = false;
+    float CameraLagBaseSpeed = 10.0f;
+    float CameraLagBaseMaxDistance = 0.0f;
+    float ZiplineLagTimeLeft = 0.0f;
+    bool bWasZiplining = false;
+    bool bMeleeCharging = false;
+    float MeleeChargeHeldTime = 0.0f;
+    float MeleeZoomAlpha = 0.0f;
+    /** Spring arm SocketOffset.X before the zoom. The zoom uses the socket offset so it doesn't fight the aim zoom's arm length. */
+    float MeleeZoomBaseSocketX = 0.0f;
 
 
     /** Moves the camera boom with Mover's smoothed mesh offset (locally controlled only). */
@@ -171,6 +217,10 @@ private:
     FVector2D CachedMoveInput = FVector2D::ZeroVector;
     bool bLocalJumpPressed = false;
     bool bJumpPressConsumed = false;
+    // Space is both jump (instant) and the zipline hold. A press while aiming at a cable holds its jump back: it stays
+    // set until the grab starts (no jump) or the key is released (bJumpTapQueued sends the jump for one input frame).
+    bool bJumpHeldForZipline = false;
+    bool bJumpTapQueued = false;
     bool bWasJumpPressedLastFrame = false;
     bool bCachedWantsToCrouch = false;
     bool bLocalSlideIntentValid = false;

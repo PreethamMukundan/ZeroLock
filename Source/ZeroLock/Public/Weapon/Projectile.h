@@ -605,8 +605,6 @@ protected:
 	/** Helper to calculate the origin of this projectile's AOE radius, if it has one. */
 	FORCEINLINE FVector GetAreaOfEffectOrigin() const;
  
-private:
- 
 	/** Helper for applying a gameplay effect (ImpactGameplayEffect or AreaGameplayEffect) to a target actor. */
 	void ApplyEffectToTarget(const bool bDirectImpact, const AActor* Target, const FHitResult& Hit) const;
  

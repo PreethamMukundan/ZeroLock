@@ -72,6 +72,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Mantle")
 	float MantleReachHeight = 50.0f;
 
+	/** Extra ledge reach (cm) while Falling. A ledge just out of reach used to fail the mantle, and the wall bounce threw the pawn off the wall. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Mantle")
+	float MantleAirReachBonus = 100.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Mantle")
 	float MantleMaxDistance = 100.0f;
 
@@ -178,6 +182,9 @@ public:
 	/** The zipline mode's name in the mode map (UZeroZiplineMode); counts as ground for the jump/air-dash counters. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Zipline")
 	FName ZipliningModeName = FName("Ziplining");
+
+	/** True if a grab along LookDir could start now: same look trace and refusals as UZeroZiplineTransition. Local input only. */
+	bool IsGrabbableZiplineInView(const FVector& LookDir) const;
 
 	/** Mode the pawn slides in while cubed (Viscous's Cube). Added at runtime from CubedModeClass if the mode map doesn't have it. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Cubed")

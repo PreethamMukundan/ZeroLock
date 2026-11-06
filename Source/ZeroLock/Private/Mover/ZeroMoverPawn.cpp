@@ -61,6 +61,67 @@ void AZeroMoverPawn::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
     UpdateSmoothedCamera();
     UpdateAimZoom(DeltaSeconds);
+    UpdateCameraEffects(DeltaSeconds);
+}
+
+void AZeroMoverPawn::UpdateCameraEffects(float DeltaSeconds)
+{
+    if (!SpringArmComponent || !MoverComponent || !IsLocallyControlled())
+    {
+        return;
+    }
+
+    const FName Mode = MoverComponent->GetMovementModeName();
+    const bool bInMelee = Mode == MoverComponent->MeleeModeName;
+    const bool bZiplining = Mode == MoverComponent->ZipliningModeName;
+    if (bZiplining && !bWasZiplining)
+    {
+        ZiplineLagTimeLeft = ZiplineCameraLagTime;
+    }
+    bWasZiplining = bZiplining;
+    ZiplineLagTimeLeft = FMath::Max(ZiplineLagTimeLeft - DeltaSeconds, 0.0f);
+
+    const bool bWantsLag = bInMelee || (bZiplining && ZiplineLagTimeLeft > 0.0f);
+    if (bWantsLag && !bOwnsCameraLag && !SpringArmComponent->bEnableCameraLag)
+    {
+        bOwnsCameraLag = true;
+        CameraLagBaseSpeed = SpringArmComponent->CameraLagSpeed;
+        CameraLagBaseMaxDistance = SpringArmComponent->CameraLagMaxDistance;
+        SpringArmComponent->bEnableCameraLag = true;
+        SpringArmComponent->CameraLagMaxDistance = ActionCameraLagMaxDistance;
+    }
+    if (bOwnsCameraLag)
+    {
+        const float LagStep = ActionCameraLagBlendTime > 0.0f ? DeltaSeconds / ActionCameraLagBlendTime : 1.0f;
+        CameraLagAlpha = FMath::Clamp(CameraLagAlpha + (bWantsLag ? LagStep : -LagStep), 0.0f, 1.0f);
+        if (!bWantsLag && CameraLagAlpha <= 0.0f)
+        {
+            bOwnsCameraLag = false;
+            SpringArmComponent->bEnableCameraLag = false;
+            SpringArmComponent->CameraLagSpeed = CameraLagBaseSpeed;
+            SpringArmComponent->CameraLagMaxDistance = CameraLagBaseMaxDistance;
+        }
+        else
+        {
+            // Eases between a near-instant catch up and the full lag, so turning it on or off doesn't jump the camera.
+            constexpr float NoLagSpeed = 40.0f;
+            SpringArmComponent->CameraLagSpeed = FMath::Lerp(NoLagSpeed, ActionCameraLagSpeed, CameraLagAlpha);
+        }
+    }
+
+    MeleeChargeHeldTime = bMeleeCharging ? MeleeChargeHeldTime + DeltaSeconds : 0.0f;
+    const bool bWantsZoom = bInMelee || (bMeleeCharging && MeleeChargeHeldTime >= MeleeZoomOutDelay);
+    if (!bWantsZoom && MeleeZoomAlpha <= 0.0f)
+    {
+        return;
+    }
+    if (MeleeZoomAlpha <= 0.0f)
+    {
+        MeleeZoomBaseSocketX = SpringArmComponent->SocketOffset.X;
+    }
+    const float ZoomStep = MeleeZoomBlendTime > 0.0f ? DeltaSeconds / MeleeZoomBlendTime : 1.0f;
+    MeleeZoomAlpha = FMath::Clamp(MeleeZoomAlpha + (bWantsZoom ? ZoomStep : -ZoomStep), 0.0f, 1.0f);
+    SpringArmComponent->SocketOffset.X = MeleeZoomBaseSocketX - MeleeZoomOutDistance * FMath::SmoothStep(0.0f, 1.0f, MeleeZoomAlpha);
 }
 
 void AZeroMoverPawn::SetAimZoom(bool bZoom, float FOVRelative, float BlendTime)
@@ -199,6 +260,9 @@ void AZeroMoverPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
         EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &AZeroMoverPawn::OnDashPressed);
         
         EnhancedInputComponent->BindAction(MeleeAction, ETriggerEvent::Triggered, this, &AZeroMoverPawn::OnHeavyMeleePressed);
+        EnhancedInputComponent->BindAction(MeleeAction, ETriggerEvent::Started, this, &AZeroMoverPawn::OnMeleeChargeStarted);
+        EnhancedInputComponent->BindAction(MeleeAction, ETriggerEvent::Canceled, this, &AZeroMoverPawn::OnMeleeChargeEnded);
+        EnhancedInputComponent->BindAction(MeleeAction, ETriggerEvent::Completed, this, &AZeroMoverPawn::OnMeleeChargeEnded);
         EnhancedInputComponent->BindAction(ZiplineAction, ETriggerEvent::Triggered, this, &AZeroMoverPawn::OnZiplinePressed);
         
         
@@ -219,15 +283,26 @@ void AZeroMoverPawn::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmd
     {
         CachedMoveInput = FVector2D::ZeroVector;
         bLocalJumpPressed = false;
+        bJumpHeldForZipline = false;
+        bJumpTapQueued = false;
+        bMeleeCharging = false;
         bCachedWantsToCrouch = false;
         bWantsToDashLatch = false;
         bWantsToHeavyMelee = false;
         bWantsToZipline = false;
     }
 
-    DefaultInputs.bIsJumpJustPressed = (!bWasJumpPressedLastFrame && bLocalJumpPressed);
-    DefaultInputs.bIsJumpPressed = bLocalJumpPressed;
-    bWasJumpPressedLastFrame = bLocalJumpPressed;
+    // The held press became the grab: letting go of the key on the cable must not jump.
+    if (bJumpHeldForZipline && MoverComponent && MoverComponent->GetMovementModeName() == MoverComponent->ZipliningModeName)
+    {
+        bJumpHeldForZipline = false;
+    }
+
+    const bool bJumpDown = bLocalJumpPressed || bJumpTapQueued;
+    bJumpTapQueued = false;
+    DefaultInputs.bIsJumpJustPressed = (!bWasJumpPressedLastFrame && bJumpDown);
+    DefaultInputs.bIsJumpPressed = bJumpDown;
+    bWasJumpPressedLastFrame = bJumpDown;
 
     FVector ControlVector = FVector::ZeroVector;
     if (Controller && !CachedMoveInput.IsZero())
@@ -264,7 +339,7 @@ void AZeroMoverPawn::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmd
     
     ZeroInputs.bWantsToCrouch = bCachedWantsToCrouch;
     ZeroInputs.bSlideIntentValid = bLocalSlideIntentValid;
-    ZeroInputs.bJumpHold = bLocalJumpPressed;
+    ZeroInputs.bJumpHold = bJumpDown;
     ZeroInputs.bCustomJumpJustPressed = DefaultInputs.bIsJumpJustPressed;
     ZeroInputs.bWantsToDash = bWantsToDashLatch;
     ZeroInputs.bWantsToMelee = bWantsToHeavyMelee;
@@ -389,17 +464,26 @@ void AZeroMoverPawn::OnLook(const FInputActionValue& Value)
 void AZeroMoverPawn::OnJumpPressed()
 {
     bJumpPressConsumed = false;
+    bJumpHeldForZipline = false;
     OnJumpInputPressed.Broadcast();
 
     // A listener (e.g. an ability cancelled by jumping) can swallow the press so it never becomes a jump.
     if (!bJumpPressConsumed)
     {
-        bLocalJumpPressed = true;
+        // Aiming at a cable: this may be the zipline hold (same key), so the jump waits for the release.
+        bJumpHeldForZipline = MoverComponent && MoverComponent->IsGrabbableZiplineInView(GetControlRotation().Vector());
+        bLocalJumpPressed = !bJumpHeldForZipline;
     }
 }
 void AZeroMoverPawn::OnJumpReleased()
 {
     bLocalJumpPressed = false;
+    // A tap at a cable, or a hold whose grab never started: the held-back press is a normal jump after all.
+    if (bJumpHeldForZipline)
+    {
+        bJumpHeldForZipline = false;
+        bJumpTapQueued = true;
+    }
 }
 void AZeroMoverPawn::OnDashPressed()
 {
@@ -410,6 +494,17 @@ void AZeroMoverPawn::OnHeavyMeleePressed()
 {
     bWantsToHeavyMelee = true;
     ++HeavyMeleeTriggerCount;
+    bMeleeCharging = false;
+}
+
+void AZeroMoverPawn::OnMeleeChargeStarted()
+{
+    bMeleeCharging = true;
+}
+
+void AZeroMoverPawn::OnMeleeChargeEnded()
+{
+    bMeleeCharging = false;
 }
 
 void AZeroMoverPawn::OnZiplinePressed()

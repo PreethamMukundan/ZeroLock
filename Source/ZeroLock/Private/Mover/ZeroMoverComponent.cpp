@@ -28,6 +28,7 @@
 #include "Mover/ZeroInstantMovementEffects.h"
 #include "Mover/ZeroMovementData.h"
 #include "Mover/ZeroMoverPawn.h"
+#include "Mover/Transitions/ZeroZiplineTransition.h"
 #include "Mover/ZeroNoClipMode.h"
 #include "Mover/ZeroZiplineMode.h"
 
@@ -458,6 +459,26 @@ void UZeroMoverComponent::HandleFloat(const FZeroMovementInputs& ZeroInputs, con
     Float->VelocityToApply = Velocity;
     Float->bAdditiveVelocity = false;
     QueueInstantMovementEffect(Float);
+}
+
+bool UZeroMoverComponent::IsGrabbableZiplineInView(const FVector& LookDir) const
+{
+    if (GetMovementModeName() == ZipliningModeName || IsRooted() || IsStunned() || IsCubed() || IsGooBall() || IsNoClip())
+    {
+        return false;
+    }
+
+    const AActor* OwnerActor = GetOwner();
+    for (const UBaseMovementModeTransition* Transition : Transitions)
+    {
+        if (const UZeroZiplineTransition* ZiplineTransition = Cast<UZeroZiplineTransition>(Transition))
+        {
+            float Distance = 0.0f;
+            return UZeroZiplineMode::FindZiplineInView(GetWorld(), OwnerActor->GetActorLocation() + FVector::UpVector * ZiplineTransition->EyeHeight,
+                LookDir, ZiplineTransition->GrabMaxDistance, ZiplineTransition->GrabTraceRadius, OwnerActor, Distance) != nullptr;
+        }
+    }
+    return false;
 }
 
 bool UZeroMoverComponent::IsNoClip() const
@@ -1013,7 +1034,10 @@ bool UZeroMoverComponent::TryMantle(const FCharacterDefaultInputs& DefaultInputs
     // simulation, so the server's copy can be tens of degrees off from the client's.
     const FVector Fwd = FRotator(0.0f, ZeroInputs.LookDir.Yaw, 0.0f).Vector();
 
-    if (MoveIntent.IsNearlyZero() || FVector::DotProduct(MoveIntent.GetSafeNormal(), Fwd) < 0.5f)
+    // A jump press in the air mantles without move input too, or the wall bounce (checked after this) would win.
+    const bool bFalling = GetMovementModeName() == DefaultModeNames::Falling;
+    const bool bMantleWithoutInput = bFalling && ZeroInputs.bCustomJumpJustPressed;
+    if (MoveIntent.IsNearlyZero() ? !bMantleWithoutInput : FVector::DotProduct(MoveIntent.GetSafeNormal(), Fwd) < 0.5f)
     {
         return false;
     }
@@ -1034,7 +1058,7 @@ bool UZeroMoverComponent::TryMantle(const FCharacterDefaultInputs& DefaultInputs
     FCollisionQueryParams Params;
     Params.AddIgnoredActor(GetOwner());
 
-    float MaxHeight = (CapHH * 2.f) + MantleReachHeight;
+    float MaxHeight = (CapHH * 2.f) + MantleReachHeight + (bFalling ? MantleAirReachBonus : 0.0f);
     float CosMMWSA = FMath::Cos(FMath::DegreesToRadians(MantleMinWallSteepnessAngle));
     float CosMMSA = FMath::Cos(FMath::DegreesToRadians(MantleMaxSurfaceAngle));
     float CosMMAA = FMath::Cos(FMath::DegreesToRadians(MantleMaxAlignmentAngle));

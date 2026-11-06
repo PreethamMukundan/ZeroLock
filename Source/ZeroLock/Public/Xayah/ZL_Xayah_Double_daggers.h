@@ -3,28 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GAS/ZL_BasePlayAnimation_AndDo.h"
+#include "Xayah/ZL_Xayah_ThrowAbility.h"
 #include "ZL_Xayah_Double_daggers.generated.h"
 
-class AZL_Xayah_projectile;
-/**
- * 
- */
+/** Slot 1. Throws two blades that fly through enemies and drop a feather where they stop. */
 UCLASS()
-class ZEROLOCK_API UZL_Xayah_Double_daggers : public UZL_BasePlayAnimation_AndDo
+class ZEROLOCK_API UZL_Xayah_Double_daggers : public UZL_Xayah_ThrowAbility
 {
 	GENERATED_BODY()
 
-	virtual void OnAnimationPointTrigger() override;
+public:
+	UZL_Xayah_Double_daggers();
 
-	void Fire(AZeroLockCharacter* Hero ,FVector Location , FRotator Rotation,FActorSpawnParameters SpawnParm);
-
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<AZL_Xayah_projectile> ProjectileClass;
-
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UGameplayEffect> FeatherDownClassClass;
-
-	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
-
+	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 };

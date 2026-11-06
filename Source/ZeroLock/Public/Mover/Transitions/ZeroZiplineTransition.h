@@ -21,7 +21,7 @@ public:
 	// direction. GrabMaxDistance reaches a lane cable (750 cm) from the ground or a nearby roof; you get pulled up to it.
 	// Keep these a little below UZeroZiplineMode's LookMaxDistance / LookTraceRadius.
 	UPROPERTY(EditAnywhere, Category = "Trace Settings")
-	float GrabMaxDistance = 1500.0f;
+	float GrabMaxDistance = 2500.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Trace Settings")
 	float GrabTraceRadius = 75.0f;

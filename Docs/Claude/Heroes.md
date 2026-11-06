@@ -1,6 +1,6 @@
 # Heroes and their abilities
 
-Code: `Source/ZeroLock/{Public,Private}/<Hero>/`. Ability BPs: `Content/ZERO/HeroAbilities/<Hero>Test/<Ability>/BP_<Hero>_<Ability>` (folders `ApolloTest`, `LashTesst`, `PocketTest`, `DrifterTest`). Xayah and Seven BPs live in `Content/Developers/rpm86/GAS_TEST/`. Base classes: GAS.md. Movement API: Movement.md.
+Code: `Source/ZeroLock/{Public,Private}/<Hero>/`. Ability BPs: `Content/ZERO/HeroAbilities/<Hero>Test/<Ability>/BP_<Hero>_<Ability>` (folders `ApolloTest`, `LashTesst`, `PocketTest`, `DrifterTest`, `XayahTest`). Seven BPs live in `Content/Developers/rpm86/GAS_TEST/`. Base classes: GAS.md. Movement API: Movement.md.
 
 ## Status
 | Hero | State |
@@ -9,7 +9,7 @@ Code: `Source/ZeroLock/{Public,Private}/<Hero>/`. Ability BPs: `Content/ZERO/Her
 | **Apollo** | 4/4 on Mover. Prediction rough edges, debug draws. |
 | **Lash** | 4/4. GroundStrike victim drag broken for remote players. |
 | **Drifter** | 4/4 on older patterns (legacy projectile, `SetActorLocation` teleport). WIP. |
-| **Xayah** (LoL kit) | 5 abilities + projectile, test-only prototype in Developers. |
+| **Xayah** (LoL kit) | Weapon, Clean Cut passive, Double Daggers, Deadly Plumage, Bladecaller, Featherstorm on predicted projectiles and a replicated feather actor, untested in play. Placeholder Wukong mesh and anims, placeholder cone feathers and blades. |
 | **Doorman** | Call Bell, Doorway, Luggage Cart, Hotel Guest (all untested in play). Placeholder hotel corridors and placeholder marker. |
 | **Viscous** | Puddle Punch, Splatter, The Cube, Goo Ball (Goo Ball untested in play). |
 | **Solomon** | Move Piece (alt fire, hover highlight) + Setup Bishop (board squares, 2 bishops) + Kingside Knight (ally knight / self king, combat barrier, knight-L hop as a ball) + Rook Battery (two ground rooks, wall reflect, recast fork) + Develop Queen (crash + 8 lines of stun squares, leaps with Move Piece, recall), untested in play. Placeholder piece meshes. |
@@ -59,8 +59,21 @@ Code: `Source/ZeroLock/{Public,Private}/<Hero>/`. Ability BPs: `Content/ZERO/Her
 | `UZL_Drifter_EternalNight` (ult) | `UZL_BasePlayAnimation_AndDo` | Self buff + blind up to 3 enemies in 1000; for 5 s weapon hits deal +15 spirit. |
 | `UZL_GA_Drifter_Teleport` (Stalker's Mark) | `UZL_BaseProjectileThrowAbility` | Legacy projectile marks a target; re-press within the mark duration teleports behind it with `SetActorLocation` (bypasses Mover). |
 
-## Xayah (`Xayah/`, prototype)
-`UZL_Xayah_CleanCut` (passive, tracks feathers), `UZL_Xayah_Double_daggers` (2 projectiles), `UZL_Xayah_DeadlyPlumage` (buff + feathers), `UZL_Xayah_Bladecaller` (recall feathers), `UZL_Xayah_Featherstorm` (10-feather fan). `AZL_Xayah_projectile : AZero_BaseProjectile` (legacy, not predicted, hard-coded damage 1 / 5, no team check).
+## Xayah (`Xayah/`)
+Hero BP `ZERO/HeroAbilities/XayahTest/BP_Xayah` (copy of `BP_Mover_Monkey`: Wukong mesh, `ABP_MoverMonkey`, Mover modes), data `XayahTest/DA_Xayah_Hero`, row `Xayah` in `DT_HeroList`, stats `XayahTest/GE_Xayah_DefaultStats` (first pass, close to Lash: 650 health, `BulletDamage` 7, `FireRate` 0.3 s, 28 ammo, `ReloadTime` 2, stamina and melee like his; she needs `BulletDamage` or bullets fall back to the projectile's `WeaponDamage` 1). All untested in play. The values are guesses. Her name and kit come from League of Legends: rename before shipping. Legacy `AZL_Xayah_projectile` and the BPs in `Developers/rpm86/GAS_TEST/XayahTest` are unused.
+| Ability | Base | What it does |
+|---|---|---|
+| Weapon `XayahTest/Weapon/BP_Xayah_Weapon` | copy of `BP_BaseFireAbility` | Single fire, `BulletSpreadAngle` 1. Fires `BP_Xayah_Projectile` (copy of `BP_ProjectileTest` reparented to `AZL_Xayah_WeaponProjectile`): 5000 cm/s, `InitialLifeSpan` 1.2 (60 m), `bDetonateOnLifeSpanEnd`. `bPierceHeroes` (on): flies through heroes, weapon damage once per enemy on the server (`ApplyEffectToTarget`, falloff and headshots from the bullet's location, ECC_Vehicle line-of-sight check), no impact FX on them. On the server when it detonates it spends a Clean Cut shot on a feather: stuck into the wall it hit, or dropped to the floor at the end of its life. |
+| `UZL_Xayah_CleanCut` (passive, `DefaultAbilities`) | `UBasePassive_GameplayAbility` | Server only. Listens to `AbilityCommittedCallbacks`; when an ability on the Secondry/Ability 1/Ability 2/Ultimate input commits, applies `UZL_GE_Xayah_CleanCut` with `ShotsPerAbility` 3 stacks for `ShotDuration` 8 s (limit 5, grants `Zerolock.Status.CleanCut`). `ConsumeFeatherShot` removes one stack. |
+| `UZL_Xayah_Double_daggers` (slot 1, `SecondryFireAbility`) | `UZL_Xayah_ThrowAbility` | Throws `BladeCount` 2 blades, `FanAngle` 5, `SpiritDamage` 55, `CooldownDuration` 9. |
+| `UZL_Xayah_DeadlyPlumage` (slot 2, `Ability_1`) | `UBaseGameplayAbility` | Predicted `UZL_GE_Xayah_Plumage` multiplies `FireRate` by 1 / (1 + `FireRateBonus` 0.5) for `BuffDuration` 5 s (SetByCaller `Zerolock.SetByCaller.FireRateMultiplier`), so the owner's fire timer restarts at once. Progress bar. `CooldownDuration` 18. |
+| `UZL_Xayah_Bladecaller` (slot 3, `Ability_2`) | `UBaseGameplayAbility` | Refused without a feather on the ground. Server calls `StartReturn` on each: per feather `SpiritDamage` 30 to each enemy it passes, once; `RootHitCount` 3 hits on one enemy in a cast root them for `RootDuration` 1.25 s (`UZL_Solomon_KnightEffect::Apply` with `ZeroLock.Movement.Rooted`). Values are cached at the cast because feathers outlive the activation. `CooldownDuration` 12. |
+| `UZL_Xayah_Featherstorm` (ult, `UltimateAbility`) | `UZL_Xayah_ThrowAbility` | `ActivationOwnedTags` `TAG_UNTOUCHABLE`, `TAG_ABILITIES_BLOCKED`, `TAG_STATUS_FLOATING` (hangs while aiming, Mover Float). Commits on the press. `RequestSafeAbilityMove` back (`LeapBackSpeed` 1500, flat, opposite the aim) and up (`LeapUpSpeed` 1600) for `LeapDuration` 0.25 s, then `RequestSafeStop` at the top (Float cancels gravity, so she would keep rising): height = `LeapUpSpeed` × `LeapDuration` = 400 cm. Locally: `AZL_Xayah_StormPreview` shows a circle at the crosshair (`PreviewRange` 2000) and `UZL_WaitDelay_Task` runs `TargetWindow` 1.25 s with the progress bar; `WaitConfirmCancel` (left click; right click too, no refund) or the timer calls `ThrowNow`: `BladeCount` 10 blades in a cone of `ConeHalfAngle` 12 (sunflower spiral, `GetBladeRotation`), `SpiritDamage` 90. The remote server starts its spawn tasks on activation, so the aim reaches it in the client's spawn data; no target data. `CooldownDuration` 100. |
+
+`UZL_Xayah_ThrowAbility` (abstract): `ThrowFan` spawns `BladeCount` predicted blades at `GetBladeRotation` (virtual, default a flat fan of `FanAngle`) and ends the ability once all have reported. `TraceAimPoint` = the crosshair point. `AZL_Xayah_BladeProjectile : AProjectile`: 3500 cm/s, `InitialLifeSpan` 0.6 (21 m), pierces enemies (each once; server copy only). A blocking hit sticks a feather into the surface (`Stick`, tip first); the end of its life (`bDetonateOnLifeSpanEnd`) drops one to the floor. Placeholder cone.
+
+`AZL_Xayah_Feather`: replicated, `bAlwaysRelevant`, no movement replication, no collision, server-spawned with Instigator = Xayah. `Stick` puts it in the surface hit, `RestHeight` out along the normal; `Drop` puts it on the floor under the spot (WorldStatic trace 2000 down, at the spot if none); `GroundLifetime` 8 s. `bReturning` RepNotify turns on Tick: every machine flies it to her at `ReturnSpeed` 3500; the server sweeps `ReturnHitRadius` 60 on the Hero and Pawn object types and reports to Bladecaller. `GetGroundFeathers` finds hers. Placeholder cone, `FeatherColor`.
+n`AZL_Xayah_StormPreview`: local only, `TG_PostUpdateWork`, flat engine Cylinder at the crosshair clamped to `PreviewRange`, radius = distance × tan(`ConeHalfAngle`).
 
 ## Seven
 `UZL_GA_Seven_Stun` (`UBase_GA_TargetActors`: start effect, then stun after `StunDelay`).
@@ -143,7 +156,7 @@ Hero BP `Developers/rpm86/Deadlock/Solomon/BP_Deadlock_Solomon` (Deadlock import
 - GroundStrike: drag uses server `RequestSafeAbilityMove` (ignored for remote players) with a displacement as velocity (`ZL_Lash_GroundStrike.cpp:171-178`); use `SendVictimMoveEvent(PullTo)`. `IsOnSameTeam` before null check (`:141`).
 - Missing `return` after EndAbility on invalid Hero: Flog `:18-21`, Grapple `:22-25`, Rend `:23-26`, EternalNight `:20-23`, Featherstorm `:30-33`, Drifter Teleport `:27-30`.
 - BloodScent: `Event.Assist` bound to the kill handler (`:48`); null deref `:174`.
-- `!X.ActivationMode == Authority` precedence (`ZL_Drifter_BloodScent.cpp:64`, `ZL_Xayah_Double_daggers.cpp:62`).
+- `!X.ActivationMode == Authority` precedence (`ZL_Drifter_BloodScent.cpp:64`).
 - FlyingCloak passes `ServerProjectileClass` without fallback (`:42`).
 - No team filtering in cone traces (FlawlessAdvance, Rend, Grapple).
 - Direct `QueueNextMode` in Riposte, Itani, DeathSlam, Barrage → desync risk. Itani capsule/camera changes are per-machine.

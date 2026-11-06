@@ -85,7 +85,7 @@ public:
 	// Look trace at a grab (eye = pawn centre + EyeHeight). A bit longer and wider than the transition's, so a grab it
 	// allowed always finds the cable again.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zipline Settings")
-	float LookMaxDistance = 1700.0f;
+	float LookMaxDistance = 2700.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zipline Settings")
 	float LookTraceRadius = 100.0f;

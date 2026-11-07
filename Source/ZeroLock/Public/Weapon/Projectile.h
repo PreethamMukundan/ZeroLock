@@ -292,6 +292,17 @@ private:
  
 	/** Safely disables and hides this projectile without destroying it. */
 	void DisableAndHide();
+
+	/** Each visible copy works this out from the shooter it sees, so nothing extra is replicated. */
+	void InitVisualOffset();
+	void UpdateVisualOffset(float DeltaSeconds);
+
+	/** World offset from the real bullet to the gun, at the start of the blend. */
+	FVector VisualOffset = FVector::ZeroVector;
+	float VisualTravelDistance = 0.0f;
+
+	/** Components still blending, with their relative location from the BP. */
+	TArray<TPair<TWeakObjectPtr<USceneComponent>, FVector>> VisualComponents;
  
  
  
@@ -662,7 +673,12 @@ protected:
 	 * normal of the bounce, to prevent sliding. */
 	UPROPERTY(EditDefaultsOnly, Category = "Projectile|FX")
 	float BounceVelocityFXThreshold;
- 
+
+	/** Primary-fire bullets fly along the crosshair line, away from the gun. Their meshes and FX start beside the gun and
+	 * ease onto the real bullet over this many cm of travel. Cosmetic: hits use the real bullet. 0 = off. */
+	UPROPERTY(EditDefaultsOnly, Category = "Projectile|FX", Meta = (ClampMin = "0.0", Units = "Centimeters"))
+	float VisualBlendDistance = 1000.0f;
+
 	/** Timer to visually shut down this projectile (hide its meshes, kill its VFX, etc.) before destroying it.
 	 * Projectiles' destruction is delayed to ensure they have time to replicate, but they should usually be visually
 	 * destroyed before then. */

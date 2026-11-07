@@ -22,6 +22,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Zero_BasePlayerController.h"
 #include "Components/MeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "ZeroLock/ZeroLockCharacter.h"
 #include "Weapon/ZL_ProjectileMovementComponent.h"
@@ -277,7 +278,76 @@ void AProjectile::BeginPlay()
 		}
 	}
 
+	InitVisualOffset();
+
 	bHasSpawnedFully = true;
+}
+
+void AProjectile::InitVisualOffset()
+{
+	const AZeroLockCharacter* Shooter = Cast<AZeroLockCharacter>(GetInstigator());
+	// The authoritative copy on the owning client stays hidden behind its fake.
+	const bool bHiddenOnOwner = !HasAuthority() && ProjectileId != NULL_PROJECTILE_ID;
+	if (!bUseShooterWeaponStats || !Shooter || VisualBlendDistance <= 0.0f || bHiddenOnOwner || GetNetMode() == NM_DedicatedServer)
+	{
+		return;
+	}
+
+	// Heroes without a muzzle fire from the body.
+	FVector GunLocation = Shooter->GetActorLocation();
+	const USkeletalMeshComponent* Mesh = Shooter->GetMesh();
+	const FName Muzzle = Shooter->WeaponStats.MuzzleSocket;
+	if (!Muzzle.IsNone() && Mesh && Mesh->DoesSocketExist(Muzzle))
+	{
+		GunLocation = Mesh->GetSocketLocation(Muzzle);
+	}
+
+	// Sideways only: the tracer runs parallel to the bullet instead of crossing the screen at an angle.
+	VisualOffset = FVector::VectorPlaneProject(GunLocation - GetActorLocation(), GetActorForwardVector());
+
+	// Nearly zero: the shot already left the gun (it fell back to converging). Very large: the shooter teleported.
+	constexpr float MaxVisualOffset = 300.0f;
+	if (VisualOffset.IsNearlyZero(1.0f) || VisualOffset.SizeSquared() > FMath::Square(MaxVisualOffset))
+	{
+		return;
+	}
+
+	for (USceneComponent* Child : RootComponent->GetAttachChildren())
+	{
+		if (Child && (Child->IsA<UMeshComponent>() || Child->IsA<UFXSystemComponent>()))
+		{
+			// It moves away from the real bullet, so it must not collide on its own.
+			Cast<UPrimitiveComponent>(Child)->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			VisualComponents.Emplace(Child, Child->GetRelativeLocation());
+		}
+	}
+	UpdateVisualOffset(0.0f);
+}
+
+void AProjectile::UpdateVisualOffset(float DeltaSeconds)
+{
+	if (VisualComponents.IsEmpty())
+	{
+		return;
+	}
+
+	VisualTravelDistance += GetVelocity().Size() * DeltaSeconds;
+	const float Alpha = bDetonated ? 1.0f : FMath::Clamp(VisualTravelDistance / VisualBlendDistance, 0.0f, 1.0f);
+
+	// Through the root's transform: bullet roots are scaled.
+	const FVector LocalOffset = RootComponent->GetComponentTransform().InverseTransformVector(VisualOffset) * (1.0f - FMath::SmoothStep(0.0f, 1.0f, Alpha));
+	for (const TPair<TWeakObjectPtr<USceneComponent>, FVector>& Visual : VisualComponents)
+	{
+		if (USceneComponent* Component = Visual.Key.Get())
+		{
+			Component->SetRelativeLocation(Visual.Value + LocalOffset);
+		}
+	}
+
+	if (Alpha >= 1.0f)
+	{
+		VisualComponents.Reset();
+	}
 }
 
 void AProjectile::CatchupTick(float CatchupTickDelta)
@@ -529,6 +599,8 @@ void AProjectile::Tick(float DeltaSeconds)
 	{
 		CorrectionLerpTick(DeltaSeconds);
 	}
+
+	UpdateVisualOffset(DeltaSeconds);
 }
 
 void AProjectile::CorrectionLerpTick(float DeltaTime)

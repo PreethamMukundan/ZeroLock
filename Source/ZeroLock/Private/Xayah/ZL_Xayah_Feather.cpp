@@ -157,9 +157,10 @@ void AZL_Xayah_Feather::Tick(float DeltaSeconds)
 		}
 		return;
 	}
-
+		
 	const FVector Start = GetActorLocation();
 	const FVector ToHero = Hero->GetActorLocation() - Start;
+	SetActorRotation(FRotationMatrix::MakeFromZ(ToHero).Rotator());
 	const float Distance = ToHero.Size();
 	const float Step = ReturnSpeed * DeltaSeconds;
 	const bool bArrived = Distance <= Step;

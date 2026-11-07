@@ -276,6 +276,21 @@ void UZL_GA_WeaponFire::GetAimData(const AZeroLockCharacter* Hero, FVector& OutS
 
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(WeaponAimTrace), true, Hero);
 
+	if (bFireAlongCrosshair && Camera)
+	{
+		// Same depth as the normal spawn, moved sideways onto the crosshair line.
+		const float SpawnDepth = FMath::Max(0.0f, FVector::DotProduct(OutSpawnLocation - CameraLocation, CameraDirection));
+		const FVector LineSpawnLocation = CameraLocation + CameraDirection * SpawnDepth;
+
+		// The camera sits off the shoulder and can see past corners the hero is still behind.
+		if (!GetWorld()->LineTraceTestByObjectType(Hero->GetActorLocation(), LineSpawnLocation, FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams))
+		{
+			OutSpawnLocation = LineSpawnLocation;
+			OutAimDirection = CameraDirection;
+			return;
+		}
+	}
+
 	FHitResult Hit;
 	const FVector AimPoint = GetWorld()->LineTraceSingleByObjectType(Hit, TraceStart, TraceEnd, ObjectParams, QueryParams) ? Hit.ImpactPoint : TraceEnd;
 

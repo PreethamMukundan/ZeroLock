@@ -103,6 +103,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Aim")
 	float MaxAimDistance = 20000.0f;
 
+	/** The real bullet starts on the crosshair line and flies along it, so shots go straight and everything under the
+	 * crosshair is hit at any distance. What the player sees leaves the gun and eases onto the line (AProjectile's
+	 * VisualBlendDistance). Off, or when a wall separates the hero from the line (no shooting around corners): the bullet
+	 * flies from the gun to the point under the crosshair. */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Aim")
+	bool bFireAlongCrosshair = true;
+
 	/** Projectiles still waiting to spawn (or, on a remote server, waiting on the client's spawn data). */
 	int32 PendingSpawns = 0;
 

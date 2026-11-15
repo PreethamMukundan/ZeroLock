@@ -131,6 +131,7 @@ void AZeroLockCharacter::InitializeFloatingStatusBar()
 	if (WidgetInstance)
 	{
 		OverHeadDisplayRef = WidgetInstance;
+		WidgetInstance->SetDisplayedHero(this);
 
 		if (UZL_VM_Attributes* VM = GetVM_Attributes())
 		{
@@ -443,6 +444,9 @@ void AZeroLockCharacter::ChangeFireRate()
 
 void AZeroLockCharacter::PrimaryFireTickFunction()
 {
+	// Left mouse is also IA_Confirm: while a targeted cast waits for its confirm, the click only casts.
+	if (AbilitySystemComp->GenericLocalConfirmCallbacks.IsBound()) return;
+
 	if (AttributeSet->GetCurrentAmmo() > 0)
 	{
 		AbilitySystemComp->TryActivateAbilityByClass(PrimaryFireAbility, true);

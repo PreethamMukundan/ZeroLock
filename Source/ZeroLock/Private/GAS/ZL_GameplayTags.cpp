@@ -29,6 +29,10 @@ namespace ZerolockGameplayTagsForBinding
 	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_STEALTHED, "Zerolock.Status.Stealthed");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_ENLARGED, "Zerolock.Status.Enlarged");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_SHRUNK, "Zerolock.Status.Shrunk");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_IMMORTAL, "Zerolock.Status.Immortal");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_DEBUFFSTACK, "Zerolock.DebuffStack");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_DEBUFFSTACK_FROST, "Zerolock.DebuffStack.Frost");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_IGNORE_BARRIER, "Zerolock.Status.IgnoreBarrier");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_COOLDOWN_ITEM_SLOT_1, "ZerolockAbilities.Cooldown.Item.Slot1");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_COOLDOWN_ITEM_SLOT_2, "ZerolockAbilities.Cooldown.Item.Slot2");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_COOLDOWN_ITEM_SLOT_3, "ZerolockAbilities.Cooldown.Item.Slot3");
@@ -36,6 +40,7 @@ namespace ZerolockGameplayTagsForBinding
 	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_CUBED, "Zerolock.Status.Cubed");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_GOOBALL, "Zerolock.Status.GooBall");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_FLOATING, "Zerolock.Status.Floating");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_CHANNELING, "Zerolock.Status.Channeling");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_CLEAN_CUT, "Zerolock.Status.CleanCut");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_SETBYCALLER_FIRE_RATE_MULTIPLIER, "Zerolock.SetByCaller.FireRateMultiplier");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_KNIGHT, "Zerolock.Status.Knight");

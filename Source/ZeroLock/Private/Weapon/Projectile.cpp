@@ -10,6 +10,7 @@
 #include "TimerManager.h"
 #include "GAS/BaseCharAbilitySystemComponent.h"
 #include "GAS/BaseCharAttributeSet.h"
+#include "HeroKit/ZL_KitCue.h"
 #include "Components/ArrowComponent.h"
 #include "Components/AudioComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -199,6 +200,7 @@ void AProjectile::ApplyShooterBulletSpeed()
 void AProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+	ZLKitCue::AddLocal(this, TrailCue);
 
 	/* Predicted projectiles must have an instigating player controller. We need it so we can retrieve their ping for
 	 * prediction logic. We don't need a PC for non-predicted projectiles (or projectiles spawned on the server without
@@ -432,6 +434,7 @@ void AProjectile::LifeSpanExpired()
 
 void AProjectile::ShutDown()
 {
+	ZLKitCue::RemoveLocal(this, TrailCue);
 
 	/* If we want to keep this projectile visible after its detonation (i.e. for post-detonation FX, like a landing
 	 * animation), make sure it's not hidden. E.g. if we're not predicting FX, we need to unhide the authoritative
@@ -482,6 +485,7 @@ void AProjectile::ShutDown()
 
 void AProjectile::Destroyed()
 {
+	ZLKitCue::RemoveLocal(this, TrailCue);
 	// Redundancy for safety. Should never happen.
 	if (LinkedFakeProjectile)
 	{
@@ -917,6 +921,11 @@ void AProjectile::Detonate(bool bHasDirectImpactTarget, AActor* OtherActor, UPri
 					{
 						UGameplayStatics::SpawnEmitterAtLocation(this, ImpactParticle, HitLocation, Normal.Rotation());
 					}
+				}
+				// Niagara through gameplay cues (hero kit), local like the particles.
+				if (bHasDirectImpactTarget || IsValid(OtherActor) || IsValid(OtherComp))
+				{
+					ZLKitCue::ExecuteLocal(this, bHasDirectImpactTarget ? HitCharacterCue : HitWorldCue, HitLocation, Normal.Rotation());
 				}
 
 				/* Spawn missed impact FX if we didn't directly hit a target (i.e. detonated against the environment),

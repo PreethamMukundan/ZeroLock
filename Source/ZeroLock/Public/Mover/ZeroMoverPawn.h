@@ -34,6 +34,9 @@ public:
     /** Call from an OnJumpInputPressed listener to stop this press from reaching the mover (no jump, air jump or mantle). */
     void ConsumeJumpPress() { bJumpPressConsumed = true; }
 
+    /** Locally controlled pawns: whether the jump key is held right now (Tempest's glide, HeroKit). */
+    bool IsJumpInputHeld() const { return bLocalJumpPressed; }
+
     /** Clips used by ABP_DeadlockHero (UZL_DeadlockAnimInstance) for this pawn. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
     TObjectPtr<class UZL_DeadlockAnimSet> DeadlockAnimSet;

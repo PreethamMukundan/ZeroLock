@@ -126,7 +126,9 @@ enum class EZL_ItemStatus : uint8
 	Invulnerable,
 	/** Visual only: the capsule keeps its size. */
 	Enlarged,
-	Shrunk
+	Shrunk,
+	/** Can't move (Mover "Locked"). Appended for the hero kit: keep new values at the end. */
+	Root
 };
 
 /** What sets a proc off. */

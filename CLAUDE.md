@@ -9,7 +9,7 @@ Main branch `main`; feature branches `feature/Hero/<Hero>`.
 |---|---|
 | `Docs/Claude/Movement.md` | Mover pawn/component, modes, transitions, the `RequestSafe*` latch API, input, network prediction, controller/player state/camera |
 | `Docs/Claude/GAS.md` | ASC setup, attribute set, damage/heal pipeline, base ability classes, tasks, tags, items/shop, new-ability recipe |
-| `Docs/Claude/Heroes.md` | Every hero ability (Apollo, Lash, Pocket, Drifter, Xayah, Seven, Doorman, Viscous, Solomon), status, patterns to copy |
+| `Docs/Claude/Heroes.md` | Every hero ability (Apollo, Lash, Pocket, Drifter, Xayah, Seven, Doorman, Viscous, Solomon, SCombo), status, patterns to copy |
 | `Docs/Claude/Weapons.md` | Primary fire, predicted projectiles (`AProjectile`, spawn task), prediction tuning |
 | `Docs/Claude/GameFlow.md` | Game mode/state, teams, death/respawn, hero select, online (CommonUser sessions, EOS config split, console commands), cheats (0-key menu, `ZL.Cheat.*`, target dummies) |
 | `Docs/Claude/UI.md` | CommonUI layers, MVVM viewmodels/resolvers, HUD, shop, menus |
@@ -17,6 +17,7 @@ Main branch `main`; feature branches `feature/Hero/<Hero>`.
 | `Docs/Claude/Telemetry.md` | Stats recording (`UZL_TelemetrySubsystem`), Cloudflare Worker API + D1, dashboard, setup/deploy |
 | `Docs/Claude/Content.md` | Content folder map, editor module, `Tools/` |
 | `Docs/Claude/ItemRoadmap.md` | Item system phases, what's done, open decisions |
+| `Docs/Claude/HeroKit.md` | Data-driven hero kit (payloads, kit ability classes, zones, kit projectiles), the 19 sheet heroes in `Content/ZERO/Heroes/`, `Tools/HeroKit` |
 
 ## Architecture in one screen
 - **Hero** = `AZeroLockCharacter` → `AZeroMoverPawn` (APawn, **Mover plugin**, not ACharacter/CMC) with `UZeroMoverComponent`. Mover modes/transitions are configured in BP (`Content/ZERO/monkeyBoi/BP_Mover_Monkey`).

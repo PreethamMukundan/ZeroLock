@@ -33,3 +33,12 @@ void UZL_OverHeadWidgetComponent::TickComponent(float DeltaTime, enum ELevelTick
 		SetWorldRotation(LookAtRotation);
 	}
 }
+
+void UZL_OverHeadWidgetComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	if (!FMath::IsNearlyZero(ExtraHeight))
+	{
+		AddRelativeLocation(FVector(0.f, 0.f, ExtraHeight));
+	}
+}

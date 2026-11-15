@@ -11,6 +11,7 @@
 
 enum class EZL_ItemStat : uint8;
 
+class UUserWidget;
 class UZL_VM_ChargePercent;
 class UZL_VM_Attributes;
 class UZL_VM_AbilityTimerProgressBar;
@@ -68,6 +69,10 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Icon")
 	TObjectPtr<UTexture2D> IconImage;
+
+	/** Widget added to the owner's screen when the hero gets this ability, and removed with the hero (UZL_AbilityUIManagerComponent). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<UUserWidget> AbilityHUDWidget;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Icon")
 	FString AbilityName;

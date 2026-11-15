@@ -415,6 +415,12 @@ bool UZeroMoverComponent::IsGooBall() const
     return ASC && ASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_GOOBALL);
 }
 
+bool UZeroMoverComponent::IsChanneling() const
+{
+    const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+    return ASC && ASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_CHANNELING);
+}
+
 bool UZeroMoverComponent::IsFloating() const
 {
     const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());

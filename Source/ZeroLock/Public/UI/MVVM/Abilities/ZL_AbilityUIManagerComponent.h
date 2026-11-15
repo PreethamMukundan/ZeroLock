@@ -18,6 +18,7 @@ struct FActiveGameplayEffectHandle;
 struct FGameplayAbilitySpec;
 class UZL_VM_AbilitiesContainer;
 class UZL_VM_AbilityIcon;
+class UUserWidget;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ZEROLOCK_API UZL_AbilityUIManagerComponent : public UActorComponent
@@ -47,6 +48,13 @@ public:
 	void BindToLocalHero();
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	/** One per AbilityHUDWidget class, added when the ability arrives. */
+	UPROPERTY(Transient)
+	TMap<TSubclassOf<UUserWidget>, TObjectPtr<UUserWidget>> AbilityHUDWidgets;
+
+	void AddAbilityHUDWidget(const UBaseGameplayAbility* Ability);
 
 	bool bBoundToHeroASC = false;
 

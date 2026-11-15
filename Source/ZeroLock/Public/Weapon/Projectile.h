@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayEffect.h"
 #include "GameplayEffectTypes.h"
+#include "GameplayTagContainer.h"
 
 #include "Weapon/ZeroAbilityTypes.h"
 #include "GameFramework/Actor.h"
@@ -554,6 +555,18 @@ protected:
 	/** Cascade particle spawned when this projectile hits the environment. */
 	UPROPERTY(EditDefaultsOnly, Category = "Projectile|FX")
 	TObjectPtr<UParticleSystem> HitWorldParticle;
+
+	/** Looping gameplay cue (a loop notify, e.g. AZL_GCN_KitLoop) added locally on every copy for the whole flight. */
+	UPROPERTY(EditDefaultsOnly, Category = "Projectile|FX|Cues", meta = (Categories = "GameplayCue"))
+	FGameplayTag TrailCue;
+
+	/** Gameplay cue executed locally where it detonates on a character / on the environment (every machine that shows
+	 *  the detonation, like the particles above). */
+	UPROPERTY(EditDefaultsOnly, Category = "Projectile|FX|Cues", meta = (Categories = "GameplayCue"))
+	FGameplayTag HitCharacterCue;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Projectile|FX|Cues", meta = (Categories = "GameplayCue"))
+	FGameplayTag HitWorldCue;
  
 	/** Called when this projectile stops because it hit a valid target, hit a blocking surface, or stopped moving (e.g.
 	 * ran out of bounces). Applies ImpactGameplayEffect to the hit actor (if bHasDirectImpactTarget is true), triggers

@@ -49,6 +49,15 @@ namespace ZerolockGameplayTagsForBinding
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_ENLARGED)
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_SHRUNK)
 
+	// Hero kit (HeroKit/). Immortal: hero damage never takes the hero below 1 health. IgnoreBarrier: on the attacker, its
+	// damage skips the target's combat barrier.
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_IMMORTAL)
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_IGNORE_BARRIER)
+	// Debuff stacks shown on the HUD: an effect granting a child tag (Zerolock.DebuffStack.<Name>) is tracked per
+	// instigator by UBaseCharAbilitySystemComponent::DebuffStacks (GAS/ZL_DebuffStacks.h).
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_DEBUFFSTACK)
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_DEBUFFSTACK_FROST)
+
 	/** Cooldown of the active item on each key. The cooldown stays with the key, so an upgrade keeps it; selling clears it. */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_COOLDOWN_ITEM_SLOT_1)
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_COOLDOWN_ITEM_SLOT_2)
@@ -71,6 +80,10 @@ namespace ZerolockGameplayTagsForBinding
 	/** Solomon floats (UZL_Solomon_MovePiece's ActivationOwnedTags, predicted): in the air the Mover caps his fall and air speed and
 	 * cancels part of gravity, fading over UZeroMoverComponent::FloatFadeDuration of air time (FZeroMovementInputs::bIsFloating). */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_FLOATING)
+
+	/** Locked into a channel (ActivationOwnedTags, predicted): every ability without AbilityTriggers is refused, weapon and melee included
+	 * (UBaseGameplayAbility::CanActivateAbility), and the Mover input drops dash, crouch/slide, heavy melee and zipline. Walking stays. */
+	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_CHANNELING)
 
 	/** Promoted by Solomon's Kingside Knight (UZL_Solomon_KnightEffect): an ally knight, or Solomon himself as king. */
 	ZEROLOCK_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_STATUS_KNIGHT)

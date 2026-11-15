@@ -88,6 +88,7 @@ FGameplayTag ZLItemStatus::GetTag(EZL_ItemStatus Status)
 	case EZL_ItemStatus::Invulnerable: return TAG_UNTOUCHABLE;
 	case EZL_ItemStatus::Enlarged: return TAG_STATUS_ENLARGED;
 	case EZL_ItemStatus::Shrunk: return TAG_STATUS_SHRUNK;
+	case EZL_ItemStatus::Root: return TAG_MOVEMENT_ROOTED;
 	default: return FGameplayTag();
 	}
 }

@@ -244,6 +244,9 @@ public:
 	/** True while the owner has Zerolock.Status.Floating. Only read when producing input (FZeroMovementInputs::bIsFloating). */
 	bool IsFloating() const;
 
+	/** True while the owner has Zerolock.Status.Channeling. Only read when producing input. */
+	bool IsChanneling() const;
+
 	/** Cheat noclip mode (UZeroNoClipMode). Added at runtime from NoClipModeClass if the mode map doesn't have it. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mover|Cheats")
 	FName NoClipModeName = FName("NoClip");

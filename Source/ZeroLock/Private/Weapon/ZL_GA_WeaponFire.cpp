@@ -12,10 +12,20 @@
 #include "Engine/World.h"
 #include "GAS/BaseCharAttributeSet.h"
 #include "GAS/ZL_GameplayTags.h"
+#include "Mover/ZeroMoverComponent.h"
 #include "Weapon/Projectile.h"
 #include "Weapon/ZL_GE_AmmoCost.h"
 #include "Weapon/ZL_Task_SpawnPredictedProjectile.h"
 #include "ZeroLock/ZeroLockCharacter.h"
+
+namespace
+{
+	const UZeroMoverComponent* GetHeroMover(const FGameplayAbilityActorInfo* ActorInfo)
+	{
+		const AZeroLockCharacter* Hero = ActorInfo ? Cast<AZeroLockCharacter>(ActorInfo->AvatarActor.Get()) : nullptr;
+		return Hero ? Hero->GetZeroMoverComponent() : nullptr;
+	}
+}
 
 UZL_GA_WeaponFire::UZL_GA_WeaponFire()
 {
@@ -36,6 +46,16 @@ bool UZL_GA_WeaponFire::CanActivateAbility(const FGameplayAbilitySpecHandle Hand
 			|| ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_WEAPON_RELOADING)))
 	{
 		return false;
+	}
+	// Locally controlled only: the server's Mover runs behind the client, so checking there would reject the client's first
+	// shots after it drops off the cable.
+	if (ActorInfo && ActorInfo->IsLocallyControlled())
+	{
+		const UZeroMoverComponent* Mover = GetHeroMover(ActorInfo);
+		if (Mover && Mover->GetMovementModeName() == Mover->ZipliningModeName)
+		{
+			return false;
+		}
 	}
 	return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
 }
@@ -62,6 +82,12 @@ void UZL_GA_WeaponFire::ApplyCost(const FGameplayAbilitySpecHandle Handle, const
 
 	if (!bConsumeAmmo || !ActorInfo || !ActorInfo->AbilitySystemComponent.IsValid()
 		|| ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_CHEAT_INFINITE_AMMO))
+	{
+		return;
+	}
+	// Shots are free while sliding.
+	const UZeroMoverComponent* Mover = GetHeroMover(ActorInfo);
+	if (Mover && Mover->GetMovementModeName() == TEXT("Sliding"))
 	{
 		return;
 	}

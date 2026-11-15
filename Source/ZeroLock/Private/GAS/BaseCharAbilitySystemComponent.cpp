@@ -4,6 +4,9 @@
 #include "GAS/BaseCharAbilitySystemComponent.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
+#include "Engine/World.h"
+#include "GameFramework/GameStateBase.h"
+#include "Net/UnrealNetwork.h"
 #include "TimerManager.h"
 #include "GameFramework/Pawn.h"
 #include "GAS/BaseCharAttributeSet.h"
@@ -188,6 +191,7 @@ void UBaseCharAbilitySystemComponent::FinishHit(EZL_ProcTrigger HitTrigger, EZL_
 	}
 
 	BreakStealth();
+	OnDamageDealt.Broadcast(Target, DamageDealt, HitTrigger, DamageSource);
 
 	if (UZL_ItemProcComponent* Procs = Hero->GetItemProcs())
 	{
@@ -718,5 +722,89 @@ void UBaseCharAbilitySystemComponent::OnChargeRechargeRemoved(const FGameplayEff
 	if (GetNumericAttribute(Recharge->ChargeAttr) < GetNumericAttribute(Recharge->MaxChargeAttr))
 	{
 		StartChargeRecharge(RechargeTag);
+	}
+}
+// ---- Debuff stacks ----------------------------------------------------------------------------------------------------
+
+void UBaseCharAbilitySystemComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	if (!GetOwner() || !GetOwner()->HasAuthority())
+	{
+		return;
+	}
+	OnActiveGameplayEffectAddedDelegateToSelf.AddWeakLambda(this, [this](UAbilitySystemComponent*, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle Handle)
+	{
+		FGameplayTagContainer Granted;
+		Spec.GetAllGrantedTags(Granted);
+		if (!Granted.HasTag(ZerolockGameplayTagsForBinding::TAG_DEBUFFSTACK))
+		{
+			return;
+		}
+		if (FOnActiveGameplayEffectStackChange* StackChange = OnGameplayEffectStackChangeDelegate(Handle))
+		{
+			StackChange->AddWeakLambda(this, [this](FActiveGameplayEffectHandle, int32, int32) { QueueDebuffStackRefresh(); });
+		}
+		QueueDebuffStackRefresh();
+	});
+	OnAnyGameplayEffectRemovedDelegate().AddWeakLambda(this, [this](const FActiveGameplayEffect& Effect)
+	{
+		if (ZLDebuffStack::FindStackTag(Effect).IsValid())
+		{
+			QueueDebuffStackRefresh();
+		}
+	});
+}
+
+void UBaseCharAbilitySystemComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UBaseCharAbilitySystemComponent, DebuffStacks);
+}
+
+UZL_VM_DebuffStacks* UBaseCharAbilitySystemComponent::GetDebuffStacksVM()
+{
+	if (!DebuffStacksVM)
+	{
+		DebuffStacksVM = NewObject<UZL_VM_DebuffStacks>(this);
+		DebuffStacksVM->Update(DebuffStacks);
+	}
+	return DebuffStacksVM;
+}
+
+void UBaseCharAbilitySystemComponent::OnRep_DebuffStacks()
+{
+	GetDebuffStacksVM()->Update(DebuffStacks);
+}
+
+void UBaseCharAbilitySystemComponent::QueueDebuffStackRefresh()
+{
+	UWorld* World = GetWorld();
+	if (bDebuffRefreshQueued || !World)
+	{
+		return;
+	}
+	bDebuffRefreshQueued = true;
+	World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this]()
+	{
+		bDebuffRefreshQueued = false;
+		RefreshDebuffStacks();
+	}));
+}
+
+void UBaseCharAbilitySystemComponent::RefreshDebuffStacks()
+{
+	TArray<FZL_DebuffStackEntry> Entries;
+	ZLDebuffStack::Gather(this, Entries);
+	if (Entries == DebuffStacks)
+	{
+		return;
+	}
+	DebuffStacks = MoveTemp(Entries);
+	// The server's own copy (listen host, bots' overhead bars there) doesn't get OnRep.
+	GetDebuffStacksVM()->Update(DebuffStacks);
+	if (AActor* Owner = GetOwner())
+	{
+		Owner->ForceNetUpdate();
 	}
 }

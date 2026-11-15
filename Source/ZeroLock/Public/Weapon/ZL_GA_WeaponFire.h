@@ -34,7 +34,7 @@ class ZEROLOCK_API UZL_GA_WeaponFire : public UBaseGameplayAbility
 public:
 	UZL_GA_WeaponFire();
 
-	/** No shooting while Viscous is a Goo Ball (Zerolock.Status.GooBall). */
+	/** No shooting while reloading, while Viscous is a Goo Ball (Zerolock.Status.GooBall) or while riding a zipline. */
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr,
 		const FGameplayTagContainer* TargetTags = nullptr, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 
@@ -44,7 +44,7 @@ public:
 	/** With bConsumeAmmo: needs at least one CurrentAmmo. */
 	virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	/** With bConsumeAmmo: UZL_GE_AmmoCost for one ammo per shot (a burst costs BurstCount, pellets cost nothing extra),
-	 * capped at the ammo left. Predicted with the activation. */
+	 * capped at the ammo left. Free while sliding. Predicted with the activation. */
 	virtual void ApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
 
 protected:

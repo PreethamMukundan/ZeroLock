@@ -58,6 +58,10 @@ bool UBaseGameplayAbility::CanActivateAbility(const FGameplayAbilitySpecHandle H
 	if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid() && AbilityTriggers.IsEmpty())
 	{
 		const UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
+		if (ASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_CHANNELING))
+		{
+			return false;
+		}
 		const FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(Handle);
 		const int32 InputID = Spec ? Spec->InputID : static_cast<int32>(EGASAbilityInputID::None);
 

@@ -206,9 +206,13 @@ void UBaseCharAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 						{
 							return;
 						}
-						const bool bBuddha = TargetASC && TargetASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_CHEAT_BUDDHA);
-						// Combat barrier soaks the hit first.
-						const float Absorbed = FMath::Min(GetCombatBarrier(), LocalDamageDone);
+						// Immortal (hero kit) works like buddha: never below 1 health.
+						const bool bBuddha = TargetASC && (TargetASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_CHEAT_BUDDHA)
+							|| TargetASC->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_IMMORTAL));
+						// Combat barrier soaks the hit first, unless the attacker ignores barriers.
+						const UAbilitySystemComponent* SourceASCForBarrier = SourceCharacter->GetAbilitySystemComponent();
+						const bool bIgnoreBarrier = SourceASCForBarrier && SourceASCForBarrier->HasMatchingGameplayTag(ZerolockGameplayTagsForBinding::TAG_STATUS_IGNORE_BARRIER);
+						const float Absorbed = bIgnoreBarrier ? 0.0f : FMath::Min(GetCombatBarrier(), LocalDamageDone);
 						if (Absorbed > 0.0f)
 						{
 							SetCombatBarrier(GetCombatBarrier() - Absorbed);

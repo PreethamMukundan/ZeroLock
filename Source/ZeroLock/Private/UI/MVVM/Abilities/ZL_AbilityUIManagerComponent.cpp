@@ -3,6 +3,7 @@
 
 #include "UI/MVVM/Abilities/ZL_AbilityUIManagerComponent.h"
 
+#include "Blueprint/UserWidget.h"
 #include "GameplayTagContainer.h"
 #include "GAS/BaseCharAbilitySystemComponent.h"
 #include "GAS/BaseCharAttributeSet.h"
@@ -146,6 +147,35 @@ void UZL_AbilityUIManagerComponent::BindToLocalHero()
 	
 }
 
+void UZL_AbilityUIManagerComponent::AddAbilityHUDWidget(const UBaseGameplayAbility* Ability)
+{
+	// OnAbilityAdded runs again for the same spec, so each class is only added once.
+	if (!Ability->AbilityHUDWidget || AbilityHUDWidgets.Contains(Ability->AbilityHUDWidget))
+	{
+		return;
+	}
+	const APawn* Hero = Cast<APawn>(GetOwner());
+	APlayerController* PC = Hero ? Cast<APlayerController>(Hero->GetController()) : nullptr;
+	if (UUserWidget* Widget = PC ? CreateWidget<UUserWidget>(PC, Ability->AbilityHUDWidget) : nullptr)
+	{
+		Widget->AddToViewport();
+		AbilityHUDWidgets.Add(Ability->AbilityHUDWidget, Widget);
+	}
+}
+
+void UZL_AbilityUIManagerComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	for (const TPair<TSubclassOf<UUserWidget>, TObjectPtr<UUserWidget>>& Pair : AbilityHUDWidgets)
+	{
+		if (Pair.Value)
+		{
+			Pair.Value->RemoveFromParent();
+		}
+	}
+	AbilityHUDWidgets.Reset();
+	Super::EndPlay(EndPlayReason);
+}
+
 void UZL_AbilityUIManagerComponent::OnStackTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
 	if (StackTagToSlotMap.Contains(CallbackTag))
@@ -163,6 +193,7 @@ void UZL_AbilityUIManagerComponent::OnAbilityAdded(FGameplayAbilitySpec& Spec)
 	
 	UBaseGameplayAbility* Ability = Cast<UBaseGameplayAbility>(Spec.Ability);
 	if (!Ability) return;
+	AddAbilityHUDWidget(Ability);
 
 	UZL_VM_AbilityIcon* TargetSlot = nullptr;
 	FGameplayTagContainer CombinedTags = Spec.GetDynamicSpecSourceTags();

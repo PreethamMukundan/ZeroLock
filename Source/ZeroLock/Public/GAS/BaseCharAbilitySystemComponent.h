@@ -4,16 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
+#include "GAS/ZL_DebuffStacks.h"
 #include "BaseCharAbilitySystemComponent.generated.h"
 
 enum class EZL_ProcTrigger : uint8;
 class UZL_Task_WaitSlamLocation;
+class AZeroLockCharacter;
 class UBaseGameplayAbility;
 /**
  * 
  */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FNewAbilityAddedDelegate,FGameplayAbilitySpec& ,AbilitySpec);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAbilityUpgradedDelegate,UGameplayAbility* ,Ability,int32 ,newlevel);
+/** Server: this hero landed damage on Target. DamageSource is what was passed to Apply*Damage. */
+DECLARE_MULTICAST_DELEGATE_FourParams(FZL_OnDamageDealt, AZeroLockCharacter* /*Target*/, float /*Damage*/, EZL_ProcTrigger /*HitTrigger*/, const UObject* /*DamageSource*/);
 UCLASS()
 class ZEROLOCK_API UBaseCharAbilitySystemComponent : public UAbilitySystemComponent
 {
@@ -54,6 +58,8 @@ protected:
 public:
 	UPROPERTY(BlueprintAssignable)
 	FNewAbilityAddedDelegate OnNewAbilityAdded;
+
+	FZL_OnDamageDealt OnDamageDealt;
 
 	UPROPERTY(BlueprintAssignable)
 	FAbilityUpgradedDelegate OnAbilityUpgraded;
@@ -191,4 +197,32 @@ protected:
 
 	void StartChargeRecharge(FGameplayTag RechargeTag);
 	void OnChargeRechargeRemoved(const FGameplayEffectRemovalInfo& RemovalInfo, FGameplayTag RechargeTag);
+
+	// ---- Debuff stacks (GAS/ZL_DebuffStacks.h) ----
+public:
+	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	/** Every machine: the viewmodel the debuff stack icons read (this hero's stacks, all instigators). */
+	UFUNCTION(BlueprintPure, Category = "Debuff")
+	UZL_VM_DebuffStacks* GetDebuffStacksVM();
+
+	const TArray<FZL_DebuffStackEntry>& GetDebuffStacks() const { return DebuffStacks; }
+
+protected:
+	/** Server-built from the active effects granting a Zerolock.DebuffStack child; replicated to everyone. */
+	UPROPERTY(ReplicatedUsing = OnRep_DebuffStacks)
+	TArray<FZL_DebuffStackEntry> DebuffStacks;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UZL_VM_DebuffStacks> DebuffStacksVM;
+
+	UFUNCTION()
+	void OnRep_DebuffStacks();
+
+	/** Server: rebuild DebuffStacks next tick (stack and duration changes land in the same frame). */
+	void QueueDebuffStackRefresh();
+	void RefreshDebuffStacks();
+
+	bool bDebuffRefreshQueued = false;
 };

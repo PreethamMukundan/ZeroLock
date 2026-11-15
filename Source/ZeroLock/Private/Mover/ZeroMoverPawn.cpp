@@ -367,6 +367,14 @@ void AZeroMoverPawn::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmd
         ZeroInputs.bWantsToMelee = false;
         ZeroInputs.bWantsToZipline = false;
     }
+    // Channeling: walk only. Jump is left to the ability (it can cancel on the press and consume it).
+    if (MoverComponent && MoverComponent->IsChanneling())
+    {
+        ZeroInputs.bWantsToCrouch = false;
+        ZeroInputs.bWantsToDash = false;
+        ZeroInputs.bWantsToMelee = false;
+        ZeroInputs.bWantsToZipline = false;
+    }
     // Cheat noclip: jump held / crouch held fly up / down (UZeroNoClipMode); no dash, melee lunge or zipline.
     ZeroInputs.bIsNoClip = MoverComponent && MoverComponent->IsNoClip();
     if (ZeroInputs.bIsNoClip)

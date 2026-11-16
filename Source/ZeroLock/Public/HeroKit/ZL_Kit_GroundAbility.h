@@ -58,4 +58,10 @@ protected:
 
 	/** Server, at the impact. */
 	virtual void DoImpact(const FVector& Location);
+
+	/** While aiming, a disc as wide as the hit (the bigger of ImpactRadius and the zone's radius) on the aimed spot. */
+	UPROPERTY(EditDefaultsOnly, Category = "Kit")
+	bool bShowAreaPreview = true;
+
+	virtual float GetPreviewDiscRadius() const override;
 };

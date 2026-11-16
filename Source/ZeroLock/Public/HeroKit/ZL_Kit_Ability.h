@@ -69,6 +69,35 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Kit|Move")
 	bool bStopAfterMove = false;
 
+	/** Quick launch: when the move ends, set the up speed to UpSpeedAfterMove and keep the flat speed (instead of
+	 *  carrying MoveUpSpeed into a long coast up). Ignored with bStopAfterMove. */
+	UPROPERTY(EditDefaultsOnly, Category = "Kit|Move")
+	bool bCutUpSpeedAfterMove = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Kit|Move", meta = (EditCondition = "bCutUpSpeedAfterMove"))
+	float UpSpeedAfterMove = 0.0f;
+
+	/** The self move's flat direction comes from the movement keys (camera-relative WASD) when any is held, like Apollo's
+	 *  Sigil; the aim otherwise. MoveUpSpeed is unchanged. */
+	UPROPERTY(EditDefaultsOnly, Category = "Kit|Self")
+	bool bMoveAlongInput = false;
+
+	/** Landing hit: when the caster's Mover goes from an air mode back to Walking/Sliding (OnMovementModeChanged, so
+	 *  double jumps and air dashes just extend the wait), LandingPayload hits enemies in Area around them (LandingCue)
+	 *  and the ability ends. The normal pulses (HitDelay, PulseCount) still run, e.g. a launch hit at the press. */
+	UPROPERTY(EditDefaultsOnly, Category = "Kit|Landing")
+	bool bLandingHit = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Kit|Landing", meta = (EditCondition = "bLandingHit"))
+	FZL_KitPayload LandingPayload;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Kit|Landing", meta = (EditCondition = "bLandingHit"))
+	FZL_KitCue LandingCue;
+
+	/** Safety cap only: the ability ends without a landing hit if the caster hasn't landed after this long. */
+	UPROPERTY(EditDefaultsOnly, Category = "Kit|Landing", meta = (EditCondition = "bLandingHit"))
+	float LandingTimeout = 10.0f;
+
 	/** No area hits when false. */
 	UPROPERTY(EditDefaultsOnly, Category = "Kit|Hit")
 	bool bHasAreaHit = true;
@@ -169,6 +198,16 @@ private:
 	int32 PulsesDone = 0;
 	FTimerHandle PulseTimer;
 	FTimerHandle MoveTimer;
+	/** The self move's flat velocity (for bCutUpSpeedAfterMove). */
+	FVector LaunchFlatVelocity = FVector::ZeroVector;
+	/** The caster was seen off the ground since the press (a landing only counts after that). */
+	bool bLeftGround = false;
+	/** Mover mode change: air → Walking/Sliding is the landing (double jumps and air dashes just keep it waiting). */
+	UFUNCTION()
+	void OnLandingModeChanged(const FName& PreviousMovementModeName, const FName& NewMovementModeName);
+	void DoLanding();
+	void UnbindLanding();
+	static bool IsGroundMode(const FName& ModeName);
 	FDelegateHandle DamageDealtHandle;
 	bool bEnding = false;
 };

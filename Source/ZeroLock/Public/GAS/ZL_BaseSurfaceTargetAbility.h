@@ -50,6 +50,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Targeting|Preview")
 	bool bShowPreview = false;
 
+	/** Flat disc of this radius on the aimed surface instead of the box preview (area abilities). 0 = off. */
+	UPROPERTY(EditDefaultsOnly, Category = "Targeting|Preview")
+	float PreviewDiscRadius = 0.0f;
+
 	/** Preview size in cm, placement space: X out of the surface (starts on it), Y and Z centered on the aim point. */
 	UPROPERTY(EditDefaultsOnly, Category = "Targeting|Preview", meta = (EditCondition = "bShowPreview"))
 	FVector PreviewSize = FVector(100.0f, 100.0f, 100.0f);
@@ -77,6 +81,9 @@ protected:
 	 * set when a transform exists, for the preview.
 	 */
 	virtual bool GetPlacementTransform(const FHitResult& Hit, FTransform& OutTransform) const;
+
+	/** Radius of a flat area disc shown on the aimed surface (green/red), cm; 0 = none. Default: PreviewDiscRadius. */
+	virtual float GetPreviewDiscRadius() const { return PreviewDiscRadius; }
 
 	/** Placement-space box the preview mesh fills. Default: PreviewSize, or none while bShowPreview is off (invalid = no preview). */
 	virtual FBox GetPreviewBox() const;

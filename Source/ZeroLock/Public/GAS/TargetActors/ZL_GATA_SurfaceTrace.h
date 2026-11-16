@@ -74,6 +74,15 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (ExposeOnSpawn = true), Category = "Surface|Preview")
 	FZL_PlacementClearance Clearance;
 
+	/** Area preview instead of the box: a flat disc of this radius (cm) lying on the surface, ValidPreviewColor /
+	 *  InvalidPreviewColor (area abilities). 0 = off. */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Surface|Preview")
+	float PreviewDiscRadius = 0.f;
+
+	/** Mesh for the disc (engine cylinder: 100 cm wide, axis Z). */
+	UPROPERTY(EditDefaultsOnly, Category = "Surface|Preview")
+	TObjectPtr<UStaticMesh> DiscMesh;
+
 	/** Preview size in placement space (cm); invalid box = no preview. */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Surface|Preview")
 	FBox PreviewBox = FBox(ForceInit);

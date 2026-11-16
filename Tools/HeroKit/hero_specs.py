@@ -103,7 +103,7 @@ def weapon(mode="Single", speed=8000, life=0.8, gravity=0.0, spread=1.0, pellets
 
 
 # Heroes that get a DT_HeroList row (hero select). The rest are built but hidden until they're ready (user, 2026-11-14).
-SELECTOR_HEROES = {"KaiKoa"}
+SELECTOR_HEROES = {"KaiKoa", "Tempest"}
 
 HEROES = {
     # ------------------------------------------------------------------------------------------------------------------
@@ -155,25 +155,74 @@ HEROES = {
     "Tempest": {
         "display": "Tempest", "color": (0.7, 1.0, 0.8),
         "desc": "The guiding wind, in his 10th reincarnation.",
-        "weapon": weapon("Single", speed=9000, life=0.8),
-        "secondary": None,  # Rebound: redirecting missed attacks (hard)
-        "ability1": None,  # Alley-oop: homing shots
-        "ability2": ("PhantomDrive", "ZL_Kit_DashAbility", merge(cd(14), {
+        # Hit puffs (2026-11-15): NS_CloudBurst adds +125 cm up to its particles, so up=-125 puts them on the hit point.
+        "weapon": merge(weapon("Single", speed=9000, life=0.8), {
+            "hit_character_cue": cue("HitHero", NS + "NS_CloudBurst", scale=0.6, up=-125),
+            "hit_world_cue": cue("HitWorld", NS + "NS_CloudBurst", scale=0.4, up=-125)}),
+        # Slots decided with the user 2026-11-14: Alley-oop secondary, Side Step (sheet: Air Jordan) ability 1, Setting a Pick (one
+        # pull; replaced Phantom Screen) ability 2, I Am Number 10 ult. Rebound (redirecting missed attacks) isn't built; Phantom Drive is the unassigned f.
+        "secondary": ("AlleyOop", "ZL_Kit_ProjectileAbility", merge(cd(8), {
+            "ability_name": "Alley-oop",
+            "ability_description": "Throw a wind ball that curves toward your crosshair: aim to steer it. Bursts on impact. 2 charges.",
+            "is_charged_ability": True, "max_charges_config": 2, "time_between_charges": 0.5,
+            "projectile": proj(1800, 3.0, radius=35, color=(2.2, 5, 3.5), placeholder_scale=0.7,
+                               placeholder_material="/Game/ZERO/HeroKit/FX/Materials/MI_HeroKit_WindBall",
+                               core_material="/Game/ZERO/HeroKit/FX/Materials/MI_HeroKit_EnergyCore_Wind", core_scale=0.75,
+                               core_color=(0.5, 1.6, 1.0), steer_to_crosshair=True, steer_turn_rate=240,
+                               steer_delay=0.1, trail_cue=cue("Trail", NS + "NS_HeroKit_WindRibbon", scale=1.5, attach=True, loop=True),
+                               impact_cue=cue("Impact", NS + "NS_Wukong_Poke_Impact", scale=2.0)),
+            "hit": {"area_radius": 300, "area_payload": {"damage": 75}}})),
+        "ability1": ("SideStep", "ZL_Kit_Ability", merge(cd(16), {
+            "ability_name": "Side Step",
+            "ability_description": "Leap in the direction you're moving (forward if standing still). Hits enemies around you on take-off and again on landing, which also stuns. Sheet name 'Air Jordan'.",
+            # Natural arc (2026-11-15, user: no speed cut; was 700/1400/0.35 = ~15 m, ~3.5 s): a 0.1 s kick at 1000 up, then
+            # gravity: ~6 m apex, ~2.1 s in the air, flat speed carried the whole way.
+            "move_forward_speed": 1500, "move_up_speed": 1000, "move_duration": 0.1, "is_movement_ability": True,
+            "move_along_input": True, "hit_delay": 0, "pulse_count": 1, "area": {"shape": "Sphere", "range": 400},
+            "pulse_cue": cue("Launch", NS + "NS_CloudBurst", scale=1.5),
+            "enemy_payload": {"damage": 40, "statuses": [], "status_duration": 0},
+            "landing_hit": True, "landing_timeout": 10.0,
+            "landing_cue": cue("Land", NS + "NS_CloudLand", scale=1.8),
+            "landing_payload": merge({"damage": 70}, stun(0.8))})),
+        "ability2": ("SettingAPick", "ZL_Kit_GroundAbility", merge(cd(14), {
+            "ability_name": "Setting a Pick",
+            "ability_description": "A gust at the target spot yanks nearby enemies to its centre and slows them. Sets up Alley-oop.",
+            "max_placement_range": 1500, "impact_delay": 0.2, "impact_radius": 350,
+            "impact_cue": cue("Burst", NS + "NS_Spin", scale=2.5),
+            "impact_enemy_payload": merge({"damage": 30, "pull_to_origin": True, "pull_duration": 0.3}, slow(30, 1.5))})),
+        "f": ("PhantomDrive", "ZL_Kit_DashAbility", merge(cd(14), {
             "ability_name": "Phantom Drive", "dash_distance": 900, "dash_duration": 0.3,
+            "dash_cue": cue("Dash", NS + "NS_CloudStep", scale=1.5),
             "self_payload": {"statuses": ["Stealth"], "status_duration": 3},
             "hit_payload": {"damage": 40}})),
-        "f": ("SkyLeap", "ZL_Kit_Ability", merge(cd(16), {
-            "ability_name": "Sky Leap", "ability_description": "Sheet name 'Air Jordan' (trademark: renamed).",
-            "move_forward_speed": 600, "move_up_speed": 1400, "move_duration": 0.35, "is_movement_ability": True,
-            "hit_delay": 0.9, "area": {"shape": "Sphere", "range": 400},
-            "enemy_payload": merge({"damage": 70}, stun(0.8))})),
         "ult": ("IAmNumber10", "ZL_Kit_ProjectileAbility", merge(cd(100), {
-            "ability_name": "I Am Number 10", "move_up_speed": 1600, "move_duration": 0.3, "stop_after_move": True,
-            "activation_owned_tags": ["Zerolock.Status.Floating"], "fire_delay": 0.35,
-            "volley_count": 10, "volley_interval": 0.45, "volley_interval_scale": 0.88, "area_radius_per_volley": 20,
-            "projectile": proj(3500, 1.5, radius=35, color=(0.7, 1, 0.8)),
-            "hit": {"direct_payload": {"damage": 35}, "area_radius": 150, "area_payload": {"damage": 35}}})),
-        "passives": [("WindRider", "ZL_Tempest_WindRider", {"ability_name": "Wind Rider"})],
+            "ability_name": "I Am Number 10",
+            "ability_description": "Leap up and hang in the air: left click fires a huge wind ball through enemies, three in all. Where it lands it pulls enemies to the centre and leaves a wind dome for 3 s that damages and slows. Jump or the ult key ends it early.",
+            "move_up_speed": 1600, "move_duration": 0.3, "stop_after_move": True,
+            "cast_cue": cue("Cast", NS + "NS_CloudBurst", scale=2.0),
+            "activation_owned_tags": ["ZeroLock.Abilities.Blocked"], "hold_mode_name": "Locked", "fire_delay": 0.35,
+            "fire_on_confirm": True, "confirm_window": 4.0, "cancel_on_jump": True, "cancel_on_repress": True,
+            "count": 1, "volley_count": 3, "area_radius_per_volley": 0,
+            # Wind ball like Alley-oop, faster (2026-11-15: was 2600 cm/s for 2.5 s; 4500 for 1.5 s keeps ~65 m range).
+            "projectile": proj(4500, 1.5, radius=120, color=(2.2, 5, 3.5), pierce=True, pass_through_walls=False,
+                               zone_on_floor=False, burst_on_pierce_hit=True,
+                               placeholder_scale=2.0, placeholder_material="/Game/ZERO/HeroKit/FX/Materials/MI_HeroKit_WindBall",
+                               core_material="/Game/ZERO/HeroKit/FX/Materials/MI_HeroKit_EnergyCore_Wind", core_scale=0.75,
+                               core_color=(0.5, 1.6, 1.0),
+                               trail_cue=cue("Trail", NS + "NS_HeroKit_WindRibbon", scale=4.0, attach=True, loop=True)),
+            # Eye of the Storm (2026-11-15): pierces players and bursts on each enemy it passes and where it stops (wall, floor,
+            # end of range), at that point (not the floor): one pull to the centre, then
+            # a 3 s wind dome (BP_Tempest_IAmNumber10_Vortex: zone child with a sphere DiscMesh, MI_HeroKit_WindBall,
+            # DiscThickness 700 = 2x radius; made by hand over MCP, the builder doesn't create it) that ticks damage + slow (the
+            # burst's single pull is the only pull; a pull on every tick was tried and dropped 2026-11-15).
+            "hit": {"direct_payload": {"damage": 80, "hit_cue": cue("HitHero", NS + "NS_Wukong_Poke_Impact", scale=3.0)},
+                    "area_radius": 350, "area_payload": {"damage": 60, "pull_to_origin": True, "pull_duration": 0.3},
+                    "zone": {"duration": 3, "radius": 350, "interval": 0.5, "max_per_caster": 3, "color": (2.2, 5, 3.5),
+                             "enemy_payload": merge({"damage": 10}, slow(40, 0.5))},
+                    "zone_class": "/Game/ZERO/Heroes/Tempest/Abilities/IAmNumber10/BP_Tempest_IAmNumber10_Vortex.BP_Tempest_IAmNumber10_Vortex_C"}}})),
+        # More air steering (asked 2026-11-15): Falling AirControlPercentage, engine default 0.4; the builder logs the old value.
+        "mover": {"air_control": 0.8},
+        "passives": [],  # Wind Rider (glide, UZL_Tempest_WindRider) removed by the user 2026-11-14
     },
     # ------------------------------------------------------------------------------------------------------------------
     "KaijuX": {

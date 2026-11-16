@@ -22,7 +22,8 @@ void UZL_BaseSurfaceTargetAbility::OnTargetActorSpawned(AGameplayAbilityTargetAc
 		SurfaceTrace->MaxRange = MaxPlacementRange.GetValueAtLevel(GetAbilityLevel()) * GetAbilityRangeScale();
 		SurfaceTrace->bDebug = bDrawTargetingDebug;
 		SurfaceTrace->PreviewBox = GetPreviewBox();
-		if (bShowPreview)
+		SurfaceTrace->PreviewDiscRadius = GetPreviewDiscRadius();
+		if (bShowPreview || SurfaceTrace->PreviewDiscRadius > 0.0f)
 		{
 			if (PreviewMesh)
 			{

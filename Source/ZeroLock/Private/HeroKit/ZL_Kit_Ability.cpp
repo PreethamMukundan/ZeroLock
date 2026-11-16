@@ -58,13 +58,30 @@ void UZL_Kit_Ability::ActivateAbility(const FGameplayAbilitySpecHandle Handle, c
 	{
 		if (UZeroMoverComponent* Mover = Hero->GetZeroMoverComponent())
 		{
-			const FVector Forward = bMoveAlongPitch ? CastDirection.GetSafeNormal() : CastDirection.GetSafeNormal2D();
+			FVector Forward = bMoveAlongPitch ? CastDirection.GetSafeNormal() : CastDirection.GetSafeNormal2D();
+			if (bMoveAlongInput)
+			{
+				const FVector Input = Hero->GetInputWorldDir().GetSafeNormal2D();
+				if (!Input.IsNearlyZero())
+				{
+					Forward = Input;
+				}
+			}
 			Mover->RequestSafeAbilityMove(Forward * MoveForwardSpeed + FVector::UpVector * MoveUpSpeed, FMath::Max(MoveDuration, 0.01f));
-			if (bStopAfterMove)
+			LaunchFlatVelocity = FVector(Forward.X, Forward.Y, 0.0f) * MoveForwardSpeed;
+			if (bStopAfterMove || bCutUpSpeedAfterMove)
 			{
 				Timers.SetTimer(MoveTimer, this, &UZL_Kit_Ability::OnMoveFinished, FMath::Max(MoveDuration, 0.01f), false);
 			}
 		}
+	}
+
+	// A pulse at the press runs on the server inside this activation's prediction window, so its multicast skips the
+	// predicting owner: the owner plays its own copy here (predicted, like CastCue). Later pulses come from timers
+	// outside the window and reach everyone.
+	if (bHasAreaHit && HitDelay <= 0.0f && !HasAuthority(&ActivationInfo) && IsLocallyControlled())
+	{
+		ZLKitCue::Play(Hero->GetMyAbilitySystemComp(), PulseCue, CastOrigin, CastDirection.Rotation(), Area.Range * GetAbilityRangeScale());
 	}
 
 	if (HasAuthority(&ActivationInfo))
@@ -94,7 +111,19 @@ void UZL_Kit_Ability::ActivateAbility(const FGameplayAbilitySpecHandle Handle, c
 	}
 
 	const float LastPulse = bHasAreaHit ? HitDelay + (PulseCount - 1) * PulseInterval : 0.0f;
-	const float Total = FMath::Max3(ActiveDuration, LastPulse, bMoves ? MoveDuration : 0.0f) + 0.05f;
+	float Total = FMath::Max3(ActiveDuration, LastPulse, bMoves ? MoveDuration : 0.0f) + 0.05f;
+	if (bLandingHit)
+	{
+		// Each machine listens to its own Mover's mode changes; the timeout is only a safety cap. A cast in the air
+		// counts as already off the ground; on the ground, the leap's switch to Falling arms it (the server simulates
+		// that a bit after activation, so "on ground" at the press isn't a landing).
+		Total = FMath::Max(Total, LandingTimeout + 0.05f);
+		if (UZeroMoverComponent* Mover = Hero->GetZeroMoverComponent())
+		{
+			bLeftGround = !IsGroundMode(Mover->GetMovementModeName());
+			Mover->OnMovementModeChanged.AddUniqueDynamic(this, &UZL_Kit_Ability::OnLandingModeChanged);
+		}
+	}
 
 	if (ActiveDuration > 0.0f && bShowProgressBar)
 	{
@@ -223,9 +252,96 @@ void UZL_Kit_Ability::OnMoveFinished()
 	{
 		if (UZeroMoverComponent* Mover = Hero->GetZeroMoverComponent())
 		{
-			Mover->RequestSafeStop();
+			if (bStopAfterMove)
+			{
+				Mover->RequestSafeStop();
+			}
+			else if (bCutUpSpeedAfterMove)
+			{
+				// One short override; Falling then carries this velocity with normal gravity. Predicted through input.
+				Mover->RequestSafeAbilityMove(LaunchFlatVelocity + FVector::UpVector * UpSpeedAfterMove, 0.02f);
+			}
 		}
 	}
+}
+
+bool UZL_Kit_Ability::IsGroundMode(const FName& ModeName)
+{
+	// Ziplining isn't a landing: grabbing a cable mid-leap keeps the ability waiting for the real touchdown.
+	return ModeName == DefaultModeNames::Walking || ModeName == FName(TEXT("Sliding"));
+}
+
+void UZL_Kit_Ability::OnLandingModeChanged(const FName& PreviousMovementModeName, const FName& NewMovementModeName)
+{
+	AZeroLockCharacter* Hero = GetHero();
+	UZeroMoverComponent* Mover = Hero ? Hero->GetZeroMoverComponent() : nullptr;
+	if (!IsActive() || !Mover)
+	{
+		UnbindLanding();
+		return;
+	}
+	// Resimulated steps (client corrections) count too: only the server hits, so on the client a landing just ends
+	// the local ability, and skipping them could miss a touchdown that only shows up after a correction.
+	if (!IsGroundMode(NewMovementModeName))
+	{
+		bLeftGround = true;
+		return;
+	}
+	// Walking → Sliding etc. before the leap has happened on this machine: not a landing yet.
+	if (bLeftGround && !IsGroundMode(PreviousMovementModeName))
+	{
+		DoLanding();
+	}
+}
+
+void UZL_Kit_Ability::UnbindLanding()
+{
+	if (AZeroLockCharacter* Hero = GetHero())
+	{
+		if (UZeroMoverComponent* Mover = Hero->GetZeroMoverComponent())
+		{
+			Mover->OnMovementModeChanged.RemoveDynamic(this, &UZL_Kit_Ability::OnLandingModeChanged);
+		}
+	}
+}
+
+void UZL_Kit_Ability::DoLanding()
+{
+	UnbindLanding();
+	AZeroLockCharacter* Hero = GetHero();
+	if (!Hero)
+	{
+		return;
+	}
+	// Landing cue: the owner plays its own copy the moment it lands on its machine; the server sends it to everyone
+	// else, under the activation's prediction key so the multicast skips that owner (no double, no wait for the server).
+	if (!HasAuthority(&CurrentActivationInfo) && IsLocallyControlled() && !Hero->bIsDead && LandingCue.Duration <= 0.0f)
+	{
+		ZLKitCue::ExecuteLocal(Hero, LandingCue.Cue, Hero->GetActorLocation(), CastDirection.Rotation(), Area.Range * GetAbilityRangeScale());
+	}
+	if (HasAuthority(&CurrentActivationInfo) && !Hero->bIsDead)
+	{
+		const FVector Origin = Hero->GetActorLocation();
+		const float RangeScale = GetAbilityRangeScale();
+		{
+			FScopedPredictionWindow Window(Hero->GetMyAbilitySystemComp(), CurrentActivationInfo.GetActivationPredictionKey(), false);
+			ZLKitCue::Play(Hero->GetMyAbilitySystemComp(), LandingCue, Origin, CastDirection.Rotation(), Area.Range * RangeScale);
+		}
+		TArray<AZeroLockCharacter*> Villans;
+		if (!LandingPayload.IsEmpty())
+		{
+			ZLKit::FindHeroes(Hero, Origin, CastDirection, Area, RangeScale, EZL_KitTeam::Enemies, Villans);
+			for (AZeroLockCharacter* Villan : Villans)
+			{
+				ZLKit::ApplyPayload(this, Hero, Villan, Origin, LandingPayload, GetPower());
+			}
+		}
+		if (bDrawDebug)
+		{
+			ZLKit::DrawArea(GetWorld(), Origin, CastDirection, Area, RangeScale, Villans.IsEmpty() ? FColor::Yellow : FColor::Red);
+		}
+	}
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UZL_Kit_Ability::OnDurationFinished()
@@ -251,6 +367,10 @@ void UZL_Kit_Ability::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 	{
 		World->GetTimerManager().ClearTimer(PulseTimer);
 		World->GetTimerManager().ClearTimer(MoveTimer);
+	}
+	if (bLandingHit)
+	{
+		UnbindLanding();
 	}
 	if (DamageDealtHandle.IsValid())
 	{

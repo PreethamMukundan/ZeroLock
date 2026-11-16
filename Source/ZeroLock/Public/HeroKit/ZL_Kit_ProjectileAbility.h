@@ -98,6 +98,30 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Kit|FX")
 	FZL_KitCue CastCue;
 
+	/**
+	 * Manual fire: instead of the volley timer, each left click (generic confirm) fires one volley, up to VolleyCount,
+	 * within ConfirmWindow seconds (ability progress bar). Ends after the last volley, when the window runs out, or on a
+	 * cancel (jump / pressing the ability again). The first click counts after FireDelay (e.g. a leap). Weapon fire is
+	 * skipped while the click is bound; add Zerolock.Status.Floating / ZeroLock.Abilities.Blocked to ActivationOwnedTags
+	 * to hang in the air and block other abilities.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Kit|Manual Fire")
+	bool bFireOnConfirm = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Kit|Manual Fire", meta = (EditCondition = "bFireOnConfirm"))
+	float ConfirmWindow = 4.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Kit|Manual Fire", meta = (EditCondition = "bFireOnConfirm"))
+	bool bCancelOnJump = true;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Kit|Manual Fire", meta = (EditCondition = "bFireOnConfirm"))
+	bool bCancelOnRepress = true;
+
+	/** Mover mode held while the ability runs, like Lash's Death Slam ("Locked": hangs in place, no gravity). Queued on
+	 *  every machine once the self move (MoveDuration) is over, "Falling" when the ability ends. None = off. */
+	UPROPERTY(EditDefaultsOnly, Category = "Kit|Self")
+	FName HoldModeName = NAME_None;
+
 	/** Server: a projectile spawned and was armed. */
 	virtual void OnProjectileArmed(AZL_Kit_Projectile* Projectile) {}
 
@@ -118,6 +142,30 @@ private:
 
 	UFUNCTION()
 	void OnMoveFinished();
+
+	void StartManualFire(class AZeroLockCharacter* Hero);
+	void EnterHoldMode();
+	FTimerHandle HoldTimer;
+	bool bHolding = false;
+	void ArmConfirm();
+	void EndManual();
+	void OnJumpPressed();
+
+	UFUNCTION()
+	void OnConfirmPressed();
+
+	UFUNCTION()
+	void OnConfirmWindowFinished();
+
+	UFUNCTION()
+	void OnRepressed(float TimeWaited);
+
+	UPROPERTY(Transient)
+	TObjectPtr<class UZL_WaitDelay_Task> WindowTask;
+
+	FDelegateHandle JumpHandle;
+	FTimerHandle ServerSafetyTimer;
+	bool bConfirmBound = false;
 
 	int32 PendingSpawns = 0;
 	int32 VolleysFired = 0;

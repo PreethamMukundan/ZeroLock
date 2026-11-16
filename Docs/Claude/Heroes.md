@@ -14,7 +14,7 @@ Code: `Source/ZeroLock/{Public,Private}/<Hero>/`. Ability BPs: `Content/ZERO/Her
 | **Viscous** | Puddle Punch, Splatter, The Cube, Goo Ball (Goo Ball untested in play). |
 | **Solomon** | Move Piece (alt fire, hover highlight) + Setup Bishop (board squares, 2 bishops) + Kingside Knight (ally knight / self king, combat barrier, knight-L hop as a ball) + Rook Battery (two ground rooks, wall reflect, recast fork) + Develop Queen (crash + 8 lines of stun squares, leaps with Move Piece, recall), untested in play. Placeholder piece meshes. |
 | **SCombo** | Slash, Dash, Quick Strike, Combo Mode ult, combo passive and HUD bar. All untested in play, temp numbers, placeholder icons, no other art. |
-| **Hero kit heroes** (19, `Content/ZERO/Heroes/`) | Kai Koa, Tempest, Kaiju X, Ayiana, Lady Grimm, Yatagarasu, Scarab, Van Helsing, Jet, JA594, Sobek, Genghis Khan, Ashura, Ryu, Dr. Ooze, Ryuga, Mephisto, Kronos, WuKong: the doable abilities from the design sheet, built on the hero kit. See HeroKit.md. Untested in play. Only Kai Koa is in hero select (`DT_HeroList`); the rest are hidden. |
+| **Hero kit heroes** (19, `Content/ZERO/Heroes/`) | Kai Koa, Tempest, Kaiju X, Ayiana, Lady Grimm, Yatagarasu, Scarab, Van Helsing, Jet, JA594, Sobek, Genghis Khan, Ashura, Ryu, Dr. Ooze, Ryuga, Mephisto, Kronos, WuKong: the doable abilities from the design sheet, built on the hero kit. See HeroKit.md. Untested in play. Only Kai Koa and Tempest are in hero select (`DT_HeroList`); the rest are hidden. |
 | **Seven** | Stun prototype only. **MonkeyBoi**: `UZL_Ruyibang` stub. |
 
 ## Patterns to follow (Pocket is the reference)

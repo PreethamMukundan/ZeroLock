@@ -24,6 +24,13 @@ CONVERT = [
     "/Game/ParagonTwinblast/FX/Particles/Abilities/VortexGrenade/FX/P_Twinblast_VortexGrenade_ExplodeWater",
     "/Game/ParagonTwinblast/FX/Particles/Abilities/VortexGrenade/FX/P_GrenadeBounceSplash",
     "/Game/ParagonSunWukong/FX/Particles/Wukong/Abilities/DoubleJump/FX/p_GroundSlam_Radius",
+    # Tempest (wind): cloud puffs, swirl, trail, impact
+    "/Game/ParagonSunWukong/FX/Particles/Wukong/Abilities/DoubleJump/FX/p_CloudBurst",
+    "/Game/ParagonSunWukong/FX/Particles/Wukong/p_CloudLand",
+    "/Game/ParagonSunWukong/FX/Particles/Wukong/p_CloudStep",
+    "/Game/ParagonSunWukong/FX/Particles/Wukong/p_Spin",
+    "/Game/ParagonSunWukong/FX/Particles/Wukong/Abilities/Poke/FX/p_SubtleSpeedTrail",
+    "/Game/ParagonSunWukong/FX/Particles/Wukong/Abilities/Poke/FX/P_Wukong_Poke_Impact",
 ]
 
 

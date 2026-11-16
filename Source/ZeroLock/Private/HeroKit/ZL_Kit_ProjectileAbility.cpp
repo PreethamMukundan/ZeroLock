@@ -4,6 +4,8 @@
 
 #include "GAS/BaseCharAbilitySystemComponent.h"
 #include "AbilitySystemComponent.h"
+#include "Abilities/Tasks/AbilityTask_WaitInputPress.h"
+#include "GAS/Tasks/ZL_WaitDelay_Task.h"
 #include "Animation/AnimMontage.h"
 #include "Camera/CameraComponent.h"
 #include "Engine/World.h"
@@ -58,6 +60,20 @@ void UZL_Kit_ProjectileAbility::ActivateAbility(const FGameplayAbilitySpecHandle
 		}
 	}
 
+	// Hang in the air (Death Slam style) once the leap is done, on every machine so the Mover agrees.
+	bHolding = false;
+	if (!HoldModeName.IsNone())
+	{
+		if (bMoves && MoveDuration > 0.0f)
+		{
+			Timers.SetTimer(HoldTimer, this, &UZL_Kit_ProjectileAbility::EnterHoldMode, MoveDuration, false);
+		}
+		else
+		{
+			EnterHoldMode();
+		}
+	}
+
 	PendingSpawns = Count * VolleyCount;
 	VolleysFired = 0;
 	ArmedCount = 0;
@@ -70,6 +86,18 @@ void UZL_Kit_ProjectileAbility::ActivateAbility(const FGameplayAbilitySpecHandle
 		{
 			StartSpawnTask(Hero->GetActorLocation(), Hero->GetActorRotation());
 		}
+		if (bFireOnConfirm && IsActive())
+		{
+			// The client ends it (replicated) after its last click; this only catches a client that never does.
+			GetWorld()->GetTimerManager().SetTimer(ServerSafetyTimer, this, &UZL_Kit_ProjectileAbility::EndManual,
+				FireDelay + ConfirmWindow + 3.0f, false);
+		}
+		return;
+	}
+
+	if (bFireOnConfirm)
+	{
+		StartManualFire(Hero);
 		return;
 	}
 
@@ -110,7 +138,8 @@ void UZL_Kit_ProjectileAbility::FireVolley()
 		StartSpawnTask(Location, Aim + FRotator(0.0f, FirstYaw + YawStep * Index, 0.0f));
 	}
 
-	if (++VolleysFired < VolleyCount && IsActive())
+	++VolleysFired;
+	if (!bFireOnConfirm && VolleysFired < VolleyCount && IsActive())
 	{
 		GetWorld()->GetTimerManager().SetTimer(VolleyTimer, this, &UZL_Kit_ProjectileAbility::FireVolley, FMath::Max(NextInterval, 0.02f), false);
 		NextInterval *= FMath::Max(VolleyIntervalScale, 0.05f);
@@ -176,6 +205,102 @@ void UZL_Kit_ProjectileAbility::OnMoveFinished()
 	}
 }
 
+void UZL_Kit_ProjectileAbility::EnterHoldMode()
+{
+	const AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo());
+	UZeroMoverComponent* Mover = Hero ? Hero->GetZeroMoverComponent() : nullptr;
+	if (!Mover || !IsActive() || bEnding)
+	{
+		return;
+	}
+	Mover->QueueNextMode(HoldModeName);
+	bHolding = true;
+}
+
+void UZL_Kit_ProjectileAbility::StartManualFire(AZeroLockCharacter* Hero)
+{
+	WindowTask = UZL_WaitDelay_Task::WaitDealyWithProgressBar(this, FMath::Max(FireDelay + ConfirmWindow, 0.1f));
+	WindowTask->OnProgress.AddDynamic(this, &UZL_Kit_ProjectileAbility::UpdateProgressionTimer);
+	WindowTask->OnStarted.AddDynamic(this, &UZL_Kit_ProjectileAbility::StartProgressionTimer);
+	WindowTask->OnEnd.AddDynamic(this, &UZL_Kit_ProjectileAbility::StopProgressionTimer);
+	WindowTask->OnFinished.AddDynamic(this, &UZL_Kit_ProjectileAbility::OnConfirmWindowFinished);
+	WindowTask->ReadyForActivation();
+
+	if (bCancelOnRepress)
+	{
+		UAbilityTask_WaitInputPress* Repress = UAbilityTask_WaitInputPress::WaitInputPress(this, false);
+		Repress->OnPress.AddDynamic(this, &UZL_Kit_ProjectileAbility::OnRepressed);
+		Repress->ReadyForActivation();
+	}
+	if (bCancelOnJump && Hero)
+	{
+		JumpHandle = Hero->OnJumpInputPressed.AddUObject(this, &UZL_Kit_ProjectileAbility::OnJumpPressed);
+	}
+
+	if (FireDelay > 0.0f)
+	{
+		GetWorld()->GetTimerManager().SetTimer(VolleyTimer, this, &UZL_Kit_ProjectileAbility::ArmConfirm, FireDelay, false);
+	}
+	else
+	{
+		ArmConfirm();
+	}
+}
+
+void UZL_Kit_ProjectileAbility::ArmConfirm()
+{
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	if (!ASC || !IsActive() || bConfirmBound)
+	{
+		return;
+	}
+	// The ASC clears its confirm callbacks after every confirm, so this is re-bound per shot.
+	ASC->GenericLocalConfirmCallbacks.AddDynamic(this, &UZL_Kit_ProjectileAbility::OnConfirmPressed);
+	bConfirmBound = true;
+}
+
+void UZL_Kit_ProjectileAbility::OnConfirmPressed()
+{
+	bConfirmBound = false;
+	if (!IsActive() || bEnding)
+	{
+		return;
+	}
+	FireVolley();
+	// After the last volley, the spawn tasks end the ability when they report.
+	if (VolleysFired < VolleyCount && IsActive())
+	{
+		ArmConfirm();
+	}
+}
+
+void UZL_Kit_ProjectileAbility::OnConfirmWindowFinished()
+{
+	EndManual();
+}
+
+void UZL_Kit_ProjectileAbility::OnRepressed(float TimeWaited)
+{
+	EndManual();
+}
+
+void UZL_Kit_ProjectileAbility::OnJumpPressed()
+{
+	if (AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo()))
+	{
+		Hero->ConsumeJumpPress(); // cancel only, no air jump
+	}
+	EndManual();
+}
+
+void UZL_Kit_ProjectileAbility::EndManual()
+{
+	if (IsActive())
+	{
+		EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), true, false);
+	}
+}
+
 void UZL_Kit_ProjectileAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
@@ -188,9 +313,45 @@ void UZL_Kit_ProjectileAbility::EndAbility(const FGameplayAbilitySpecHandle Hand
 	{
 		World->GetTimerManager().ClearTimer(VolleyTimer);
 		World->GetTimerManager().ClearTimer(MoveTimer);
+		World->GetTimerManager().ClearTimer(ServerSafetyTimer);
+		World->GetTimerManager().ClearTimer(HoldTimer);
 	}
+	if (bHolding)
+	{
+		bHolding = false;
+		if (const AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo()))
+		{
+			if (UZeroMoverComponent* Mover = Hero->GetZeroMoverComponent())
+			{
+				Mover->QueueNextMode(FName("Falling"));
+			}
+		}
+	}
+	if (bConfirmBound)
+	{
+		if (UAbilitySystemComponent* ASC = ActorInfo ? ActorInfo->AbilitySystemComponent.Get() : nullptr)
+		{
+			ASC->GenericLocalConfirmCallbacks.RemoveDynamic(this, &UZL_Kit_ProjectileAbility::OnConfirmPressed);
+		}
+		bConfirmBound = false;
+	}
+	if (JumpHandle.IsValid())
+	{
+		if (AZeroLockCharacter* Hero = Cast<AZeroLockCharacter>(GetAvatarActorFromActorInfo()))
+		{
+			Hero->OnJumpInputPressed.Remove(JumpHandle);
+		}
+		JumpHandle.Reset();
+	}
+	if (WindowTask && WindowTask->IsActive())
+	{
+		WindowTask->OnFinished.RemoveDynamic(this, &UZL_Kit_ProjectileAbility::OnConfirmWindowFinished);
+		WindowTask->EndTask();
+	}
+	WindowTask = nullptr;
 	// The client finishes spawning first; its end must not cancel the server's tasks still waiting for spawn data.
-	if (bReplicateEndAbility && ActorInfo && !ActorInfo->IsNetAuthority())
+	// Manual fire is the exception: the client decides when it's over (its spawn data is sent before the end).
+	if (bReplicateEndAbility && ActorInfo && !ActorInfo->IsNetAuthority() && !bFireOnConfirm)
 	{
 		bReplicateEndAbility = false;
 	}

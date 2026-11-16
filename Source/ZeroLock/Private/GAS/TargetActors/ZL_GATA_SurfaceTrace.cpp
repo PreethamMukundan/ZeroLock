@@ -38,6 +38,11 @@ AZL_GATA_SurfaceTrace::AZL_GATA_SurfaceTrace()
 	{
 		PreviewMesh = CubeMesh.Object;
 	}
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+	if (CylinderMesh.Succeeded())
+	{
+		DiscMesh = CylinderMesh.Object;
+	}
 	static ConstructorHelpers::FObjectFinder<UMaterialInterface> ShapeMaterial(TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
 	if (ShapeMaterial.Succeeded())
 	{
@@ -48,16 +53,18 @@ AZL_GATA_SurfaceTrace::AZL_GATA_SurfaceTrace()
 bool AZL_GATA_SurfaceTrace::UpdatePreview(bool bHasHit, const FTransform& Placement, bool bValid)
 {
 	const APlayerController* PC = PrimaryPC;
-	const bool bShow = bHasHit && PreviewBox.IsValid && PreviewMesh && PC && PC->IsLocalController();
+	const bool bDisc = PreviewDiscRadius > 0.f && DiscMesh;
+	UStaticMesh* Mesh = bDisc ? DiscMesh.Get() : PreviewMesh.Get();
+	const bool bShow = bHasHit && (bDisc || PreviewBox.IsValid) && Mesh && PC && PC->IsLocalController();
 	PreviewComponent->SetHiddenInGame(!bShow);
 	if (!bShow)
 	{
 		return false;
 	}
 
-	if (PreviewComponent->GetStaticMesh() != PreviewMesh)
+	if (PreviewComponent->GetStaticMesh() != Mesh)
 	{
-		PreviewComponent->SetStaticMesh(PreviewMesh);
+		PreviewComponent->SetStaticMesh(Mesh);
 	}
 	if (!PreviewMID && PreviewMaterial)
 	{
@@ -69,6 +76,16 @@ bool AZL_GATA_SurfaceTrace::UpdatePreview(bool bHasHit, const FTransform& Placem
 	{
 		bPreviewShowsValid = bValid;
 		PreviewMID->SetVectorParameterValue(TEXT("Color"), bValid ? ValidPreviewColor : InvalidPreviewColor);
+	}
+
+	if (bDisc)
+	{
+		// Placement X is the surface normal; the cylinder's axis is Z. Thin, a hair off the surface.
+		const FVector Normal = Placement.GetUnitAxis(EAxis::X);
+		const float Width = PreviewDiscRadius / 50.f;
+		PreviewComponent->SetWorldTransform(FTransform(FRotationMatrix::MakeFromZ(Normal).ToQuat(),
+			Placement.GetLocation() + Normal * 2.f, FVector(Width, Width, 0.02f)));
+		return true;
 	}
 
 	if (!bFitPreviewMeshToBox)

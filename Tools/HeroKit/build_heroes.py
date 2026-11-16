@@ -229,8 +229,8 @@ def blueprint(folder, name, parent):
     path = asset_path(folder, name)
     if EAL.does_asset_exist(path):
         bp = EAL.load_asset(path)
-        current = bp.get_editor_property("parent_class")
-        if parent and current != parent:
+        generated_cls = BEL.generated_class(bp)
+        if parent and generated_cls and not unreal.MathLibrary.class_is_child_of(generated_cls, parent):
             BEL.reparent_blueprint(bp, parent)
             log(f"reparented {path} to {parent.get_name()}")
     else:
@@ -370,14 +370,25 @@ def build_ability(hero, spec, entry, slot, with_cooldown=True):
         proj_obj = cdo(proj_bp)
         tune_projectile(proj_bp, p, where + " projectile")
         extra = {"placeholder_color": p["color"]}
-        for key in ("pierce", "return_after", "hit_team", "hide_placeholder", "trail_cue", "impact_cue"):
+        for key in ("pierce", "return_after", "hit_team", "hide_placeholder", "trail_cue", "impact_cue",
+                    "pass_through_walls", "steer_to_crosshair", "steer_turn_rate", "steer_delay", "steer_range",
+                    "zone_on_floor", "burst_on_pierce_hit"):
             if key in p:
                 extra[key] = p[key]
         set_props(proj_obj, extra, where + " projectile")
         try:
             proj_obj.get_editor_property("hitbox_comp").set_capsule_size(float(p["hitbox"]), float(p["hitbox"]))
-            scale = max(p["hitbox"] / 100.0, 0.15)
-            proj_obj.get_editor_property("placeholder_mesh").set_editor_property("relative_scale3d", unreal.Vector(scale, scale, scale))
+            scale = float(p.get("placeholder_scale", max(p["hitbox"] / 100.0, 0.15)))
+            mesh = proj_obj.get_editor_property("placeholder_mesh")
+            mesh.set_editor_property("relative_scale3d", unreal.Vector(scale, scale, scale))
+            if p.get("placeholder_material"):
+                # The look of the ball (e.g. MI_HeroKit_WindBall); its "Color" parameter gets placeholder_color.
+                mesh.set_editor_property("override_materials", [unreal.load_asset(p["placeholder_material"])])
+            if p.get("core_material"):
+                # Inner core sphere (AZL_Kit_Projectile::CoreMesh), e.g. M_HeroKit_EnergyCore under a wind shell.
+                proj_obj.set_editor_property("core_material", unreal.load_asset(p["core_material"]))
+                proj_obj.set_editor_property("core_scale", float(p.get("core_scale", 0.8)))
+                proj_obj.set_editor_property("core_color", unreal.LinearColor(*p.get("core_color", (1, 1, 1)), 1.0))
         except Exception as exc:
             fail(f"{where} projectile hitbox: {exc}")
         save(proj_bp)
@@ -418,6 +429,28 @@ def add_hero_row(hero, da):
     save(table)
 
 
+def apply_mover(hero, hero_cdo, mover_spec):
+    """Per-hero Mover tuning on the BP's MoverComponent (copied from BP_SCombo). Keys:
+    air_control: the Falling mode's AirControlPercentage (engine default 0.4; air acceleration = input accel x this;
+    AirControlBonus items multiply it, clamped to 1)."""
+    if not mover_spec:
+        return
+    try:
+        mover = hero_cdo.get_editor_property("mover_component")
+        modes = mover.get_editor_property("movement_modes")
+        falling = next((m for name, m in modes.items() if str(name).lower() == "falling"), None)
+        if "air_control" in mover_spec:
+            if not falling:
+                fail(f"{hero} mover: no Falling mode")
+            else:
+                old = falling.get_editor_property("air_control_percentage")
+                falling.set_editor_property("air_control_percentage", float(mover_spec["air_control"]))
+                log(f"{hero} mover: air control {old} -> {mover_spec['air_control']}")
+        mover.modify()
+    except Exception as exc:
+        fail(f"{hero} mover: {exc}")
+
+
 def build_hero(hero, spec):
     folder = f"{ROOT}/{hero}"
     for sub in ("", "/Abilities", "/Weapon", "/Montages", "/Materials", "/Textures"):
@@ -449,6 +482,7 @@ def build_hero(hero, spec):
             hero_cdo.set_editor_property(key, value)
         except Exception as exc:
             fail(f"{hero} BP {key}: {exc}")
+    apply_mover(hero, hero_cdo, spec.get("mover", {}))
     save(hero_bp)
 
     set_props(da, {"character_name": spec["display"], "character_description": spec["desc"],

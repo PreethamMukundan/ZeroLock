@@ -85,3 +85,13 @@ void UZL_Kit_GroundAbility::DoImpact(const FVector& Location)
 		AZL_Kit_Zone::Spawn(ZoneClass, Hero, Location, Zone, Power, RangeScale, GetClass()->GetFName());
 	}
 }
+
+float UZL_Kit_GroundAbility::GetPreviewDiscRadius() const
+{
+	if (!bShowAreaPreview)
+	{
+		return Super::GetPreviewDiscRadius();
+	}
+	const float Radius = FMath::Max(ImpactRadius, Zone.IsValid() ? Zone.Radius : 0.0f);
+	return Radius > 0.0f ? Radius * GetAbilityRangeScale() : Super::GetPreviewDiscRadius();
+}

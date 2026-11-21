@@ -33,6 +33,14 @@ namespace ZerolockGameplayTagsForBinding
 	UE_DEFINE_GAMEPLAY_TAG(TAG_DEBUFFSTACK, "Zerolock.DebuffStack");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_DEBUFFSTACK_FROST, "Zerolock.DebuffStack.Frost");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_STATUS_IGNORE_BARRIER, "Zerolock.Status.IgnoreBarrier");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_COOLDOWN_KAIKOA_SHARKSHARKSHARK, "ZerolockAbilities.Cooldown.KaiKoa.SharkSharkShark");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_COOLDOWN_KAIKOA_TSUNAMIFIST, "ZerolockAbilities.Cooldown.KaiKoa.TsunamiFist");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_COOLDOWN_KAIKOA_ARCTICBURST, "ZerolockAbilities.Cooldown.KaiKoa.ArcticBurst");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_COOLDOWN_KAIKOA_ABSOLUTEZERO, "ZerolockAbilities.Cooldown.KaiKoa.AbsoluteZero");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_COOLDOWN_TEMPEST_ALLEYOOP, "ZerolockAbilities.Cooldown.Tempest.AlleyOop");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_COOLDOWN_TEMPEST_SIDESTEP, "ZerolockAbilities.Cooldown.Tempest.SideStep");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_COOLDOWN_TEMPEST_SETTINGAPICK, "ZerolockAbilities.Cooldown.Tempest.SettingAPick");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_COOLDOWN_TEMPEST_IAMNUMBER10, "ZerolockAbilities.Cooldown.Tempest.IAmNumber10");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_COOLDOWN_ITEM_SLOT_1, "ZerolockAbilities.Cooldown.Item.Slot1");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_COOLDOWN_ITEM_SLOT_2, "ZerolockAbilities.Cooldown.Item.Slot2");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_COOLDOWN_ITEM_SLOT_3, "ZerolockAbilities.Cooldown.Item.Slot3");
